@@ -1,0 +1,1633 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="財富島">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>我的財富島</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#EEF3F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1411" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: one iOS column (max 520px) · sticky frosted title bar · tab views (島嶼 / 帳本 / 報表 / 資產) · fixed frosted tab bar with a raised record button */
+:root{
+  --bg:#EEF3F0; --surface:#FFFFFF; --surface-2:#F4F7F5; --bar:rgba(238,243,240,.78); --glass:rgba(255,255,255,.72);
+  --ink:#14211B; --ink-2:#4A5A51; --ink-3:#7E8C84; --line:#DEE6E1; --scrim:rgba(10,20,15,.42);
+  --emerald:#16905E; --emerald-deep:#0E7149; --on-em:#FFFFFF; --emerald-soft:#DCF1E7; --emerald-shadow:rgba(22,144,94,.35);
+  --sky:#3F97D6; --sky-soft:#DDEEFA; --wood:#A8703F; --wood-soft:#F3E6D8;
+  --coral:#DF5C4A; --coral-soft:#FBE6E1; --debt:#78808A; --debt-soft:#E8EBEE; --amber:#C27A12;
+  --c1:#2F7FD0; --c2:#D9741C;   /* chart pair (validated: CVD-safe on light surface) */
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+  --font-num:ui-rounded,"SF Pro Rounded","Nunito",-apple-system,"Noto Sans TC",system-ui,sans-serif;
+  /* island scene */
+  --sky-top:#7EC8F2; --sky-bot:#E1F3FB; --sea-top:#5BBDE1; --sea-bot:#2C86BC; --foam:rgba(255,255,255,.75);
+  --sand:#EFDCB2; --soil-top:#B88556; --soil-bot:#7D5434; --grass:#7AC66A; --grass-hi:#9EDB88; --grass-lo:#56A958;
+  --tree:#3E9954; --tree-hi:#5DB86A; --trunk:#8A5A35; --sun:#FFD25E; --sun-glow:rgba(255,210,94,.28); --cloud:#FFFFFF;
+  --wall:#FFF6E8; --roof:#D0573F; --timber:#8B5A33; --window:#A8DBF5; --found:#8C939B; --found-line:#6E757D;
+  --turbine:#FFFFFF; --turbine-dim:#C3CAD1; --hub:#5B6B75; --glass-a:#A7DAF5; --glass-b:#4D9BD0;
+  --rope:rgba(40,60,50,.45); --star-op:0; --tank-in:#2D5C77; --water:#5BC2F0; --rock:#8E949B; --rock-hi:#B0B6BC;
+  --tag-bg:rgba(255,255,255,.88); --tag-fg:#14211B; --hi:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0C1411; --surface:#151F1A; --surface-2:#1B2721; --bar:rgba(12,20,17,.78); --glass:rgba(21,31,26,.74);
+  --ink:#E7EFEA; --ink-2:#AEBDB4; --ink-3:#77877E; --line:#25322B; --scrim:rgba(0,0,0,.55);
+  --emerald:#38C287; --emerald-deep:#1F9A66; --on-em:#05140D; --emerald-soft:#123325; --emerald-shadow:rgba(56,194,135,.25);
+  --sky:#66B5EA; --sky-soft:#13283A; --wood:#D49C63; --wood-soft:#2D2218;
+  --coral:#F27A68; --coral-soft:#3A1F1A; --debt:#9AA2AB; --debt-soft:#252B31; --amber:#E9A84A;
+  --c1:#3E8FDF; --c2:#D07A2A;
+  --sky-top:#0A1830; --sky-bot:#29496E; --sea-top:#1C4E74; --sea-bot:#0D2A45; --foam:rgba(190,220,255,.35);
+  --sand:#9A8865; --soil-top:#6E4D31; --soil-bot:#3E2A19; --grass:#3F8A4F; --grass-hi:#4F9D5D; --grass-lo:#2E6D3D;
+  --tree:#2A6D3D; --tree-hi:#3A8550; --trunk:#5E3E25; --sun:#F3EAC4; --sun-glow:rgba(243,234,196,.14); --cloud:rgba(170,190,220,.32);
+  --wall:#D8CBB6; --roof:#9A4232; --timber:#5E3E25; --window:#FFD36B; --found:#5E646B; --found-line:#454A50;
+  --turbine:#D6DDE4; --turbine-dim:#7B848D; --hub:#AEB8C0; --glass-a:#2A577D; --glass-b:#15314B;
+  --rope:rgba(220,230,240,.38); --star-op:1; --tank-in:#0D2435; --water:#3A9FD8; --rock:#5E646B; --rock-hi:#7A828B;
+  --tag-bg:rgba(18,28,23,.85); --tag-fg:#E7EFEA; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0C1411; --surface:#151F1A; --surface-2:#1B2721; --bar:rgba(12,20,17,.78); --glass:rgba(21,31,26,.74);
+  --ink:#E7EFEA; --ink-2:#AEBDB4; --ink-3:#77877E; --line:#25322B; --scrim:rgba(0,0,0,.55);
+  --emerald:#38C287; --emerald-deep:#1F9A66; --on-em:#05140D; --emerald-soft:#123325; --emerald-shadow:rgba(56,194,135,.25);
+  --sky:#66B5EA; --sky-soft:#13283A; --wood:#D49C63; --wood-soft:#2D2218;
+  --coral:#F27A68; --coral-soft:#3A1F1A; --debt:#9AA2AB; --debt-soft:#252B31; --amber:#E9A84A;
+  --c1:#3E8FDF; --c2:#D07A2A;
+  --sky-top:#0A1830; --sky-bot:#29496E; --sea-top:#1C4E74; --sea-bot:#0D2A45; --foam:rgba(190,220,255,.35);
+  --sand:#9A8865; --soil-top:#6E4D31; --soil-bot:#3E2A19; --grass:#3F8A4F; --grass-hi:#4F9D5D; --grass-lo:#2E6D3D;
+  --tree:#2A6D3D; --tree-hi:#3A8550; --trunk:#5E3E25; --sun:#F3EAC4; --sun-glow:rgba(243,234,196,.14); --cloud:rgba(170,190,220,.32);
+  --wall:#D8CBB6; --roof:#9A4232; --timber:#5E3E25; --window:#FFD36B; --found:#5E646B; --found-line:#454A50;
+  --turbine:#D6DDE4; --turbine-dim:#7B848D; --hub:#AEB8C0; --glass-a:#2A577D; --glass-b:#15314B;
+  --rope:rgba(220,230,240,.38); --star-op:1; --tank-in:#0D2435; --water:#3A9FD8; --rock:#5E646B; --rock-hi:#7A828B;
+  --tag-bg:rgba(18,28,23,.85); --tag-fg:#E7EFEA; color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg)}
+body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:16;background:var(--bg)}
+/* no visible scrollbars on inner scrollers */
+*{scrollbar-width:none} *::-webkit-scrollbar{display:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+:focus-visible{outline:2px solid var(--sky);outline-offset:2px;border-radius:8px}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:800;letter-spacing:-.01em}
+.muted{color:var(--ink-3)}
+.pos{color:var(--emerald)} .neg{color:var(--coral)}
+
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bar);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid transparent;transition:border-color .2s}
+.topbar.scrolled{border-bottom-color:var(--line)}
+.topbar-in{max-width:520px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:10px}
+.topbar h1{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.topbar .sub{font-size:12px;color:var(--ink-3);font-weight:500}
+.topbar .grow1{flex:1;min-width:0}
+.icon-btn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--surface);color:var(--ink-2);border:1px solid var(--line);flex-shrink:0}
+
+main{max-width:520px;margin:0 auto;padding-block:6px calc(110px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px}
+.sec-title{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:6px 4px 0}
+.sec-title h2{font-size:17px;font-weight:700}
+.sec-title .link{font-size:13px;color:var(--emerald);font-weight:600}
+.lbl{font-size:12px;color:var(--ink-3);font-weight:600;letter-spacing:.04em}
+.cur{font-size:.6em;font-weight:700;color:var(--ink-3);margin-right:2px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.pill.green{background:var(--emerald-soft);color:var(--emerald)}
+.pill.grey{background:var(--debt-soft);color:var(--debt)}
+.pill.coral{background:var(--coral-soft);color:var(--coral)}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;background:var(--surface-2);color:var(--ink-3);vertical-align:2px;margin-left:4px}
+
+/* hint card */
+.hint-card{display:flex;gap:12px;align-items:center;background:var(--wood-soft);border-radius:18px;padding:12px 14px;font-size:13px;color:var(--ink-2)}
+.hint-card p{flex:1;min-width:0}
+.hint-card b{color:var(--ink)}
+.mini-btn{flex-shrink:0;font-size:12.5px;font-weight:700;padding:7px 11px;border-radius:999px;background:var(--surface);color:var(--wood);border:1px solid var(--line)}
+
+/* KPI */
+.kpi{display:flex;flex-direction:column;gap:14px}
+.kpi-net{display:flex;flex-direction:column;gap:2px}
+.kpi-net .num{font-size:36px;line-height:1.1}
+.kpi-net .cur{font-size:.5em;margin-right:3px}
+.krow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi-tile{background:var(--surface-2);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi-tile .num{font-size:18px;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kpi-tile .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+
+/* island */
+.island{position:relative;border-radius:24px;overflow:hidden;border:1px solid var(--line);background:var(--sky-bot);box-shadow:0 10px 30px -18px rgba(20,60,40,.45)}
+.island svg{display:block;width:100%;height:auto;max-width:100%}
+.island .chip-tl{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;background:var(--glass);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);color:var(--ink)}
+.island .chip-tl i{width:8px;height:8px;border-radius:50%;background:var(--emerald)}
+.island .empty-tip{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);font-size:12.5px;font-weight:600;text-align:center;padding:8px 12px;border-radius:14px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:-4px}
+.legend button{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);padding:6px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.legend .sw{width:8px;height:8px;border-radius:2px}
+
+.obj{cursor:pointer}
+.gw{transform-box:fill-box;transform-origin:50% 100%}
+.grow{animation:grow .7s cubic-bezier(.2,1.3,.4,1) both}
+.fadein{animation:fadein .8s ease both}
+@keyframes grow{from{transform:scale(.01)}to{transform:scale(1)}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+[data-ak]{transition:transform 1s cubic-bezier(.2,.8,.2,1)}
+.spin{animation:spin linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cloud{animation:drift linear infinite}
+@keyframes drift{from{transform:translateX(-90px)}to{transform:translateX(440px)}}
+.wave{animation:wave 6s linear infinite}
+.wave.b{animation-duration:9s;animation-direction:reverse}
+@keyframes wave{from{transform:translateX(-40px)}to{transform:translateX(0)}}
+.water-wave{animation:wave2 2.4s linear infinite}
+@keyframes wave2{from{transform:translateX(-10px)}to{transform:translateX(0)}}
+.sway{animation:bob 4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.float{animation:float 7s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translate(0,0)}33%{transform:translate(4px,-6px)}66%{transform:translate(-3px,-2px)}}
+.smoke circle{animation:smoke 3.6s ease-out infinite;opacity:0;transform-box:fill-box;transform-origin:center}
+.smoke circle:nth-child(2){animation-delay:1.2s}.smoke circle:nth-child(3){animation-delay:2.4s}
+@keyframes smoke{0%{opacity:.55;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(6px,-16px) scale(1.6)}}
+.drip{animation:drip 1.6s ease-in infinite;opacity:0}
+.drip:nth-of-type(2){animation-delay:.55s}.drip:nth-of-type(3){animation-delay:1.1s}
+@keyframes drip{0%{opacity:.9;transform:translateY(0)}100%{opacity:0;transform:translateY(34px)}}
+.blink{animation:blink 1.6s steps(1) infinite}
+@keyframes blink{50%{opacity:.15}}
+.pulse{animation:glow 1.2s ease-in-out 3}
+@keyframes glow{50%{filter:drop-shadow(0 0 5px var(--sun)) brightness(1.15)}}
+.tether{stroke:var(--rope);stroke-width:.7;stroke-dasharray:2 2;fill:none}
+.bln .env{fill:var(--bc)}
+.bln .stripe{fill:var(--hi);opacity:.3}
+.bln .ropes{stroke:var(--rope);stroke-width:.8;fill:none}
+.bln .basket{fill:var(--wood)}
+.bln.ghost{opacity:.45}
+.bln.ghost .env{filter:saturate(.3);stroke:var(--hi);stroke-width:1;stroke-dasharray:3 2}
+.tag rect{fill:var(--tag-bg)} .tag text{fill:var(--tag-fg);font:800 7.5px var(--font-num);text-anchor:middle}
+
+/* budget */
+.budget{display:flex;flex-direction:column;gap:10px}
+.budget .top{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.budget .big{font-size:30px;line-height:1.1}
+.bar{height:9px;border-radius:999px;background:var(--surface-2);overflow:hidden;display:flex}
+.bar i{display:block;height:100%;border-radius:999px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.foot{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink-3);flex-wrap:wrap}
+.foot b{color:var(--ink);font-family:var(--font-num)}
+.inline-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.inline-stats div{background:var(--surface-2);border-radius:12px;padding:8px 10px;display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:12.5px;color:var(--ink-3)}
+.inline-stats .num{font-size:15px}
+
+/* lists */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;width:100%;text-align:left}
+.row + .row{border-top:1px solid var(--line)}
+button.row:active{background:var(--surface-2)}
+.row .main{flex:1;min-width:0}
+.row .t{display:block;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .s{display:block;font-size:12px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .amt{text-align:right;flex-shrink:0}
+.row .amt .num{font-size:15.5px;font-weight:800}
+.row .amt .s{font-size:11px}
+.tile{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;font-size:19px;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c)}
+.empty-row{padding:22px 16px;text-align:center;font-size:13.5px;color:var(--ink-3)}
+.day-h{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-3);padding:8px 6px 6px}
+.more-btn{display:block;width:100%;padding:12px;font-size:13.5px;font-weight:700;color:var(--emerald);text-align:center;border-top:1px solid var(--line)}
+
+/* ledger filters (menus) */
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.filters .wide{grid-column:1 / -1}
+.sel{position:relative;min-width:0}
+.sel select,.sel input{width:100%;min-width:0;appearance:none;-webkit-appearance:none;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:9px 30px 9px 12px;font-size:16px;font-weight:600;color:var(--ink);outline:0}
+.sel input{padding-right:12px;font-weight:500}
+.sel select:focus,.sel input:focus{border-color:var(--emerald)}
+.sel::after{content:"";position:absolute;right:13px;top:50%;width:7px;height:7px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.sel.noarrow::after{display:none}
+.sel.on select{border-color:var(--emerald);background:var(--emerald-soft);color:var(--emerald)}
+.result-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink-3);padding:0 4px;flex-wrap:wrap}
+.result-bar b{color:var(--ink);font-family:var(--font-num)}
+.link-btn{font-size:12.5px;font-weight:700;color:var(--emerald)}
+
+/* calendar */
+.cal{display:flex;flex-direction:column;gap:10px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cal-head h3{font-size:17px;font-weight:800}
+.cal-nav{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--ink-2)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-wd{text-align:center;font-size:11px;font-weight:700;color:var(--ink-3);padding-bottom:2px}
+.cal-day{position:relative;min-height:54px;border-radius:12px;padding:5px 3px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--surface-2);border:1.5px solid transparent;min-width:0}
+.cal-day .d{font-size:13px;font-weight:700;color:var(--ink)}
+.cal-day .e{font:800 10px var(--font-num);color:var(--ink-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-day .i{width:5px;height:5px;border-radius:50%;background:var(--c1)}
+.cal-day.blank{background:transparent}
+.cal-day.today .d{color:var(--emerald)}
+.cal-day.sel{border-color:var(--ink)}
+.cal-day.wkend .d{color:var(--ink-3)}
+.cal-legend{display:flex;gap:12px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
+.cal-legend span{display:inline-flex;align-items:center;gap:5px}
+.cal-legend i{display:inline-block;width:10px;height:10px;border-radius:3px}
+
+/* reports */
+.rep-ctrl{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi4{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi4 > div{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi4 .num{font-size:19px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kpi4 small{font-size:11.5px;color:var(--ink-3)}
+.chart-card{display:flex;flex-direction:column;gap:10px}
+.chart-card h3{font-size:15px;font-weight:700}
+.chart-card .sub{font-size:12px;color:var(--ink-3);margin-top:-6px}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .axis{font:600 9px var(--font-num);fill:var(--ink-3)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .hit:hover,.chart .hit.on{fill:var(--ink);opacity:.05}
+.tip{position:absolute;z-index:5;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.5;padding:7px 10px;border-radius:10px;white-space:nowrap;transform:translate(-50%,-100%);box-shadow:0 8px 20px -8px rgba(0,0,0,.4)}
+.tip b{font-family:var(--font-num)}
+.tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.key{display:flex;gap:14px;font-size:12px;color:var(--ink-2);flex-wrap:wrap}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{display:inline-block;width:10px;height:10px;border-radius:3px}
+.key .ln{width:14px;height:2px;border-radius:2px}
+.hbars{display:flex;flex-direction:column;gap:2px}
+.hbar{display:grid;grid-template-columns:5.6em 1fr auto;align-items:center;gap:10px;padding:7px 2px;font-size:13px;width:100%;text-align:left;border-radius:10px}
+.hbar .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .tr{height:10px;border-radius:0 4px 4px 0;background:transparent;position:relative}
+.hbar .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0;min-width:2px}
+.hbar .v{font:800 13px var(--font-num);text-align:right;white-space:nowrap}
+.hbar .v small{font:600 11px var(--font);color:var(--ink-3);margin-left:4px}
+.hbar-sub{padding:0 0 6px 1.2em;display:flex;flex-direction:column;gap:2px}
+.hbar-sub .hbar{font-size:12px;padding:4px 2px}
+.hbar-sub .hbar .tr{height:6px}
+details.cat-detail summary{list-style:none;cursor:pointer}
+details.cat-detail summary::-webkit-details-marker{display:none}
+.stack{display:flex;gap:2px;height:14px}
+.stack i{display:block;height:100%}
+.stack i:first-child{border-radius:4px 0 0 4px} .stack i:last-child{border-radius:0 4px 4px 0}
+.tbl-wrap{overflow-x:auto;margin:0 -4px}
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.tbl th{font-weight:700;color:var(--ink-3);text-align:right;padding:6px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{text-align:right;padding:6px 6px;border-bottom:1px solid var(--line);font-family:var(--font-num);font-weight:700;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left;font-family:var(--font);font-weight:600}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tfoot td{border-top:1.5px solid var(--line);font-weight:800}
+details.tview summary{font-size:12.5px;font-weight:700;color:var(--emerald);cursor:pointer;list-style:none}
+details.tview summary::-webkit-details-marker{display:none}
+details.tview[open] summary{margin-bottom:8px}
+
+/* assets & dreams */
+.comp{display:flex;flex-direction:column;gap:10px}
+.comp .bar{height:12px;gap:2px;background:transparent}
+.comp .bar i{border-radius:3px}
+.comp-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12.5px;color:var(--ink-2)}
+.comp-legend span{display:flex;align-items:center;gap:6px}
+.comp-legend .num{margin-left:auto;font-size:13px}
+.comp-legend .sw{width:9px;height:9px;border-radius:3px}
+.kline{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.group-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:4px 6px 6px}
+.group-h h3{font-size:14px;font-weight:700;color:var(--ink-2)}
+.group-h .num{font-size:14px;color:var(--ink-2)}
+.group-h small{font-size:11.5px;color:var(--ink-3);font-weight:500;margin-left:6px}
+.goal{display:flex;gap:12px;align-items:center}
+.goal svg{width:54px;height:72px;flex-shrink:0;overflow:visible}
+.goal .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.goal h3{font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.goal .top{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.goal .meta{font-size:12.5px;color:var(--ink-3)}
+.goal .meta b{font-family:var(--font-num);color:var(--ink)}
+.goal .bar{position:relative;overflow:visible}
+.goal .bar .half{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--line);border-radius:2px}
+.intro{font-size:13.5px;color:var(--ink-2);padding:0 4px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:15px;padding:13px 18px;border-radius:14px;background:var(--surface-2);color:var(--ink)}
+.btn.primary{background:var(--emerald);color:var(--on-em);box-shadow:0 6px 18px -6px var(--emerald-shadow)}
+.btn.block{width:100%}
+.btn.small{font-size:13px;padding:8px 12px;border-radius:12px}
+.btn.green-soft{background:var(--emerald-soft);color:var(--emerald)}
+.btn.danger{background:var(--coral-soft);color:var(--coral)}
+.btn.danger.armed{background:var(--coral);color:var(--surface)}
+.btn.dashed{background:transparent;border:1.5px dashed var(--line);color:var(--ink-2)}
+.seg{display:flex;background:var(--surface-2);border-radius:12px;padding:3px}
+.seg button{flex:1;padding:8px 6px;border-radius:9px;font-size:14px;font-weight:600;color:var(--ink-3);white-space:nowrap}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+main > .seg{background:var(--debt-soft)}
+
+/* tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bar);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--line)}
+.tabbar-in{max-width:520px;margin:0 auto;height:58px;display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;font-weight:600;color:var(--ink-3);padding:4px 0}
+.tab.on{color:var(--emerald)}
+.fab{justify-self:center;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;color:var(--on-em);background:linear-gradient(150deg,var(--emerald),var(--emerald-deep));box-shadow:0 10px 22px -6px var(--emerald-shadow),0 0 0 5px var(--bg);transform:translateY(-14px);transition:transform .15s}
+.fab:active{transform:translateY(-14px) scale(.94)}
+
+/* sheet */
+#sheet-root{position:fixed;inset:0;z-index:40}
+.backdrop{position:absolute;inset:0;background:var(--scrim);opacity:0;transition:opacity .25s}
+.sheet{position:absolute;left:0;right:0;bottom:0;margin:0 auto;max-width:520px;max-height:calc(100% - env(safe-area-inset-top,0px) - 20px);overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border-radius:26px 26px 0 0;padding-top:8px;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));transform:translateY(105%);transition:transform .34s cubic-bezier(.2,.9,.25,1);display:flex;flex-direction:column;gap:14px}
+#sheet-root.open .backdrop{opacity:1}
+#sheet-root.open .sheet{transform:none}
+.grabber{width:38px;height:5px;border-radius:999px;background:var(--line);margin:0 auto}
+.sheet-head{display:flex;align-items:center;gap:10px}
+.sheet-head h2{flex:1;font-size:19px;font-weight:800}
+.sheet-head .icon-btn{width:32px;height:32px;background:var(--surface-2);border:0}
+.amount{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface-2);border-radius:18px;padding:8px 16px;border:2px solid transparent;transition:border-color .2s}
+.amount:focus-within{border-color:var(--emerald)}
+.amount span{font:700 18px var(--font-num);color:var(--ink-3)}
+.amount input{width:100%;min-width:0;border:0;outline:0;background:transparent;text-align:center;font:800 40px var(--font-num);letter-spacing:-.02em;padding:2px 0}
+.amount.exp input{color:var(--coral)} .amount.inc input{color:var(--emerald)} .amount.tra input{color:var(--sky)}
+.fgroup{display:flex;flex-direction:column;gap:8px}
+.flabel{font-size:12.5px;font-weight:700;color:var(--ink-3);letter-spacing:.03em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two .wide{grid-column:1 / -1}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:12.5px;font-weight:700;color:var(--ink-3)}
+.field input,.field select{width:100%;min-width:0;border:1.5px solid transparent;border-radius:12px;background:var(--surface-2);padding:11px 12px;font-size:16px;outline:0;appearance:none;-webkit-appearance:none}
+.field input[type="date"]{min-height:46px;display:block;text-align:left}   /* iOS Safari centers and collapses date inputs once appearance is reset */
+.field input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
+.field .sel select{background:var(--surface-2);border:1.5px solid transparent;padding:11px 30px 11px 12px;font-weight:500}
+.field input:focus,.field select:focus,.field .sel select:focus{border-color:var(--emerald)}
+.field .hint{font-size:12px;color:var(--ink-3)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip-btn{font-size:13px;font-weight:600;padding:7px 13px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--ink-2)}
+.chip-btn.on{background:var(--emerald);border-color:var(--emerald);color:var(--on-em)}
+.preview{background:var(--sky-soft);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--ink-2);display:flex;flex-direction:column;gap:3px}
+.preview b{color:var(--ink);font-family:var(--font-num)}
+.preview .warn{color:var(--coral);font-weight:600}
+.err{font-size:13px;font-weight:600;color:var(--coral);background:var(--coral-soft);padding:8px 12px;border-radius:12px}
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--line);text-align:left;min-width:0}
+.type-btn .tile{width:34px;height:34px;border-radius:10px}
+.type-btn b{display:block;font-size:14px}
+.type-btn small{display:block;font-size:11.5px;color:var(--ink-3)}
+.type-btn.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,transparent)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface-2);font-size:14px;font-weight:600}
+.toggle small{display:block;font-size:11.5px;font-weight:500;color:var(--ink-3)}
+.switch{position:relative;width:48px;height:29px;flex-shrink:0}
+.switch input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.switch i{position:absolute;inset:0;border-radius:999px;background:var(--line);transition:background .2s;pointer-events:none}
+.switch i::after{content:"";position:absolute;top:2px;left:2px;width:25px;height:25px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:transform .2s}
+.switch input:checked + i{background:var(--emerald)}
+.switch input:checked + i::after{transform:translateX(19px)}
+.switch input:focus-visible + i{outline:2px solid var(--sky);outline-offset:2px}
+.swatches{display:flex;gap:10px}
+.swatch{width:32px;height:32px;border-radius:50%;background:var(--c);border:3px solid var(--surface);box-shadow:0 0 0 1.5px var(--line)}
+.swatch.on{box-shadow:0 0 0 2.5px var(--c)}
+.detail-hero{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0 2px;text-align:center}
+.detail-hero .num{font-size:32px}
+.btn-row{display:flex;gap:8px}
+.btn-row .btn{flex:1}
+.note{font-size:12.5px;color:var(--ink-3);line-height:1.6}
+.file-btn{position:relative;overflow:hidden}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+/* toast */
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:60;transform:translate(-50%,-140%);opacity:0;transition:transform .35s cubic-bezier(.2,.9,.25,1),opacity .25s;width:max-content;max-width:min(92vw,460px);padding:10px 16px;border-radius:18px;background:var(--ink);color:var(--bg);font-size:13.5px;font-weight:600;line-height:1.45;box-shadow:0 12px 30px -10px rgba(0,0,0,.4);pointer-events:none}
+#toast.show{transform:translate(-50%,0);opacity:1}
+#toast small{display:block;font-weight:500;opacity:.78;font-size:12.5px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .cloud,.wave,.spin,.float,.sway,.water-wave,.smoke circle,.blink,.drip{animation:none!important}
+}
+</style>
+
+<style>html,body{margin:0;padding:0}</style>
+</head>
+<body>
+<header class="topbar" id="topbar"><div class="topbar-in">
+  <div class="grow1"><h1 id="title">我的財富島</h1><div class="sub" id="subtitle"></div></div>
+  <button class="icon-btn" data-action="record-today" aria-label="新增紀錄" id="top-add" hidden><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="icon-btn" data-action="settings" aria-label="設定"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</div></header>
+
+<main id="view"></main>
+
+<nav class="tabbar" aria-label="主選單"><div class="tabbar-in">
+  <button class="tab" data-action="tab:home" data-tab="home"><span id="ic-home"></span>島嶼</button>
+  <button class="tab" data-action="tab:ledger" data-tab="ledger"><span id="ic-ledger"></span>帳本</button>
+  <button class="fab" data-action="record" aria-label="新增紀錄"><span id="ic-plus"></span></button>
+  <button class="tab" data-action="tab:reports" data-tab="reports"><span id="ic-reports"></span>報表</button>
+  <button class="tab" data-action="tab:assets" data-tab="assets"><span id="ic-assets"></span>資產</button>
+</div></nav>
+
+<div id="sheet-root" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* Raw rows from 2026_記帳模板.xlsx: [日期, 屬性, 類型, 項目, 備註, 金額, From, To] + each account's latest 本月餘額.
+   build.py fills this in; the in-app 匯入 Excel produces the same shape. */
+const TEMPLATE = /*__TEMPLATE__*/null;
+
+/* ───────── constants (follow the 2026 記帳模板 columns) ───────── */
+const LS_KEY = 'wealth-island-v2';
+const CATS = [
+  { key:'食', emo:'🍱', color:'#E1604F' }, { key:'衣', emo:'👕', color:'#D9923B' },
+  { key:'住', emo:'🏠', color:'#8E5A8B' }, { key:'行', emo:'🚗', color:'#3D6FA8' },
+  { key:'育', emo:'📚', color:'#3F7D4E' }, { key:'樂', emo:'🎮', color:'#B85B7A' },
+  { key:'其他', emo:'📦', color:'#7A6F62' },
+];
+const ITEMS = { '食':['外食','食材','營養品'], '衣':['衣'], '住':['住宿','固定支出','生活用品'], '行':['交通費','汽油費','汽機車保養'], '育':['育'], '樂':['樂'], '其他':['其他'] };
+const INCOME = [
+  { key:'薪資', emo:'💼' }, { key:'獎金紅利', emo:'🎁' }, { key:'利息、股息', emo:'📈' },
+  { key:'被動收入', emo:'🌱' }, { key:'其它收入', emo:'✨' }, { key:'其他入帳', emo:'🤝' },
+];
+const SCOPES = ['個人', '家庭'];
+const FIXED = [['房貸', ['房貸']], ['水電瓦斯網路手機', ['水費', '電費', '天然氣', '瓦斯', '手機', '網路']], ['管理費', ['管理費']], ['車貸', ['車貸']]];
+const TYPES = {
+  cash:     { label:'現金與銀行', island:'蓄水池',         c:'var(--sky)',     icon:'drop' },
+  credit:   { label:'信用卡',     island:'卡債岩石',       c:'var(--amber)',   icon:'card' },
+  invest:   { label:'投資與保單', island:'風車・科技大樓', c:'var(--emerald)', icon:'turbine' },
+  property: { label:'房產',       island:'歐式小屋',       c:'var(--wood)',    icon:'house' },
+  loan:     { label:'貸款',       island:'灰色地基・岩石', c:'var(--debt)',    icon:'stone' },
+};
+const INV_KIND = { stock:'股票・加密貨幣（風車）', fund:'ETF・基金・債券（科技大樓）', policy:'保單・儲蓄險（科技大樓）' };
+const GOAL_COLORS = ['#E1604F','#3F97D6','#E0A030','#8E5A8B','#16905E'];
+
+const ICONS = {
+  drop:'<path d="M12 3c-3 4-6 7.5-6 11a6 6 0 0 0 12 0c0-3.5-3-7-6-11z"/>',
+  card:'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/>',
+  turbine:'<path d="M12 11v10M9 21h6"/><circle cx="12" cy="9" r="1.4"/><path d="M12 7.6V2.5M13.2 9.7l4.4 2.6M10.8 9.7l-4.4 2.6"/>',
+  house:'<path d="M4 11l8-6 8 6M6 10v10h12V10M10 20v-5h4v5"/>',
+  stone:'<path d="M4 17c0-4 3-8 7-8 3 0 4 2 6 2s3 2 3 4-1 3-3 3H6c-1.2 0-2-.5-2-1z"/>',
+  balloon:'<path d="M12 3a6 6 0 0 0-6 6c0 4 4 7 6 8 2-1 6-4 6-8a6 6 0 0 0-6-6z"/><path d="M10.5 17.5l.5 3h2l.5-3"/>',
+  island:'<path d="M3 17c3-2 6-3 9-3s6 1 9 3"/><path d="M12 14V7M12 7c-2-2-5-2-6 0M12 7c2-2 5-2 6 0"/><path d="M5 20c2 0 2-1 3.5-1s1.5 1 3.5 1 2-1 3.5-1 1.5 1 3.5 1"/>',
+  list:'<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
+  chart:'<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',
+  wallet:'<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 14.5h2"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  close:'<path d="M6 6l12 12M18 6L6 18"/>',
+  chev:'<path d="M9 6l6 6-6 6"/>',
+  chevl:'<path d="M15 6l-6 6 6 6"/>',
+};
+const ic = (n, s=22, w=1.9) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+
+/* ───────── helpers ───────── */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fmt = n => Math.round(Math.abs(n)).toLocaleString('zh-TW');
+const money = n => (n < 0 ? '−' : '') + 'NT$' + fmt(n);
+const wan = n => { const a = Math.abs(n), s = n < 0 ? '−' : '';
+  if (a >= 1e8) return s + (a/1e8).toFixed(2).replace(/\.?0+$/,'') + '億';
+  if (a >= 1e4) return s + (a/1e4).toFixed(a >= 1e6 ? 0 : 1).replace(/\.0$/,'') + '萬';
+  return s + fmt(a); };
+const pct = x => (isFinite(x) ? Math.round(x*100) : 0) + '%';
+const pctW = x => (isFinite(x) ? (x*100).toFixed(1).replace(/\.0$/, '') : 0) + '%';   // water level, fine-grained so a NT$200 meal still shows a change
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const today = () => ymd(new Date());
+const thisYm = () => today().slice(0, 7);
+const WD = ['日','一','二','三','四','五','六'];
+const dayLabel = s => { const [y,m,d] = s.split('-').map(Number); const dt = new Date(y, m-1, d);
+  const diff = Math.round((new Date(today()) - new Date(s)) / 864e5);
+  return `${m}月${d}日 週${WD[dt.getDay()]}` + (diff === 0 ? ' · 今天' : diff === 1 ? ' · 昨天' : ''); };
+const ymLabel = ym => `${ym.slice(0,4)} 年 ${Number(ym.slice(5))} 月`;
+const shiftYm = (ym, n) => { const d = new Date(Number(ym.slice(0,4)), Number(ym.slice(5)) - 1 + n, 1); return ymd(d).slice(0, 7); };
+const digits = v => String(v ?? '').replace(/[^0-9]/g, '');
+const catOf = k => CATS.find(c => c.key === k) || CATS[CATS.length-1];
+const sortTx = (a, b) => b.date.localeCompare(a.date) || b.ts - a.ts;
+
+/* ───────── template → state ───────── */
+const ALIAS = { '富邦網路銀行':'富邦銀行' };
+function accTypeOf(name) { return /信用卡/.test(name) ? 'credit' : /保單/.test(name) ? 'invest' : 'cash'; }
+function buildFromTemplate(T) {
+  const accounts = [], ids = {}, txs = [];
+  const addAcc = (name, value) => {
+    const id = 'a' + (accounts.length + 1), type = accTypeOf(name);
+    const a = { id, type, name, value:Math.round(value) || 0, src:'template' };
+    if (type === 'invest') { a.kind = 'policy'; a.cost = a.value; }
+    accounts.push(a); ids[name] = id; return id;
+  };
+  (T.balances || []).forEach(([n, v]) => addAcc(n, v));
+  const norm = r => [ALIAS[r[6]] || r[6] || '', ALIAS[r[7]] || r[7] || ''];
+  T.rows.forEach(r => { const [f, t] = norm(r);   // accounts that appear in 流水帳 but not in 金流 (e.g. 富邦銀行、iPass Money)
+    if (t && t !== '花費' && !ids[t]) addAcc(t, 0);
+    if (t === '花費' && f && !ids[f] && Number(r[5]) > 0) addAcc(f, 0); });
+  T.rows.forEach((r, i) => {
+    let [date, scope, cat, item, note, amt] = r; let [f, t] = norm(r);
+    amt = Number(amt) || 0; if (!amt) return;
+    scope = scope === '各人' ? '個人' : scope || '';
+    const base = { id:'t' + i, date:String(date).slice(0, 10), note:String(note || '').trim(), amount:Math.abs(amt), scope, ts:i };
+    if (amt < 0 && !f && ids[t]) { txs.push(Object.assign(base, { kind:'expense', cat:'其他', item:'其他', from:ids[t], noStat:true })); return; }   // 現金調節
+    if (cat === '收入') { txs.push(Object.assign(base, { kind:'income', item:item || '其它收入', payer:f, to:ids[t] })); return; }
+    if (t === '花費' && amt < 0) { txs.push(Object.assign(base, { kind:'expense', amount:amt, cat:cat || '其他', item:item || '其他', from:ids[f] || '', payer:ids[f] ? '' : f, noStat:!cat })); return; }   // 代墊收回、退款
+    if (t === '花費') { txs.push(Object.assign(base, { kind:'expense', cat:cat || '其他', item:item || '其他', from:ids[f], noStat:!cat })); return; }
+    if (ids[f] && ids[t]) { txs.push(Object.assign(base, { kind:'transfer', from:ids[f], to:ids[t] })); return; }
+    if (ids[t]) txs.push(Object.assign(base, { kind:'income', item:'其他入帳', payer:f, to:ids[t], noStat:true }));
+  });
+  return { accounts, txs };
+}
+function defaultSettings(txs) {
+  const byM = {}; txs.forEach(t => { if (t.kind === 'expense' && !t.noStat) byM[t.date.slice(0,7)] = (byM[t.date.slice(0,7)] || 0) + t.amount; });
+  const full = Object.keys(byM).filter(m => m < thisYm()); const avg = full.length ? full.reduce((s, m) => s + byM[m], 0) / full.length : 30000;
+  return { name:'我的財富島', budget:Math.round(avg / 1000) * 1000, fullWater:Math.round(avg * 6 / 10000) * 10000 || 360000 };
+}
+function templateState(T = TEMPLATE) {
+  if (!T) return emptyState();
+  const { accounts, txs } = buildFromTemplate(T);
+  return { v:2, source:T.source || '2026_記帳模板.xlsx', importedAt:today(), settings:defaultSettings(txs), accounts, goals:[], txs };
+}
+const emptyState = () => ({ v:2, source:'', settings:{ name:'我的財富島', budget:30000, fullWater:360000 }, accounts:[], goals:[], txs:[] });
+
+function load() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!s || !Array.isArray(s.accounts) || !Array.isArray(s.txs)) return null;
+    s.goals = s.goals || [];
+    s.settings = Object.assign({ name:'我的財富島', budget:30000, fullWater:360000 }, s.settings);
+    return s;
+  } catch (e) { return null; }
+}
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }
+
+let S = load() || templateState();
+const ui = { tab:'home', ledgerMode:'list', assetsView:'list', f:{ month:thisYm(), kind:'all', cat:'all', scope:'all', acc:'all', q:'' }, day:today(), limit:80,
+  rep:{ period:'year', scope:'all' } };
+const prevAnim = {};          // last transform per animated island part, so changes tween
+let seen = new Set(), firstPaint = true, newSeen = new Set();
+let highlight = [];
+
+const acc = id => S.accounts.find(a => a.id === id);
+const goal = id => S.goals.find(g => g.id === id);
+const byType = t => S.accounts.filter(a => a.type === t);
+const loanOf = p => S.accounts.find(a => a.type === 'loan' && a.propertyId === p.id);
+const isFlow = a => a && (a.type === 'cash' || a.type === 'credit');
+const payAccounts = () => S.accounts.filter(isFlow);
+
+function totals() {
+  const t = { cash:0, credit:0, creditOwed:0, invest:0, prop:0, goal:0, loans:0 };
+  S.accounts.forEach(a => {
+    if (a.type === 'cash') t.cash += a.value; else if (a.type === 'invest') t.invest += a.value;
+    else if (a.type === 'property') t.prop += a.value; else if (a.type === 'loan') t.loans += a.value;
+    else if (a.type === 'credit') { if (a.value < 0) t.creditOwed += -a.value; else t.credit += a.value; } });
+  S.goals.forEach(g => t.goal += g.saved);
+  t.assets = t.cash + t.credit + t.invest + t.prop + t.goal;
+  t.debts = t.loans + t.creditOwed;
+  t.net = t.assets - t.debts;
+  return t;
+}
+const statExp = t => t.kind === 'expense' && !t.noStat;
+const statInc = t => t.kind === 'income' && !t.noStat;
+function monthStats(ym = thisYm()) {
+  let inc = 0, exp = 0;
+  S.txs.forEach(t => { if (t.date.slice(0, 7) !== ym) return; if (statInc(t)) inc += t.amount; else if (statExp(t)) exp += t.amount; });
+  const d = new Date(), dim = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(), daysLeft = dim - d.getDate() + 1;
+  const left = S.settings.budget - exp;
+  return { inc, exp, budget:S.settings.budget, left, daysLeft, perDay: left > 0 ? Math.floor(left / daysLeft) : 0, month:d.getMonth()+1 };
+}
+const waterLevel = cash => cash / Math.max(1, S.settings.fullWater);
+
+/* apply (sign=1) or reverse (sign=-1) a transaction's effect on balances */
+function applyTx(t, sign = 1) {
+  const amt = t.amount * sign;
+  if (t.kind === 'expense') { const a = acc(t.from); if (a) a.value -= amt; }
+  else if (t.kind === 'income') { const a = acc(t.to); if (a) a.value += amt; }
+  else if (t.kind === 'transfer') {
+    const a = acc(t.from); if (a) { a.value -= amt; if (a.type === 'invest') a.cost = Math.max(0, (a.cost || 0) - amt); }
+    if (String(t.to).startsWith('goal:')) { const g = goal(t.to.slice(5)); if (g) g.saved += amt; }
+    else { const b = acc(t.to); if (b) {
+      if (b.type === 'loan') b.value -= amt;
+      else if (b.type === 'invest') { b.value += amt; b.cost = (b.cost || 0) + amt; }
+      else b.value += amt; } }
+  }
+}
+function transferKind(to) {
+  if (String(to).startsWith('goal:')) return { label:'存入夢想', emo:'🎈', c:'var(--coral)' };
+  const b = acc(to);
+  if (!b) return { label:'轉帳', emo:'⇄', c:'var(--sky)' };
+  if (b.type === 'loan') return { label:'貸款還款', emo:'🏦', c:'var(--debt)' };
+  if (b.type === 'credit') return { label:'信用卡扣款', emo:'💳', c:'var(--amber)' };
+  if (b.type === 'invest') return { label:'投資加碼', emo:'📈', c:'var(--emerald)' };
+  return { label:'帳戶轉帳', emo:'⇄', c:'var(--sky)' };
+}
+const accName = id => acc(id)?.name || '已刪除的帳戶';
+const destName = to => String(to).startsWith('goal:') ? (goal(to.slice(5))?.name || '已刪除的夢想') : accName(to);
+function txInfo(t) {
+  if (t.kind === 'expense') { const c = catOf(t.cat), refund = t.amount < 0;
+    return { emo:c.emo, c:c.color, title:t.note || t.item, sub:[`${t.cat}・${t.item}`, refund && '退款', t.scope, t.from ? accName(t.from) : t.payer && '來自 ' + t.payer].filter(Boolean).join(' · '),
+      amt:(refund ? '+' : '−') + money(Math.abs(t.amount)), cls:refund ? 'pos' : '' }; }
+  if (t.kind === 'income') { const i = INCOME.find(x => x.key === t.item) || INCOME[4];
+    return { emo:i.emo, c:'var(--emerald)', title:t.note || t.item, sub:[t.item, t.payer && '來自 ' + t.payer, accName(t.to)].filter(Boolean).join(' · '), amt:'+' + money(t.amount), cls:'pos' }; }
+  const k = transferKind(t.to);
+  return { emo:k.emo, c:k.c, title:t.note || k.label, sub:`${k.label} · ${accName(t.from)} → ${destName(t.to)}`, amt:money(t.amount), cls:'tra' };
+}
+
+/* ───────── island scene ───────── */
+const GY = 172;
+function growAttr(key, mode = 'grow') {
+  newSeen.add(key);
+  if (seen.has(key) || firstPaint) return 'class="gw"';   // first paint shows the island at rest; only newly added things grow in
+  return `class="gw ${mode}"`;
+}
+function ak(key, to) { return `data-ak="${key}" data-to="${to}" style="transform:${prevAnim[key] || to}"`; }
+const lin = (a, b, n) => n === 1 ? [(a+b)/2] : Array.from({ length:n }, (_, i) => a + (b-a) * i / (n-1));
+const invHeight = v => clamp(26 + 22 * Math.log10(Math.max(v, 1e4) / 1e4), 30, 100);
+
+function balloonShape(color, p) {
+  return `<g class="bln ${p >= .5 ? 'vivid' : 'ghost'}" style="--bc:${color}">
+    <path class="env" d="M0 -52 C18 -52 21 -31 13 -19 L5 -9 L-5 -9 L-13 -19 C-21 -31 -18 -52 0 -52Z"/>
+    <path class="stripe" d="M0 -52 C7 -52 8.5 -31 5 -19 L2 -9 L-2 -9 L-5 -19 C-8.5 -31 -7 -52 0 -52Z"/>
+    <path class="ropes" d="M-5 -9 L-3.5 -2 M5 -9 L3.5 -2"/>
+    <rect class="basket" x="-4.5" y="-2.5" width="9" height="7" rx="1.5"/></g>`;
+}
+function tree(x, y, s, i) {
+  return `<g transform="translate(${x} ${y}) scale(${s})"><g ${growAttr('tree' + i)}>
+    <rect x="-1.6" y="-10" width="3.2" height="10" rx="1" style="fill:var(--trunk)"/>
+    <circle cx="0" cy="-17" r="9" style="fill:var(--tree)"/><circle cx="-5" cy="-12" r="6" style="fill:var(--tree)"/>
+    <circle cx="5" cy="-12.5" r="6" style="fill:var(--tree)"/><circle cx="-2.5" cy="-20" r="4.5" style="fill:var(--tree-hi)"/></g></g>`;
+}
+function tank(cash, x) {
+  const lvl = waterLevel(cash), f = clamp(lvl, 0, 1), off = (34 * (1 - f)).toFixed(1);
+  let wave = 'M-30 -46'; for (let i = 0; i < 8; i++) wave += ' q2.5 -2 5 0 t5 0'; wave += ' V-8 H-30Z';
+  const over = lvl >= 1 ? `<g style="fill:var(--water)"><circle class="drip" cx="-19" cy="-48" r="1.6"/><circle class="drip" cx="19" cy="-47" r="1.4"/><circle class="drip" cx="-18" cy="-44" r="1.2"/></g>` : '';
+  return `<g transform="translate(${x} ${GY})" class="obj" data-tap="cash"><g ${growAttr('tank')}>
+    <rect x="-17" y="-10" width="3" height="10" rx="1" style="fill:var(--timber)"/><rect x="14" y="-10" width="3" height="10" rx="1" style="fill:var(--timber)"/>
+    <path d="M-24 -50 L0 -63 L24 -50Z" style="fill:var(--roof)"/>
+    <rect x="-20" y="-50" width="40" height="42" rx="5" style="fill:var(--wood)"/>
+    <rect x="-15" y="-46" width="30" height="34" rx="3" style="fill:var(--tank-in)"/>
+    <g clip-path="url(#tankClip)"><g ${ak('water', `translate(0px,${off}px)`)}><path class="water-wave" d="${wave}" style="fill:var(--water)"/></g></g>
+    <path d="M-20 -40 H-15 M15 -40 H20 M-20 -20 H-15 M15 -20 H20" style="stroke:var(--timber);stroke-width:2"/>
+    ${over}
+    <g class="tag" transform="translate(0 -76)"><rect x="-17" y="-6" width="34" height="12" rx="6"/><text y="2.6">${lvl >= 1 ? '滿水位' : pct(f)}</text></g>
+  </g></g>`;
+}
+function house(p, loan, x, s) {
+  const ratio = loan ? clamp(loan.value / Math.max(1, p.value), 0, 1) : 0;
+  const fh = loan && loan.value > 0 ? 4 + 22 * ratio : 0;
+  const free = !loan || loan.value <= 0;
+  return `<g transform="translate(${x} ${GY}) scale(${s})" class="obj" data-tap="acc:${p.id}"><g ${growAttr('h' + p.id)}>
+    <rect x="-31" y="-1" width="62" height="3" rx="1.5" style="fill:var(--grass-lo)"/>
+    <g ${ak('fd' + p.id, `scaleY(${(fh / 26).toFixed(3)})`)} class="gw">
+      <rect x="-30" y="-26" width="60" height="26" rx="1.5" style="fill:var(--found)"/>
+      <path d="M-30 -19.5 H30 M-30 -13 H30 M-30 -6.5 H30 M-15 -26 V-19.5 M5 -26 V-19.5 M-5 -19.5 V-13 M15 -19.5 V-13 M-15 -13 V-6.5 M5 -13 V-6.5 M-5 -6.5 V0 M15 -6.5 V0" style="stroke:var(--found-line);stroke-width:.8"/>
+    </g>
+    <g ${ak('hb' + p.id, `translate(0px,${-fh}px)`)}>
+      <rect x="11" y="-50" width="7" height="14" style="fill:var(--timber)"/>
+      <g class="smoke" style="fill:var(--cloud)"><circle cx="14.5" cy="-53" r="2.4"/><circle cx="14.5" cy="-53" r="2.4"/><circle cx="14.5" cy="-53" r="2.4"/></g>
+      <rect x="-24" y="-30" width="48" height="30" style="fill:var(--wall)"/>
+      <path d="M-24 -30 H24 V0 H-24Z M-24 -15 H24 M-8 -30 V-15 M8 -30 V-15 M-24 -30 L-8 -15 M24 -30 L8 -15" style="fill:none;stroke:var(--timber);stroke-width:1.4"/>
+      <rect x="-19" y="-26" width="7" height="8" rx="1" style="fill:var(--window)"/><rect x="12" y="-26" width="7" height="8" rx="1" style="fill:var(--window)"/>
+      <rect x="-18" y="-11" width="8" height="7" rx="1" style="fill:var(--window)"/><rect x="10" y="-11" width="8" height="7" rx="1" style="fill:var(--window)"/>
+      <path d="M-5 0 V-9 a5 5 0 0 1 10 0 V0Z" style="fill:var(--timber)"/>
+      <path d="M-30 -29 L0 -55 L30 -29 Z" style="fill:var(--roof)"/>
+      <path d="M-30 -29 L0 -55 L30 -29" style="fill:none;stroke:var(--timber);stroke-width:1.6;stroke-linejoin:round"/>
+      <circle cx="0" cy="-38" r="3.2" style="fill:var(--window)"/>
+      ${free ? `<path d="M0 -55 V-70" style="stroke:var(--timber);stroke-width:1.3"/><path d="M0 -70 L11 -66.5 L0 -63Z" style="fill:var(--emerald)"/>` : ''}
+    </g>
+  </g></g>`;
+}
+function turbine(a, x) {
+  const h = invHeight(a.value), gain = a.cost ? (a.value - a.cost) / a.cost : 0;
+  const dur = clamp(3.4 - gain * 5, 0.9, 9).toFixed(2), L = clamp(h * .36, 12, 22), loss = gain < 0;
+  const blade = r => `<path transform="rotate(${r})" d="M0 0 C2.2 -3 2.8 ${-L*.5} .7 ${-L} L-.7 ${-L} C-1.6 ${-L*.5} -1.8 -3 0 0Z" style="fill:var(${loss ? '--turbine-dim' : '--turbine'})"/>`;
+  return `<g transform="translate(${x} ${GY})" class="obj" data-tap="acc:${a.id}"><g ${growAttr('i' + a.id)}>
+    <path d="M-2.4 0 L-1 ${-h} L1 ${-h} L2.4 0Z" style="fill:var(--turbine)"/>
+    <path d="M1 ${-h} L2.4 0 L.9 0Z" style="fill:var(--turbine-dim)"/>
+    <g transform="translate(0 ${-h})"><g class="spin" style="animation-duration:${dur}s">${blade(0)}${blade(120)}${blade(240)}</g>
+      <circle r="2.2" style="fill:var(--hub)"/></g></g></g>`;
+}
+function tower(a, x) {
+  const h = invHeight(a.value) * .92, w = 20, rows = Math.max(2, Math.floor((h - 10) / 7));
+  let win = '';
+  for (let r = 0; r < rows; r++) for (let c = 0; c < 3; c++) {
+    const lit = ((r * 7 + c * 3 + a.id.length) % 4) !== 0;
+    win += `<rect x="${-7 + c * 5}" y="${(-h + 7 + r * 7).toFixed(1)}" width="3.4" height="3.6" rx=".6" style="fill:var(--window);opacity:${lit ? .95 : .35}"/>`;
+  }
+  return `<g transform="translate(${x} ${GY})" class="obj" data-tap="acc:${a.id}"><g ${growAttr('i' + a.id)}>
+    <path d="M0 ${-h} V${-h - 12}" style="stroke:var(--hub);stroke-width:1.2"/>
+    <circle class="blink" cx="0" cy="${-h - 12}" r="1.5" style="fill:var(--coral)"/>
+    <rect x="${-w/2}" y="${-h}" width="${w}" height="${h}" rx="2.5" fill="url(#gGlass)"/>
+    <rect x="${-w/2}" y="${-h}" width="${w}" height="3" rx="1.5" style="fill:var(--hub)"/>
+    ${win}</g></g>`;
+}
+function boulder(id, value, tap, x, y) {
+  const r = clamp(5 + 3.2 * Math.log10(Math.max(value, 1e4) / 1e4), 5, 15);
+  return `<g transform="translate(${x} ${y})" class="obj" data-tap="${tap}"><g ${growAttr('r' + id)}>
+    <path d="M${-r} 0 C${-r} ${-r*.9} ${-r*.4} ${-r*1.2} ${r*.2} ${-r*1.1} C${r*.9} ${-r} ${r*1.1} ${-r*.4} ${r} 0Z" style="fill:var(--rock)"/>
+    <path d="M${-r*.5} ${-r*.75} C${-r*.2} ${-r*1.05} ${r*.3} ${-r*1.05} ${r*.5} ${-r*.8}" style="fill:none;stroke:var(--rock-hi);stroke-width:1.6;stroke-linecap:round"/></g></g>`;
+}
+function islandSVG() {
+  newSeen = new Set();
+  const t = totals();
+  const hasCash = byType('cash').length > 0;
+  const inv = byType('invest').filter(a => a.value > 0).sort((a, b) => b.value - a.value).slice(0, 4);
+  const props = byType('property').sort((a, b) => b.value - a.value).slice(0, 2);
+  const rockList = byType('loan').filter(l => !byType('property').some(p => p.id === l.propertyId) && l.value > 0).map(l => [l.id, l.value, 'acc:' + l.id]);
+  if (t.creditOwed > 0) rockList.unshift(['credit', t.creditOwed, 'credit']);
+  const rocks3 = rockList.slice(0, 3);
+  const goals = S.goals.slice(0, 3);
+  const empty = !S.accounts.length && !S.goals.length;
+
+  let waves1 = 'M-40 186', waves2 = 'M-40 200';
+  for (let i = 0; i < 12; i++) { waves1 += ' q10 -3.5 20 0 t20 0'; waves2 += ' q10 3 20 0 t20 0'; }
+  const stars = [[24,22],[60,48],[96,16],[140,36],[188,14],[226,44],[262,20],[342,70],[20,86],[120,70]]
+    .map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i % 3 ? .9 : 1.3}" style="fill:var(--sun)"/>`).join('');
+  const cloud = (y, s, dur, delay) => `<g class="cloud" style="animation-duration:${dur}s;animation-delay:${delay}s"><g transform="translate(0 ${y}) scale(${s})" style="fill:var(--cloud)">
+    <ellipse cx="0" cy="0" rx="22" ry="7"/><circle cx="-8" cy="-4" r="8"/><circle cx="5" cy="-7" r="10"/><circle cx="15" cy="-2" r="6"/></g></g>`;
+
+  const nTrees = t.net >= 1e5 ? clamp(Math.floor(Math.log10(t.net / 1e5) * 2) + 1, 1, 6) : 0;
+  const treeSpots = [[104, 160, .8], [214, 159, .75], [42, 164, .7], [326, 164, .72], [146, 157, .62], [262, 157, .6]];
+  const trees = treeSpots.slice(0, nTrees).map(([x, y, s], i) => tree(x, y, s, i)).join('');
+
+  const blnX = [[204], [110, 210], [106, 206, 282]][Math.max(0, goals.length - 1)] || [];
+  const balloons = goals.map((g, i) => {
+    const p = g.target ? g.saved / g.target : 0, up = p >= 1;
+    const by = up ? 50 : 104 - 44 * clamp(p, 0, 1);
+    return `<g ${ak('bl' + g.id, `translate(${blnX[i]}px,${by.toFixed(1)}px)`)} class="obj" data-tap="goal:${g.id}">
+      <g ${growAttr('g' + g.id, 'fadein')}><g class="${up ? 'float' : 'sway'}" style="animation-delay:-${i * 1.4}s">
+        ${up ? '' : '<path class="tether" d="M0 4.5 V240"/>'}
+        <g transform="scale(${up ? .85 : 1})">${balloonShape(g.color, p)}</g>
+        <g class="tag" transform="translate(0 ${up ? 14 : 15})"><rect x="-15" y="-6" width="30" height="12" rx="6"/><text y="2.6">${up ? '升空!' : pct(p)}</text></g>
+      </g></g></g>`;
+  }).join('');
+
+  const hX = props.length === 2 ? [128, 190] : [160];
+  const houses = props.map((p, i) => {
+    const s = clamp(.8 + .2 * Math.log10(p.value / 5e6), .68, 1.1) * (props.length === 2 ? .84 : 1);
+    return house(p, loanOf(p), hX[i], s.toFixed(3));
+  }).join('');
+  const iX = lin(inv.length <= 2 ? 248 : 230, inv.length <= 2 ? 296 : 316, inv.length);
+  const invs = inv.map((a, i) => a.kind === 'stock' ? turbine(a, iX[i]) : tower(a, iX[i])).join('');
+  const rocks = rocks3.map(([id, v, tap], i) => boulder(id, v, tap, [30, 334, 52][i], [186, 188, 194][i])).join('');
+
+  let tufts = '';
+  [[40, 182], [92, 186], [150, 188], [205, 188], [250, 186], [300, 183], [122, 178], [232, 178]].forEach(([x, y], i) => {
+    tufts += `<path d="M${x-3} ${y} q1 -5 2 -1 q1 -6 2 0 q1 -4 2 1" style="fill:none;stroke:var(--grass-lo);stroke-width:1.2;stroke-linecap:round"/>`;
+    if (i % 2) tufts += `<circle cx="${x+5}" cy="${y-2}" r="1.4" style="fill:${['#FFD25E','#F59AB0','#FFFFFF'][i % 3]}"/>`;
+  });
+  const sprout = empty ? `<g transform="translate(180 ${GY})"><g ${growAttr('sprout')}>
+    <path d="M0 0 V-12" style="stroke:var(--grass-lo);stroke-width:2;stroke-linecap:round"/>
+    <path d="M0 -8 C-8 -10 -10 -16 -9 -18 C-3 -18 0 -14 0 -8Z M0 -11 C7 -13 10 -19 9 -21 C3 -21 0 -17 0 -11Z" style="fill:var(--grass-hi)"/></g></g>` : '';
+
+  const desc = `財富島：蓄水池水位 ${pct(waterLevel(t.cash))}，${props.length} 棟房屋，${inv.length} 座投資建物，${goals.length} 顆夢想熱氣球`;
+  const svg = `<svg viewBox="0 0 360 250" role="img" aria-label="${esc(desc)}">
+  <defs>
+    <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sky-top)"/><stop offset="1" style="stop-color:var(--sky-bot)"/></linearGradient>
+    <linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sea-top)"/><stop offset="1" style="stop-color:var(--sea-bot)"/></linearGradient>
+    <linearGradient id="gSoil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--soil-top)"/><stop offset="1" style="stop-color:var(--soil-bot)"/></linearGradient>
+    <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--glass-a)"/><stop offset="1" style="stop-color:var(--glass-b)"/></linearGradient>
+    <clipPath id="tankClip"><rect x="-15" y="-46" width="30" height="34" rx="3"/></clipPath>
+  </defs>
+  <rect width="360" height="250" fill="url(#gSky)"/>
+  <g style="opacity:var(--star-op)">${stars}</g>
+  <circle cx="314" cy="40" r="27" style="fill:var(--sun-glow)"/><circle cx="314" cy="40" r="15" style="fill:var(--sun)"/>
+  ${cloud(34, 1, 90, -20)}${cloud(70, .75, 120, -85)}${cloud(22, .6, 140, -40)}
+  ${balloons}
+  <rect y="178" width="360" height="72" fill="url(#gSea)"/>
+  <path class="wave" d="${waves1}" style="fill:none;stroke:var(--foam);stroke-width:1.4"/>
+  <path class="wave b" d="${waves2}" style="fill:none;stroke:var(--foam);stroke-width:1;opacity:.6"/>
+  <ellipse cx="180" cy="196" rx="172" ry="18" style="fill:none;stroke:var(--foam);stroke-width:1.5"/>
+  <path d="M18 174 C22 196 70 212 180 214 C290 212 338 196 342 174Z" fill="url(#gSoil)"/>
+  <ellipse cx="180" cy="176" rx="166" ry="18" style="fill:var(--sand)"/>
+  <ellipse cx="180" cy="171" rx="157" ry="18" style="fill:var(--grass)"/>
+  <ellipse cx="168" cy="166" rx="118" ry="9" style="fill:var(--grass-hi);opacity:.55"/>
+  ${trees}${rocks}
+  ${hasCash ? tank(t.cash, 66) : ''}
+  ${houses}${invs}${sprout}${tufts}
+  </svg>`;
+  seen = newSeen; firstPaint = false;
+  return svg;
+}
+function stageName(net) {
+  if (net < 0) return '迷霧中的島';
+  if (net < 1e5) return '新生草地';
+  if (net < 1e6) return '小小村落';
+  if (net < 5e6) return '繁榮小鎮';
+  if (net < 2e7) return '富饒港灣';
+  return '財富之島';
+}
+
+/* ───────── shared bits ───────── */
+const typeTile = (type, s = 40) => `<span class="tile" style="--c:${TYPES[type].c};width:${s}px;height:${s}px">${ic(TYPES[type].icon, s * .5)}</span>`;
+const txRow = t => { const i = txInfo(t);
+  return `<button class="row" data-action="tx:${t.id}"><span class="tile" style="--c:${i.c}">${i.emo}</span>
+    <span class="main"><span class="t">${esc(i.title)}${t.noStat ? '<span class="badge">不計收支</span>' : ''}</span><span class="s">${esc(i.sub)}</span></span>
+    <span class="amt"><span class="num ${i.cls}" style="${i.cls === 'tra' ? 'color:var(--sky)' : ''}">${i.amt}</span><span class="s">${t.date.slice(5).replace('-', '/')}</span></span></button>`; };
+const selectBox = (id, opts, val, attrs = '', cls = '') => `<div class="sel ${cls}"><select id="${id}" ${attrs}>${opts.map(o => Array.isArray(o)
+  ? `<option value="${esc(o[0])}" ${String(o[0]) === String(val) ? 'selected' : ''}>${esc(o[1])}</option>`
+  : `<optgroup label="${esc(o.group)}">${o.opts.map(p => `<option value="${esc(p[0])}" ${String(p[0]) === String(val) ? 'selected' : ''}>${esc(p[1])}</option>`).join('')}</optgroup>`).join('')}</select></div>`;
+const monthsWithData = () => { const s = new Set(S.txs.map(t => t.date.slice(0, 7))); s.add(thisYm()); return [...s].sort().reverse(); };
+
+/* ───────── home ───────── */
+function viewHome() {
+  const t = totals(), m = monthStats();
+  const debtRatio = t.assets ? t.debts / t.assets : 0;
+  const recent = [...S.txs].sort(sortTx).slice(0, 5);
+  const usedPct = m.budget ? clamp(m.exp / m.budget, 0, 1) : 0;
+  const inv = byType('invest').filter(a => a.value > 0), props = byType('property');
+  const legend = [
+    byType('cash').length && `<button data-tap="cash"><span class="sw" style="background:var(--sky)"></span>蓄水池 ${waterLevel(t.cash) >= 1 ? '滿水位' : pct(waterLevel(t.cash))}</button>`,
+    inv.length && `<button data-action="tab:assets"><span class="sw" style="background:var(--emerald)"></span>投資建物 ${inv.length} 座</button>`,
+    props.length && `<button data-action="tab:assets"><span class="sw" style="background:var(--wood)"></span>小屋 ${props.length} 棟</button>`,
+    t.debts > 0 && `<button data-action="tab:assets"><span class="sw" style="background:var(--debt)"></span>地基・岩石 ${wan(t.debts)}</button>`,
+    S.goals.length && `<button data-action="dreams"><span class="sw" style="background:var(--coral)"></span>熱氣球 ${S.goals.length} 顆</button>`,
+  ].filter(Boolean).join('');
+  // the template records monthly 房貸/車貸 payments but no property value or loan balance
+  const lastPay = k => { const x = [...S.txs].sort(sortTx).find(t => t.kind === 'expense' && t.note === k); return x ? x.amount : 0; };
+  const hint = !props.length && (lastPay('房貸') || lastPay('車貸')) ? `<div class="hint-card"><p><b>帳本裡有每月房貸 ${money(lastPay('房貸'))}${lastPay('車貸') ? `、車貸 ${money(lastPay('車貸'))}` : ''} 的繳款紀錄，</b>但範本沒有房屋價值和貸款餘額。補上後，島上會蓋出小屋和灰色地基。</p><button class="mini-btn" data-action="add:property">新增房產</button></div>` : '';
+  return `
+  <section class="card kpi" aria-label="資產總覽">
+    <div class="kpi-net"><span class="lbl">淨資產（資產 − 負債）</span>
+      <div class="krow"><span class="num" style="${t.net < 0 ? 'color:var(--coral)' : ''}">${t.net < 0 ? '−' : ''}<span class="cur">NT$</span>${fmt(t.net)}</span></div>
+      <div class="krow"><span class="pill ${debtRatio > .6 ? 'coral' : debtRatio > 0 ? 'grey' : 'green'}">負債比 ${pct(debtRatio)}</span><span class="pill green">${stageName(t.net)}</span></div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-tile"><span class="lbl"><span class="dot" style="background:var(--emerald)"></span>總資產</span><span class="num"><span class="cur">NT$</span>${fmt(t.assets)}</span></div>
+      <div class="kpi-tile"><span class="lbl"><span class="dot" style="background:var(--debt)"></span>總負債</span><span class="num" style="color:var(--debt)"><span class="cur">NT$</span>${fmt(t.debts)}</span></div>
+    </div>
+  </section>
+  <section class="island" id="island">
+    ${islandSVG()}
+    <div class="chip-tl"><i></i>${esc(S.settings.name)}</div>
+    ${!S.accounts.length && !S.goals.length ? `<div class="empty-tip">島上還是一片草地。到「資產」新增第一筆，島嶼就會開始長大。</div>` : ''}
+  </section>
+  ${legend ? `<div class="legend">${legend}</div>` : ''}
+  ${!S.txs.length && !S.accounts.length ? `<div class="hint-card"><p><b>從 Excel 開始：</b>匯入「記帳模板」格式的 .xlsx，帳戶餘額和每一筆流水帳都會搬進來。資料只存在這支手機。</p><button class="mini-btn" data-action="settings">匯入 Excel</button></div>` : ''}
+  ${hint}
+  <section class="card budget" aria-label="本月可支配餘額">
+    <div class="top"><div><div class="lbl">${m.month} 月可支配餘額</div><div class="num big ${m.left < 0 ? 'neg' : ''}">${money(m.left)}</div></div>
+      <span class="pill ${m.left < 0 || usedPct > .85 ? 'coral' : 'green'}">${m.left < 0 ? '已超支' : `每日可花 ${money(m.perDay)}`}</span></div>
+    <div class="bar"><i style="width:${(usedPct * 100).toFixed(1)}%;background:${usedPct > .85 ? 'var(--coral)' : 'var(--emerald)'}"></i></div>
+    <div class="foot"><span>已花 <b>${money(m.exp)}</b> / 預算 ${money(m.budget)}</span><span>距月底 ${m.daysLeft} 天</span></div>
+    <div class="inline-stats"><div>本月收入<span class="num pos">${m.inc ? '+' : ''}${fmt(m.inc)}</span></div><div>本月支出<span class="num">${m.exp ? '−' : ''}${fmt(m.exp)}</span></div></div>
+  </section>
+  <div class="sec-title"><h2>最近記帳</h2><button class="link" data-action="tab:ledger">看全部</button></div>
+  <div class="list">${recent.length ? recent.map(txRow).join('') : `<div class="empty-row">還沒有記帳。按下方綠色 + 記第一筆。</div>`}</div>`;
+}
+
+/* ───────── ledger: menu filters + list / calendar ───────── */
+function filteredTx(ignoreMonth = false) {
+  const f = ui.f, q = f.q.trim().toLowerCase();
+  return S.txs.filter(t => {
+    if (!ignoreMonth && f.month !== 'all' && t.date.slice(0, 7) !== f.month) return false;
+    if (f.kind !== 'all' && t.kind !== f.kind) return false;
+    if (f.cat !== 'all' && !(t.kind === 'expense' && t.cat === f.cat)) return false;
+    if (f.scope !== 'all' && t.scope !== f.scope) return false;
+    if (f.acc !== 'all' && t.from !== f.acc && t.to !== f.acc) return false;
+    if (q && ![t.note, t.item, t.cat, t.payer, accName(t.from), destName(t.to || '')].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+function viewLedger() {
+  const f = ui.f, cal = ui.ledgerMode === 'cal';
+  const months = monthsWithData();
+  const on = k => f[k] !== 'all' ? 'on' : '';
+  return `
+  <div class="seg" role="tablist"><button data-action="lmode:list" class="${cal ? '' : 'on'}">列表</button><button data-action="lmode:cal" class="${cal ? 'on' : ''}">行事曆</button></div>
+  <div class="filters" aria-label="篩選">
+    ${cal ? '' : selectBox('flt-month', [['all', '全部月份'], ...months.map(m => [m, ymLabel(m)])], f.month, 'data-filter="month" aria-label="月份"', on('month'))}
+    ${selectBox('flt-kind', [['all', '全部收支'], ['expense', '支出'], ['income', '收入'], ['transfer', '轉帳・還款・存夢想']], f.kind, 'data-filter="kind" aria-label="收支"', on('kind'))}
+    ${selectBox('flt-cat', [['all', '全部類型'], ...CATS.map(c => [c.key, `${c.emo} ${c.key}`])], f.cat, 'data-filter="cat" aria-label="類型"', on('cat'))}
+    ${selectBox('flt-scope', [['all', '家庭＋個人'], ...SCOPES.map(s => [s, s])], f.scope, 'data-filter="scope" aria-label="屬性"', on('scope'))}
+    ${selectBox('flt-acc', [['all', '全部帳戶'], ...S.accounts.filter(a => a.type !== 'property').map(a => [a.id, a.name])], f.acc, 'data-filter="acc" aria-label="帳戶"', on('acc') + (cal ? '' : ' wide'))}
+    <div class="sel noarrow wide"><input type="search" id="flt-q" placeholder="搜尋備註、項目、來源、帳戶" value="${esc(f.q)}" aria-label="搜尋" autocomplete="off"></div>
+  </div>
+  <div id="ledger-results" style="display:flex;flex-direction:column;gap:12px">${cal ? ledgerCalendar() : ledgerList()}</div>`;
+}
+function resultBar(list) {
+  const exp = list.filter(statExp).reduce((s, t) => s + t.amount, 0), inc = list.filter(statInc).reduce((s, t) => s + t.amount, 0);
+  const active = Object.entries(ui.f).some(([k, v]) => k === 'q' ? v.trim() : k !== 'month' && v !== 'all');
+  return `<div class="result-bar"><span><b>${list.length}</b> 筆 · 支出 <b>${money(exp)}</b> · 收入 <b>${money(inc)}</b></span>${active ? '<button class="link-btn" data-action="clear-filters">清除篩選</button>' : ''}</div>`;
+}
+function dayGroups(list, limit) {
+  const groups = {}; let shown = 0;
+  for (const t of list) { if (shown >= limit) break; (groups[t.date] = groups[t.date] || []).push(t); shown++; }
+  return Object.keys(groups).map(d => {
+    const exp = groups[d].filter(statExp).reduce((s, t) => s + t.amount, 0);
+    return `<div><div class="day-h"><span>${dayLabel(d)}</span><span>${exp ? '支出 ' + money(exp) : ''}</span></div><div class="list">${groups[d].map(txRow).join('')}</div></div>`;
+  }).join('');
+}
+function ledgerList() {
+  const list = filteredTx().sort(sortTx);
+  return resultBar(list) + (list.length ? dayGroups(list, ui.limit) + (list.length > ui.limit ? `<div class="list"><button class="more-btn" data-action="more">再顯示 ${Math.min(80, list.length - ui.limit)} 筆（還有 ${list.length - ui.limit} 筆）</button></div>` : '')
+    : `<div class="list"><div class="empty-row">沒有符合條件的紀錄</div></div>`);
+}
+function ledgerCalendar() {
+  const ym = ui.f.month === 'all' ? thisYm() : ui.f.month;
+  const [y, m] = ym.split('-').map(Number);
+  const first = new Date(y, m - 1, 1).getDay(), dim = new Date(y, m, 0).getDate();
+  const list = filteredTx(true).filter(t => t.date.slice(0, 7) === ym);
+  const exp = {}, inc = {};
+  list.forEach(t => { if (statExp(t)) exp[t.date] = (exp[t.date] || 0) + t.amount; if (statInc(t)) inc[t.date] = (inc[t.date] || 0) + t.amount; });
+  const max = Math.max(1, ...Object.values(exp));
+  if (!ui.day || ui.day.slice(0, 7) !== ym) ui.day = ym === thisYm() ? today() : `${ym}-01`;
+  let cells = WD.map(w => `<div class="cal-wd">${w}</div>`).join('');
+  for (let i = 0; i < first; i++) cells += '<div class="cal-day blank"></div>';
+  for (let d = 1; d <= dim; d++) {
+    const ds = `${ym}-${String(d).padStart(2, '0')}`, e = exp[ds] || 0, wk = (first + d - 1) % 7;
+    const heat = e > 0 ? Math.round(10 + 45 * Math.sqrt(e / max)) : 0;
+    cells += `<button class="cal-day ${ds === today() ? 'today' : ''} ${ds === ui.day ? 'sel' : ''} ${wk === 0 || wk === 6 ? 'wkend' : ''}" data-action="day:${ds}"
+      style="${heat ? `background:color-mix(in srgb,var(--c2) ${heat}%,var(--surface-2))` : ''}" aria-label="${m}月${d}日 支出 ${fmt(e)} 元">
+      <span class="d">${d}</span>${e > 0 ? `<span class="e">${e >= 1e4 ? wan(e) : fmt(e)}</span>` : ''}${inc[ds] ? '<span class="i" title="有收入"></span>' : ''}</button>`;
+  }
+  const dayList = list.filter(t => t.date === ui.day).sort(sortTx);
+  const mExp = Object.values(exp).reduce((s, v) => s + v, 0), mInc = Object.values(inc).reduce((s, v) => s + v, 0);
+  return `<section class="card cal">
+    <div class="cal-head"><button class="cal-nav" data-action="cal:-1" aria-label="上個月">${ic('chevl', 18, 2.2)}</button><h3>${ymLabel(ym)}</h3><button class="cal-nav" data-action="cal:1" aria-label="下個月">${ic('chev', 18, 2.2)}</button></div>
+    <div class="cal-grid">${cells}</div>
+    <div class="cal-legend"><span><i style="background:color-mix(in srgb,var(--c2) 50%,var(--surface-2))"></i>顏色越深支出越多</span><span><i style="background:var(--c1);width:6px;height:6px;border-radius:50%"></i>當天有收入</span></div>
+    <div class="foot"><span>本月支出 <b>${money(mExp)}</b></span><span>收入 <b>${money(mInc)}</b></span></div>
+  </section>
+  <div class="sec-title"><h2>${dayLabel(ui.day)}</h2><button class="link" data-action="record-on:${ui.day}">＋ 這天記一筆</button></div>
+  <div class="list">${dayList.length ? dayList.map(txRow).join('') : '<div class="empty-row">這天沒有紀錄</div>'}</div>`;
+}
+function refreshLedger() { const r = $('#ledger-results'); if (r) r.innerHTML = ui.ledgerMode === 'cal' ? ledgerCalendar() : ledgerList(); }
+
+/* ───────── reports ───────── */
+function niceStep(max, n = 4) { const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw || 1))), m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+const compact = v => Math.abs(v) >= 1e4 ? (v / 1e4).toFixed(Math.abs(v) >= 1e5 ? 0 : 1).replace(/\.0$/, '') + '萬' : fmt(v);
+const colPath = (x, y, w, h) => { const r = Math.min(4, w / 2, h); return `M${x} ${y + h}V${y + r}Q${x} ${y} ${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h}Z`; };
+function monthlyColumns(rows) {   // rows: [{m, inc, exp}]
+  const W = 340, H = 180, L = 34, B = 20, T = 8, pw = W - L, ph = H - B - T;
+  const max = Math.max(1, ...rows.flatMap(r => [r.inc, r.exp])), step = niceStep(max), top = Math.ceil(max / step) * step;
+  const band = pw / rows.length, bw = Math.min(11, band * .3), y = v => T + ph - v / top * ph;
+  let g = '';
+  for (let v = 0; v <= top + 1e-6; v += step) g += `<line class="grid" x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${v ? compact(v) : 0}</text>`;
+  rows.forEach((r, i) => {
+    const cx = L + band * i + band / 2;
+    if (r.inc) g += `<path d="${colPath(cx - bw - 1, y(r.inc), bw, T + ph - y(r.inc))}" style="fill:var(--c1)"/>`;
+    if (r.exp) g += `<path d="${colPath(cx + 1, y(r.exp), bw, T + ph - y(r.exp))}" style="fill:var(--c2)"/>`;
+    g += `<text class="axis" x="${cx}" y="${H - 6}" text-anchor="middle">${r.m}月</text>`;
+    g += `<rect class="hit" x="${L + band * i}" y="${T}" width="${band}" height="${ph}" rx="6" data-tip="${esc(JSON.stringify({ h:`${r.m} 月`, rows:[['var(--c1)', '收入', r.inc], ['var(--c2)', '支出', r.exp], ['', '結餘', r.inc - r.exp]] }))}"/>`;
+  });
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="每月收入與支出">${g}</svg></div>`;
+}
+function lineChart(points) {   // points: [{label, v}]
+  const W = 340, H = 150, L = 40, B = 20, T = 14, R = 10, pw = W - L - R, ph = H - B - T;
+  const vals = points.map(p => p.v), lo0 = Math.min(...vals), hi0 = Math.max(...vals), span = Math.max(hi0 - lo0, hi0 * .02, 1);
+  const step = niceStep(span * 1.3, 3), lo = Math.floor((lo0 - span * .15) / step) * step, hi = Math.ceil((hi0 + span * .15) / step) * step;
+  const x = i => L + (points.length === 1 ? pw / 2 : pw * i / (points.length - 1)), y = v => T + ph - (v - lo) / (hi - lo) * ph;
+  let g = '';
+  for (let v = lo; v <= hi + 1e-6; v += step) g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${compact(v)}</text>`;
+  const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.v).toFixed(1)}`).join('');
+  g += `<path d="${d}L${x(points.length - 1)} ${T + ph}L${x(0)} ${T + ph}Z" style="fill:var(--c1);opacity:.1"/>`;
+  g += `<path d="${d}" style="fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round"/>`;
+  points.forEach((p, i) => {
+    g += `<text class="axis" x="${x(i)}" y="${H - 5}" text-anchor="middle">${p.label}</text>`;
+    const last = i === points.length - 1;
+    if (last) g += `<circle cx="${x(i)}" cy="${y(p.v)}" r="4.5" style="fill:var(--c1);stroke:var(--surface);stroke-width:2"/><text x="${x(i) - 6}" y="${y(p.v) - 9}" text-anchor="end" style="font:800 10px var(--font-num);fill:var(--ink)">${compact(p.v)}</text>`;
+    const bw = points.length > 1 ? pw / (points.length - 1) : pw;
+    g += `<rect class="hit" x="${x(i) - bw / 2}" y="${T}" width="${bw}" height="${ph}" data-tip="${esc(JSON.stringify({ h:p.label + ' 月底', rows:[['var(--c1)', '帳戶總額', p.v]] }))}"/>`;
+  });
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="帳戶總額走勢">${g}</svg></div>`;
+}
+const hbarList = (items, color, total) => { const max = Math.max(1, ...items.map(i => i[1]));
+  return `<div class="hbars">${items.map(([n, v]) => `<div class="hbar"><span class="nm">${esc(n)}</span><span class="tr"><i style="width:${(v / max * 100).toFixed(1)}%;background:${color}"></i></span><span class="v">${fmt(v)}<small>${total ? pct(v / total) : ''}</small></span></div>`).join('')}</div>`; };
+
+const inFlowTotal = a => a && (a.type === 'cash' || (a.type === 'invest' && a.src === 'template'));   // the template's 金流 accounts minus credit cards
+function flowEffect(t) {   // how a record moved the 現金與銀行 total (same scope as the template's 總金額, which leaves out credit cards)
+  const isCash = inFlowTotal;
+  const fa = acc(t.from), ta = t.to && !String(t.to).startsWith('goal:') ? acc(t.to) : null;
+  if (t.kind === 'expense') return isCash(fa) ? -t.amount : 0;
+  if (t.kind === 'income') return isCash(ta) ? t.amount : 0;
+  return (isCash(ta) ? t.amount : 0) - (isCash(fa) ? t.amount : 0);
+}
+function viewReports() {
+  const r = ui.rep, months = monthsWithData(), year = thisYm().slice(0, 4);
+  const inPeriod = t => r.period === 'year' ? t.date.slice(0, 4) === year : t.date.slice(0, 7) === r.period;
+  const inScope = t => r.scope === 'all' || t.scope === r.scope;
+  const tx = S.txs.filter(t => inPeriod(t) && inScope(t));
+  const exps = tx.filter(statExp), incs = tx.filter(statInc);
+  const E = exps.reduce((s, t) => s + t.amount, 0), I = incs.reduce((s, t) => s + t.amount, 0), net = I - E;
+  const ctrl = `<div class="rep-ctrl">
+    ${selectBox('rep-period', [['year', `${year} 全年`], ...months.filter(m => m.startsWith(year)).map(m => [m, ymLabel(m)])], r.period, 'data-rep="period" aria-label="期間"', 'on')}
+    ${selectBox('rep-scope', [['all', '家庭＋個人'], ...SCOPES.map(s => [s, s + '花費'])], r.scope, 'data-rep="scope" aria-label="屬性"', r.scope !== 'all' ? 'on' : '')}</div>`;
+  const nMonths = r.period === 'year' ? new Set(tx.map(t => t.date.slice(0, 7))).size || 1 : 1;
+  const kpi = `<div class="kpi4">
+    <div><span class="lbl">收入</span><span class="num">${money(I)}</span>${r.period === 'year' ? `<small>月平均 ${money(I / nMonths)}</small>` : ''}</div>
+    <div><span class="lbl">支出</span><span class="num">${money(E)}</span>${r.period === 'year' ? `<small>月平均 ${money(E / nMonths)}</small>` : ''}</div>
+    <div><span class="lbl">結餘</span><span class="num ${net < 0 ? 'neg' : ''}">${money(net)}</span></div>
+    <div><span class="lbl">儲蓄率</span><span class="num">${I ? pct(net / I) : '—'}</span><small>結餘 ÷ 收入</small></div></div>`;
+
+  // monthly table / columns (year view)
+  let monthly = '';
+  if (r.period === 'year') {
+    const rows = []; const maxM = Number(thisYm().slice(5));
+    for (let m = 1; m <= maxM; m++) { const ym = `${year}-${String(m).padStart(2, '0')}`;
+      const mt = tx.filter(t => t.date.slice(0, 7) === ym);
+      rows.push({ m, inc:mt.filter(statInc).reduce((s, t) => s + t.amount, 0), exp:mt.filter(statExp).reduce((s, t) => s + t.amount, 0) }); }
+    monthly = `<section class="card chart-card"><h3>每月收入與支出</h3><p class="sub">點長條看當月收入、支出與結餘</p>
+      <div class="key"><span><i style="background:var(--c1)"></i>收入</span><span><i style="background:var(--c2)"></i>支出</span></div>
+      ${monthlyColumns(rows)}
+      <details class="tview"><summary>查看月份明細表</summary><div class="tbl-wrap"><table class="tbl"><thead><tr><th>月份</th><th>收入</th><th>支出</th><th>結餘</th></tr></thead>
+      <tbody>${rows.map(x => `<tr><td>${x.m} 月</td><td>${fmt(x.inc)}</td><td>${fmt(x.exp)}</td><td class="${x.inc - x.exp < 0 ? 'neg' : ''}">${x.inc - x.exp < 0 ? '−' : ''}${fmt(x.inc - x.exp)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>合計</td><td>${fmt(I)}</td><td>${fmt(E)}</td><td class="${net < 0 ? 'neg' : ''}">${net < 0 ? '−' : ''}${fmt(net)}</td></tr></tfoot></table></div></details></section>`;
+  }
+
+  // category breakdown with item drill-down
+  const byCat = CATS.map(c => { const ce = exps.filter(t => t.cat === c.key); const items = {};
+    ce.forEach(t => items[t.item] = (items[t.item] || 0) + t.amount);
+    return { c, v:ce.reduce((s, t) => s + t.amount, 0), items:Object.entries(items).sort((a, b) => b[1] - a[1]) }; }).filter(x => x.v > 0).sort((a, b) => b.v - a.v);
+  const maxC = Math.max(1, ...byCat.map(x => x.v));
+  const catCard = `<section class="card chart-card"><h3>支出類型分布</h3><p class="sub">點類型展開項目明細</p>
+    ${byCat.length ? `<div class="hbars">${byCat.map(x => `<details class="cat-detail"><summary class="hbar"><span class="nm">${x.c.emo} ${x.c.key}</span><span class="tr"><i style="width:${(x.v / maxC * 100).toFixed(1)}%;background:var(--c2)"></i></span><span class="v">${fmt(x.v)}<small>${pct(x.v / E)}</small></span></summary>
+      <div class="hbar-sub">${x.items.map(([n, v]) => `<div class="hbar"><span class="nm">${esc(n)}</span><span class="tr"><i style="width:${(v / maxC * 100).toFixed(1)}%;background:var(--c2);opacity:.55"></i></span><span class="v">${fmt(v)}</span></div>`).join('')}</div></details>`).join('')}</div>` : '<p class="note">這段期間沒有支出</p>'}</section>`;
+
+  // 家庭 vs 個人
+  let split = '';
+  if (r.scope === 'all' && E) { const fam = exps.filter(t => t.scope === '家庭').reduce((s, t) => s + t.amount, 0), per = E - fam;
+    split = `<section class="card chart-card"><h3>家庭與個人花費</h3>
+      <div class="key"><span><i style="background:var(--c1)"></i>家庭 <b class="num">${money(fam)}</b>（${pct(fam / E)}）</span><span><i style="background:var(--c2)"></i>個人 <b class="num">${money(per)}</b>（${pct(per / E)}）</span></div>
+      <div class="stack" role="img" aria-label="家庭 ${pct(fam / E)}，個人 ${pct(per / E)}">${fam ? `<i style="width:${fam / E * 100}%;background:var(--c1)"></i>` : ''}${per ? `<i style="width:${per / E * 100}%;background:var(--c2)"></i>` : ''}</div></section>`; }
+
+  // income sources
+  const incBy = {}; incs.forEach(t => incBy[t.item] = (incBy[t.item] || 0) + t.amount);
+  const incCard = `<section class="card chart-card"><h3>收入來源</h3>${I ? hbarList(Object.entries(incBy).sort((a, b) => b[1] - a[1]), 'var(--c1)', I) : '<p class="note">這段期間沒有收入</p>'}</section>`;
+
+  // fixed expenses (matched by 備註, like the template's 固定支出 table)
+  const fixedRows = FIXED.map(([label, keys]) => [label, exps.filter(t => keys.includes(t.note)).reduce((s, t) => s + t.amount, 0)]);
+  const fixedTotal = fixedRows.reduce((s, x) => s + x[1], 0);
+  const fixedCard = `<section class="card chart-card"><h3>固定支出</h3><p class="sub">依備註比對：房貸、水電瓦斯網路手機、管理費、車貸</p>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>項目</th><th>金額</th>${r.period === 'year' ? '<th>月平均</th>' : ''}<th>佔支出</th></tr></thead>
+    <tbody>${fixedRows.map(([n, v]) => `<tr><td>${n}</td><td>${fmt(v)}</td>${r.period === 'year' ? `<td>${fmt(v / nMonths)}</td>` : ''}<td>${E ? pct(v / E) : '—'}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td>小計</td><td>${fmt(fixedTotal)}</td>${r.period === 'year' ? `<td>${fmt(fixedTotal / nMonths)}</td>` : ''}<td>${E ? pct(fixedTotal / E) : '—'}</td></tr></tfoot></table></div></section>`;
+
+  // payment accounts
+  const payBy = {}; exps.filter(t => t.from).forEach(t => { const n = accName(t.from); payBy[n] = (payBy[n] || 0) + t.amount; });
+  const payCard = `<section class="card chart-card"><h3>付款帳戶</h3><p class="sub">支出從哪個帳戶或信用卡付出</p>${E ? hbarList(Object.entries(payBy).sort((a, b) => b[1] - a[1]).slice(0, 8), 'var(--ink-3)', E) : '<p class="note">這段期間沒有支出</p>'}</section>`;
+
+  // top single expenses
+  const top = [...exps].sort((a, b) => b.amount - a.amount).slice(0, 5);
+  const topCard = `<div class="sec-title"><h2>單筆最大支出</h2></div><div class="list">${top.length ? top.map(txRow).join('') : '<div class="empty-row">沒有支出</div>'}</div>`;
+
+  // account total trend, rebuilt backwards from today's balances
+  let trend = '';
+  if (r.period === 'year') {
+    const flowNow = S.accounts.filter(inFlowTotal).reduce((s, a) => s + a.value, 0);
+    const pts = []; const maxM = Number(thisYm().slice(5));
+    for (let m = 1; m <= maxM; m++) { const end = ymd(new Date(Number(year), m, 0));
+      const after = S.txs.filter(t => t.date > end).reduce((s, t) => s + flowEffect(t), 0);
+      pts.push({ label:`${m}`, v:flowNow - after }); }
+    trend = `<section class="card chart-card"><h3>帳戶總金額</h3><p class="sub">每月底的現金、銀行、電子錢包與保單（同 Excel「金流」總金額，不含信用卡），由目前餘額依流水帳回推</p>${lineChart(pts)}</section>`;
+  }
+  return ctrl + kpi + monthly + trend + catCard + split + incCard + fixedCard + payCard + topCard;
+}
+
+/* ───────── assets & dreams ───────── */
+function accRow(a) {
+  let sub = '', right = money(a.value), under = '', color = '';
+  if (a.type === 'cash') { const t = totals(); sub = `佔蓄水池 ${pct(t.cash ? a.value / t.cash : 0)}`; }
+  if (a.type === 'credit') { sub = a.value < 0 ? '未繳金額，算在負債' : a.value > 0 ? '溢繳（可抵下期）' : '已繳清'; color = a.value < 0 ? 'var(--debt)' : ''; }
+  if (a.type === 'invest') { const g = a.cost ? (a.value - a.cost) / a.cost : 0;
+    sub = `${a.kind === 'stock' ? '風車' : '科技大樓'} · 成本 ${wan(a.cost || 0)}`;
+    if (a.cost) under = `<span class="s ${g >= 0 ? 'pos' : 'neg'}" style="font-weight:700">${g >= 0 ? '+' : ''}${(g * 100).toFixed(1)}%</span>`; }
+  if (a.type === 'property') { const l = loanOf(a);
+    sub = l && l.value > 0 ? `地基：${esc(l.name)} ${wan(l.value)} · 貸款成數 ${pct(l.value / a.value)}` : '無貸款，屋頂插著綠旗'; }
+  if (a.type === 'loan') { const p = acc(a.propertyId); sub = p ? `壓在「${esc(p.name)}」底下的地基` : '海邊的灰色岩石'; right = '−' + money(a.value); color = 'var(--debt)'; }
+  return `<button class="row" data-action="acc:${a.id}">${typeTile(a.type)}<span class="main"><span class="t">${esc(a.name)}</span><span class="s">${sub}</span></span>
+    <span class="amt"><span class="num" style="${color ? 'color:' + color : ''}">${right}</span>${under}</span></button>`;
+}
+function viewAssets() {
+  const seg = `<div class="seg"><button data-action="aview:list" class="${ui.assetsView === 'list' ? 'on' : ''}">資產與負債</button><button data-action="aview:dreams" class="${ui.assetsView === 'dreams' ? 'on' : ''}">夢想目標</button></div>`;
+  if (ui.assetsView === 'dreams') return seg + viewDreams();
+  const t = totals();
+  const segs = [['現金', t.cash, 'var(--sky)'], ['投資', t.invest, 'var(--emerald)'], ['房產', t.prop, 'var(--wood)'], ['夢想基金', t.goal, 'var(--coral)']];
+  const group = type => { const list = byType(type); const sum = list.reduce((s, a) => s + a.value, 0);
+    return `<div><div class="group-h"><h3>${TYPES[type].label}<small>島上的${TYPES[type].island}</small></h3><span class="num">${(type === 'loan' && sum) || sum < 0 ? '−' : ''}${money(Math.abs(sum)).replace('−', '')}</span></div>
+    <div class="list">${list.length ? list.map(accRow).join('') : `<button class="row" data-action="add:${type}" style="justify-content:center;color:var(--ink-3);font-size:13.5px">＋ 新增${TYPES[type].label}</button>`}</div></div>`; };
+  return seg + `
+  <section class="card comp" aria-label="資產組成">
+    <div class="kline"><span class="lbl">資產組成</span><span class="num" style="font-size:15px">${money(t.assets)}</span></div>
+    <div class="bar">${t.assets ? segs.filter(s => s[1] > 0).map(s => `<i style="width:${(s[1] / t.assets * 100).toFixed(2)}%;background:${s[2]}"></i>`).join('') : ''}</div>
+    <div class="comp-legend">${segs.map(s => `<span><i class="sw" style="background:${s[2]}"></i>${s[0]}<b class="num">${wan(s[1])}</b></span>`).join('')}</div>
+    <div class="kline" style="padding-top:8px;border-top:1px solid var(--line)"><span class="lbl">負債（貸款 ${wan(t.loans)} · 信用卡 ${wan(t.creditOwed)}）</span><span class="num" style="font-size:15px;color:var(--debt)">−${money(t.debts)}</span></div>
+  </section>
+  <button class="btn primary block" data-action="add:cash">${ic('plus', 18, 2.4)}新增資產或負債</button>
+  ${group('cash')}${group('credit')}${group('invest')}${group('property')}${group('loan')}`;
+}
+function viewDreams() {
+  const cards = S.goals.map(g => {
+    const p = g.target ? g.saved / g.target : 0;
+    const state = p >= 1 ? ['已升空', 'green'] : p >= .5 ? ['已上色', 'coral'] : ['半透明', 'grey'];
+    return `<article class="card goal">
+      <svg viewBox="-24 -60 48 72" aria-hidden="true"><g class="${p >= 1 ? 'float' : 'sway'}">${balloonShape(g.color, p)}</g></svg>
+      <div class="main"><div class="top"><h3>${esc(g.name)}</h3><span class="pill ${state[1]}">${state[0]}</span></div>
+        <div class="bar"><i style="width:${(clamp(p, 0, 1) * 100).toFixed(1)}%;background:${g.color}"></i><span class="half" title="50% 上色"></span></div>
+        <div class="meta"><b>${money(g.saved)}</b> / ${money(g.target)} · ${p >= 1 ? '目標達成' : '還差 ' + money(g.target - g.saved)}</div>
+        <div class="btn-row"><button class="btn small green-soft" data-action="deposit:${g.id}">存入</button><button class="btn small" data-action="goal:${g.id}">編輯</button></div>
+      </div></article>`;
+  }).join('');
+  return `<p class="intro">每個夢想都是天空中的一顆熱氣球。存到 50% 會上色，存滿 100% 就升空。存入的錢從現金帳戶轉出，仍算在你的總資產。</p>
+  ${cards || `<div class="card"><div class="empty-row">還沒有夢想。設一個目標金額，島上就會出現熱氣球。</div></div>`}
+  <button class="btn dashed block" data-action="new-goal">${ic('plus', 18, 2.2)}新增夢想目標</button>`;
+}
+
+const TITLES = { home:null, ledger:'帳本', reports:'財務報表', assets:'資產與夢想' };
+function render() {
+  const d = new Date();
+  $('#title').textContent = TITLES[ui.tab] || S.settings.name;
+  $('#subtitle').textContent = ui.tab === 'home' ? `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 週${WD[d.getDay()]}` :
+    ui.tab === 'ledger' ? `共 ${S.txs.length.toLocaleString()} 筆紀錄${S.source ? ' · 來源 ' + S.source : ''}` : ui.tab === 'reports' ? '收支、類型、固定支出與帳戶走勢' : `淨資產 ${money(totals().net)}`;
+  $('#top-add').hidden = ui.tab !== 'ledger';
+  $('#view').innerHTML = ({ home:viewHome, ledger:viewLedger, reports:viewReports, assets:viewAssets })[ui.tab]();
+  $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
+  runAnims();
+  if (highlight.length) {
+    const hl = highlight; highlight = [];
+    hl.forEach(k => $$(`#island [data-tap="${k}"]`).forEach(el => el.classList.add('pulse')));
+  }
+}
+function runAnims() {
+  const els = $$('[data-ak]');
+  if (!els.length) return;
+  void document.body.offsetHeight;   // commit the old transforms so the change below tweens
+  els.forEach(el => { el.style.transform = el.dataset.to; prevAnim[el.dataset.ak] = el.dataset.to; });
+}
+function commit(hl = []) { save(); highlight = hl; render(); }
+
+/* ───────── sheets ───────── */
+let sheetGen = 0;
+function openSheet(html, mount) {
+  const root = $('#sheet-root'); const gen = ++sheetGen;
+  root.innerHTML = `<div class="backdrop" data-close></div><div class="sheet" role="dialog" aria-modal="true"><div class="grabber"></div>${html}</div>`;
+  root.hidden = false; root.classList.remove('open');
+  void root.offsetHeight; root.classList.add('open');
+  $$('[data-close]', root).forEach(b => b.addEventListener('click', closeSheet));
+  if (mount) mount($('.sheet', root));
+}
+function closeSheet() {
+  const root = $('#sheet-root'); const gen = ++sheetGen;
+  root.classList.remove('open');
+  setTimeout(() => { if (gen === sheetGen) { root.hidden = true; root.innerHTML = ''; } }, 320);
+}
+const head = title => `<div class="sheet-head"><h2>${title}</h2><button class="icon-btn" data-close aria-label="關閉">${ic('close', 16, 2.4)}</button></div>`;
+function armDelete(btn, armedLabel, fn) {
+  const orig = btn.textContent;
+  btn.addEventListener('click', () => {
+    if (btn.dataset.armed) return fn();
+    btn.dataset.armed = '1'; btn.classList.add('armed'); btn.textContent = armedLabel;
+    setTimeout(() => { delete btn.dataset.armed; btn.classList.remove('armed'); btn.textContent = orig; }, 4000);
+  });
+}
+function showErr(sh, msg) { const e = $('.err', sh); e.textContent = msg; e.hidden = false; }
+
+let toastT;
+function toast(main, sub = '') {
+  const el = $('#toast'); el.innerHTML = esc(main) + (sub ? `<small>${esc(sub)}</small>` : '');
+  el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 3600);
+}
+
+/* new / edit record — every field is a menu, like the template's 屬性・類型・項目・From・To columns */
+const accOpt = a => [a.id, `${a.name}（${a.type === 'credit' ? (a.value < 0 ? '未繳 ' + money(-a.value) : '信用卡') : money(a.value)}）`];
+function recordSheet(pre = {}, editId = null) {
+  const old = editId ? S.txs.find(t => t.id === editId) : null;
+  const pays = payAccounts();
+  if (!pays.length) { toast('先新增一個現金帳戶', '記帳要從帳戶扣款或入帳'); addSheet('cash'); return; }
+  const lastExp = [...S.txs].sort(sortTx).find(t => t.kind === 'expense');
+  const cashFirst = byType('cash')[0] || pays[0];
+  const f = Object.assign({ kind:'expense', amount:'', date:today(), scope:lastExp?.scope || '個人', cat:'食', item:'外食', from:lastExp?.from || pays[0].id,
+    income:'薪資', payer:'', to:cashFirst.id, tfrom:cashFirst.id, dest:'', note:'', noStat:false, refund:false }, pre);
+  if (old) Object.assign(f, { kind:old.kind, amount:String(Math.abs(old.amount)), refund:old.kind === 'expense' && old.amount < 0, date:old.date, scope:old.scope || '個人', note:old.note || '', noStat:!!old.noStat },
+    old.kind === 'expense' ? { cat:old.cat, item:old.item, from:old.from || '', payer:old.payer || '' } : old.kind === 'income' ? { income:old.item, payer:old.payer || '', to:old.to } : { tfrom:old.from, dest:old.to });
+  openSheet(`${head(old ? '編輯紀錄' : '新增紀錄')}
+    <div class="seg" role="tablist">${[['expense', '支出'], ['income', '收入'], ['transfer', '轉帳・還款']].map(([k, l]) => `<button type="button" data-kind="${k}">${l}</button>`).join('')}</div>
+    <label class="amount" id="amt-box"><span>NT$</span><input id="rec-amt" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="金額" value="${esc(f.amount)}"></label>
+    <div id="rec-body" class="two"></div>
+    <div class="preview" id="rec-preview"></div>
+    <p class="err" hidden></p>
+    ${old ? `<div class="btn-row"><button class="btn danger" id="rec-del">刪除</button><button class="btn primary" id="rec-save">儲存修改</button></div>` : '<button class="btn primary block" id="rec-save">記下這筆</button>'}`, sh => {
+    const body = $('#rec-body', sh), amt = $('#rec-amt', sh);
+    const draw = () => {
+      $$('[data-kind]', sh).forEach(b => b.classList.toggle('on', b.dataset.kind === f.kind));
+      $('#amt-box', sh).className = 'amount ' + { expense:'exp', income:'inc', transfer:'tra' }[f.kind];
+      body.innerHTML = recBody(f, old); preview();
+    };
+    const preview = () => { $('#rec-preview', sh).innerHTML = recPreview(f, old); };
+    sh.addEventListener('click', e => { const k = e.target.closest('[data-kind]'); if (k) { f.kind = k.dataset.kind; $('.err', sh).hidden = true; draw(); } });
+    sh.addEventListener('input', e => {
+      const el = e.target;
+      if (el === amt) { amt.value = digits(amt.value); f.amount = amt.value; preview(); return; }
+      if (!el.dataset.f) return;
+      f[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.value;
+      if (el.dataset.f === 'cat') { f.item = ITEMS[f.cat][0]; draw(); return; }
+      if (el.dataset.f === 'refund') { if (!f.refund && !f.from) f.from = payAccounts()[0].id; draw(); return; }
+      if (el.tagName === 'SELECT' || el.type === 'checkbox') preview();
+    });
+    $('#rec-save', sh).addEventListener('click', () => saveRecord(f, sh, old));
+    if (old) armDelete($('#rec-del', sh), '再按一次確認刪除', () => {
+      applyTx(old, -1); S.txs = S.txs.filter(x => x.id !== old.id);
+      closeSheet(); commit(['cash']); refreshLedger(); toast('已刪除紀錄', '金額已退回原帳戶，島嶼也跟著還原');
+    });
+    draw();
+    if (!f.amount) setTimeout(() => amt.focus({ preventScroll:true }), 350);
+  });
+}
+function recBody(f, old) {
+  const pays = payAccounts().map(accOpt);
+  const field = (label, inner, wide) => `<div class="field ${wide ? 'wide' : ''}"><label>${label}</label>${inner}</div>`;
+  const sel = (key, opts, val, label) => selectBox('rf-' + key, opts, val, `data-f="${key}" aria-label="${label}"`);
+  const date = field('日期', `<input type="date" id="rf-date" data-f="date" value="${esc(f.date)}">`);
+  const note = field('備註', `<input id="rf-note" data-f="note" placeholder="例：家樂福購物、中餐" value="${esc(f.note)}" maxlength="80" autocomplete="off">`, true);
+  const scope = field('屬性', sel('scope', SCOPES.map(s => [s, s]), f.scope, '屬性'));
+  const noStat = `<label class="toggle wide"><span>不計入收支統計<small>例如信用卡代墊、帳戶調節、紅包轉手</small></span><span class="switch"><input type="checkbox" data-f="noStat" ${f.noStat ? 'checked' : ''}><i></i></span></label>`;
+  if (f.kind === 'expense') return date + scope +
+    field('類型', sel('cat', CATS.map(c => [c.key, `${c.emo} ${c.key}`]), f.cat, '類型')) +
+    field('項目', sel('item', (ITEMS[f.cat].includes(f.item) ? ITEMS[f.cat] : [...ITEMS[f.cat], f.item]).map(i => [i, i]), f.item, '項目')) +
+    field(f.refund ? '退回到帳戶' : '付款帳戶（From）', sel('from', f.refund ? [['', '不經過我的帳戶（例：家人還我代墊款）'], ...pays] : pays, f.from, '付款帳戶'), true) + note +
+    `<label class="toggle wide"><span>這是退款・代墊收回<small>金額會從支出中扣掉，例如別人還你代墊的餐費</small></span><span class="switch"><input type="checkbox" data-f="refund" ${f.refund ? 'checked' : ''}><i></i></span></label>` + noStat;
+  if (f.kind === 'income') {
+    const payers = [...new Set(S.txs.filter(t => t.payer).map(t => t.payer))];
+    return date + scope + field('收入類型', sel('income', INCOME.map(i => [i.key, `${i.emo} ${i.key}`]), f.income, '收入類型')) +
+      field('來源（From）', `<input id="rf-payer" data-f="payer" list="payer-list" placeholder="例：公司、銀行" value="${esc(f.payer)}" autocomplete="off"><datalist id="payer-list">${payers.map(p => `<option value="${esc(p)}">`).join('')}</datalist>`) +
+      field('存入帳戶（To）', sel('to', pays, f.to, '存入帳戶'), true) + note + noStat;
+  }
+  const from = S.accounts.filter(a => isFlow(a) || a.type === 'invest').map(accOpt);
+  const dests = [
+    { group:'現金與銀行', opts:byType('cash').filter(a => a.id !== f.tfrom).map(accOpt) },
+    { group:'信用卡（繳款）', opts:byType('credit').filter(a => a.id !== f.tfrom).map(accOpt) },
+    { group:'夢想（熱氣球）', opts:S.goals.map(g => ['goal:' + g.id, `${g.name}（${pct(g.saved / g.target)}）`]) },
+    { group:'貸款還款（地基變薄）', opts:byType('loan').map(l => [l.id, `${l.name}（剩 ${wan(l.value)}）`]) },
+    { group:'投資加碼', opts:byType('invest').filter(a => a.id !== f.tfrom).map(a => [a.id, `${a.name}（${wan(a.value)}）`]) },
+  ].filter(g => g.opts.length);
+  if (!f.dest || ![...dests.flatMap(g => g.opts.map(o => o[0]))].includes(f.dest)) f.dest = dests[0]?.opts[0]?.[0] || '';
+  return date + field('轉出（From）', sel('tfrom', from, f.tfrom, '轉出帳戶')) +
+    field('轉入（To）', dests.length ? selectBox('rf-dest', dests, f.dest, 'data-f="dest" aria-label="轉入"') : '<p class="note">沒有可轉入的地方</p>', true) + note;
+}
+function recPreview(f, old) {
+  const amt = parseInt(f.amount, 10) || 0;
+  if (!amt) return '<span>輸入金額後，這裡會預覽帳戶和島嶼的變化。</span>';
+  // "before" is what the island shows now; "after" is with the edited record (if any) swapped for this one
+  const cur = {}; S.accounts.forEach(a => cur[a.id] = a.value);
+  const w0 = waterLevel(totals().cash), m0 = monthStats();
+  if (old) applyTx(old, -1);
+  const t = totals(), lines = [];
+  const step = (label, a, b, show = x => x) => { if (old && show(a) === show(b)) return; lines.push(`${label} <b>${show(a)}</b> → <b>${show(b)}</b>`); };
+  const line = (a, delta) => { if (!a) return; step(esc(a.name), cur[a.id], a.value + delta, money);
+    if (a.type === 'cash' && a.value + delta < 0) lines.push('<span class="warn">餘額會變成負數，請確認帳戶是否正確</span>'); };
+  const water = delta => step('蓄水池水位', w0, waterLevel(t.cash + delta), pctW);
+  const oldExp = old && statExp(old) && old.date.slice(0, 7) === thisYm() ? old.amount : 0;   // monthStats still counts the record being edited
+  const month = delta => { const inMonth = !f.noStat && f.date.slice(0, 7) === thisYm(); step('本月可支配', m0.left, m0.left + oldExp + (inMonth ? delta : 0), money); };
+  if (f.kind === 'expense') { const a = acc(f.from), sign = f.refund ? 1 : -1; line(a, sign * amt);
+    if (a?.type === 'cash') water(sign * amt);
+    if (a?.type === 'credit' && !f.refund) lines.push('刷卡會增加卡債，島邊的岩石會變大');
+    month(sign * amt); }
+  else if (f.kind === 'income') { const a = acc(f.to); line(a, amt); if (a?.type === 'cash') water(amt); }
+  else { const a = acc(f.tfrom); line(a, -amt);
+    if (a?.type === 'cash') water(-amt);
+    if (String(f.dest).startsWith('goal:')) { const g = goal(f.dest.slice(5)), p0 = g.saved / g.target, p1 = (g.saved + amt) / g.target;
+      lines.push(`熱氣球「${esc(g.name)}」 <b>${pct(p0)}</b> → <b>${pct(p1)}</b>${p0 < 1 && p1 >= 1 ? '，會升空！' : p0 < .5 && p1 >= .5 ? '，會變鮮豔' : ''}`); }
+    else { const b = acc(f.dest);
+      if (b?.type === 'loan') lines.push(`「${esc(b.name)}」剩餘 <b>${wan(cur[b.id])}</b> → <b>${wan(Math.max(0, b.value - amt))}</b>${b.propertyId ? '，地基變薄' : '，岩石縮小'}`);
+      else if (b) { line(b, amt); if (b.type === 'cash') water(amt); } } }
+  if (old) applyTx(old, 1);
+  if (old && !lines.length) lines.push('金額和帳戶沒有變動，儲存後只會更新內容');
+  return lines.map(l => `<span>${l}</span>`).join('');
+}
+function saveRecord(f, sh, old) {
+  const amt = parseInt(f.amount, 10) || 0;
+  if (!amt) return showErr(sh, '請輸入金額');
+  const tx = { id:old ? old.id : uid(), kind:f.kind, amount:amt, date:f.date || today(), note:(f.note || '').trim(), ts:old ? old.ts : Date.now() };
+  if (f.kind === 'expense') { if (!acc(f.from) && !f.refund) return showErr(sh, '請選擇付款帳戶');
+    Object.assign(tx, { scope:f.scope, cat:f.cat, item:f.item, from:f.from || '' }); if (f.refund) { tx.amount = -amt; if (!f.from && f.payer) tx.payer = f.payer; } }
+  if (f.kind === 'income') { if (!acc(f.to)) return showErr(sh, '請選擇存入帳戶'); Object.assign(tx, { scope:f.scope, item:f.income, payer:f.payer.trim(), to:f.to }); }
+  if (f.kind === 'transfer') {
+    if (!acc(f.tfrom)) return showErr(sh, '請選擇轉出帳戶');
+    if (!f.dest) return showErr(sh, '請選擇轉入的地方');
+    if (f.dest === f.tfrom) return showErr(sh, '轉出和轉入不能是同一個帳戶');
+    Object.assign(tx, { from:f.tfrom, to:f.dest });
+  }
+  if (f.noStat && f.kind !== 'transfer') tx.noStat = true;
+  const w0 = waterLevel(totals().cash);
+  if (old) applyTx(old, -1);
+  const b = tx.kind === 'transfer' ? acc(tx.to) : null;
+  if (b && b.type === 'loan' && amt > b.value) { if (old) applyTx(old, 1); return showErr(sh, `還款金額超過「${b.name}」剩餘的 ${money(b.value)}`); }
+  applyTx(tx, 1);
+  if (old) Object.keys(old).forEach(k => delete old[k]), Object.assign(old, tx); else S.txs.push(tx);
+  const w1 = waterLevel(totals().cash), hl = ['cash'];
+  let msg, sub = pctW(w0) !== pctW(w1) ? `蓄水池水位 ${pctW(w0)} → ${pctW(w1)}` : '';
+  if (tx.kind === 'expense') { msg = `${old ? '已更新' : '記下'} ${tx.note || tx.item} ${tx.amount < 0 ? '退款 +' : '−'}${money(amt)}`; if (tx.amount > 0 && acc(tx.from)?.type === 'credit') { hl.push('credit'); sub = `${acc(tx.from).name} 刷卡，島邊的卡債岩石變大`; } }
+  else if (tx.kind === 'income') msg = `${old ? '已更新' : ''}${tx.item} +${money(amt)} 存入 ${accName(tx.to)}`;
+  else { const k = transferKind(tx.to); msg = `${old ? '已更新 ' : ''}${k.label} ${money(amt)} → ${destName(tx.to)}`;
+    if (tx.to.startsWith('goal:')) { const g = goal(tx.to.slice(5)); hl.push('goal:' + g.id); const p = g.saved / g.target; sub = p >= 1 ? '熱氣球升空了！' : `熱氣球進度 ${pct(p)}`; }
+    else { hl.push('acc:' + tx.to); if (b?.propertyId) hl.push('acc:' + b.propertyId); if (b?.type === 'credit') hl.push('credit'); } }
+  if (tx.date !== today() && ui.tab === 'ledger' && ui.ledgerMode === 'cal') ui.day = tx.date;
+  closeSheet(); commit(hl); toast(msg, sub);
+}
+
+/* add asset / debt */
+function addSheet(type = 'cash', pre = {}) {
+  const f = Object.assign({ type, name:'', value:'', cost:'', kind:'stock', withLoan:false, loanName:'', loanValue:'', propertyId:'' }, pre);
+  openSheet(`${head('新增資產或負債')}
+    <div class="type-grid">${Object.entries(TYPES).map(([k, t]) => `<button type="button" class="type-btn" style="--c:${t.c}" data-type="${k}">${typeTile(k, 34)}<span><b>${t.label}</b><small>島上的${t.island}</small></span></button>`).join('')}</div>
+    <div id="add-body" style="display:flex;flex-direction:column;gap:12px"></div>
+    <p class="err" hidden></p>
+    <button class="btn primary block" id="add-save">放上島嶼</button>`, sh => {
+    const body = $('#add-body', sh);
+    const draw = () => { $$('[data-type]', sh).forEach(b => b.classList.toggle('on', b.dataset.type === f.type)); body.innerHTML = addBody(f); };
+    sh.addEventListener('click', e => { const b = e.target.closest('[data-type]'); if (b) { f.type = b.dataset.type; $('.err', sh).hidden = true; draw(); }
+      const k = e.target.closest('[data-set]'); if (k) { const [key, val] = k.dataset.set.split(':'); f[key] = val; draw(); } });
+    sh.addEventListener('input', e => { const n = e.target.name; if (!n) return;
+      if (e.target.type === 'checkbox') { f[n] = e.target.checked; draw(); return; }
+      if (e.target.dataset.money !== undefined) e.target.value = (e.target.dataset.money === 'signed' && e.target.value.trim().startsWith('-') ? '-' : '') + digits(e.target.value);
+      f[n] = e.target.value; });
+    $('#add-save', sh).addEventListener('click', () => saveAsset(f, sh));
+    draw();
+  });
+}
+const mField = (name, label, val, ph, hint = '', signed = false) => `<div class="field"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" data-money="${signed ? 'signed' : ''}" inputmode="${signed ? 'text' : 'numeric'}" placeholder="${ph}" value="${esc(val)}" autocomplete="off">${hint ? `<span class="hint">${hint}</span>` : ''}</div>`;
+const tField = (name, label, val, ph) => `<div class="field"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" placeholder="${ph}" value="${esc(val)}" maxlength="24" autocomplete="off"></div>`;
+function addBody(f) {
+  if (f.type === 'cash') return tField('name', '帳戶名稱', f.name, '例：中信銀行、現金、LinePay Money') + mField('value', '目前餘額', f.value, '0', '所有現金與銀行帳戶合起來就是島上蓄水池的水量');
+  if (f.type === 'credit') return tField('name', '信用卡名稱', f.name, '例：玉山信用卡') + mField('value', '目前未繳金額', f.value, '0', '刷卡會增加未繳金額，用「轉帳・還款」繳卡費就會減少');
+  if (f.type === 'invest') return tField('name', '投資名稱', f.name, '例：台積電、0050') +
+    `<div class="fgroup"><div class="flabel">島上要長成</div><div class="chips">${Object.entries(INV_KIND).map(([k, l]) => `<button type="button" class="chip-btn ${f.kind === k ? 'on' : ''}" data-set="kind:${k}">${l}</button>`).join('')}</div></div>
+    <div class="two">${mField('cost', '投入成本', f.cost, '0')}${mField('value', '目前市值', f.value, '0')}</div>
+    <p class="note">市值越高，建物越高；股票賺錢時風車轉得快，虧損時轉得慢、葉片變灰。</p>`;
+  if (f.type === 'property') return tField('name', '房產名稱', f.name, '例：板橋兩房公寓') + mField('value', '房屋價值', f.value, '例：10000000') +
+    `<label class="toggle">同時新增連動房貸<span class="switch"><input type="checkbox" name="withLoan" ${f.withLoan ? 'checked' : ''}><i></i></span></label>
+    ${f.withLoan ? `<div class="two">${tField('loanName', '房貸名稱', f.loanName, '例：房貸')}${mField('loanValue', '剩餘貸款', f.loanValue, '例：6000000')}</div><p class="note">房貸會變成壓在小屋底下的灰色地基，貸款佔房價越高，地基越厚。</p>` : ''}`;
+  const props = byType('property');
+  return tField('name', '貸款名稱', f.name, '例：房貸、信貸、車貸') + mField('value', '剩餘本金', f.value, '0') +
+    `<div class="field"><label for="f-prop">連動房產</label>${selectBox('f-prop', [['', '不連動（海邊的灰色岩石）'], ...props.map(p => [p.id, p.name + (loanOf(p) ? '（已有房貸）' : '')])], f.propertyId, 'name="propertyId"')}</div>`;
+}
+function saveAsset(f, sh) {
+  const name = f.name.trim(), value = parseInt(f.value, 10) || 0;
+  if (!name) return showErr(sh, '請輸入名稱');
+  if ((f.type === 'property' || f.type === 'loan') && value <= 0) return showErr(sh, '請輸入金額');
+  if (f.type === 'loan' && f.propertyId && loanOf(acc(f.propertyId))) return showErr(sh, '這個房產已經有連動房貸');
+  const a = { id:uid(), type:f.type, name, value:f.type === 'credit' ? -Math.abs(value) : value };
+  if (f.type === 'invest') { a.kind = f.kind; a.cost = parseInt(f.cost, 10) || value; }
+  if (f.type === 'loan' && f.propertyId) a.propertyId = f.propertyId;
+  S.accounts.push(a);
+  const hl = [f.type === 'cash' ? 'cash' : f.type === 'credit' ? 'credit' : 'acc:' + a.id];
+  let msg = `島上多了「${name}」`, sub = TYPES[f.type].island;
+  if (f.type === 'property' && f.withLoan) {
+    const lv = parseInt(f.loanValue, 10) || 0;
+    if (lv > 0) { S.accounts.push({ id:uid(), type:'loan', name:f.loanName.trim() || name + '房貸', value:lv, propertyId:a.id }); sub = `小屋底下壓著 ${wan(lv)} 的灰色地基`; }
+  }
+  if (f.type === 'loan') { const p = acc(f.propertyId); if (p) hl.push('acc:' + p.id); sub = p ? `壓在「${p.name}」底下的地基` : '海邊的灰色岩石'; }
+  if (f.type === 'cash') sub = `蓄水池水位 ${pct(waterLevel(totals().cash))}`;
+  closeSheet(); ui.tab = 'home'; commit(hl); toast(msg, sub);
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+/* account detail / edit */
+function accountSheet(id) {
+  const a = acc(id); if (!a) return;
+  const f = { name:a.name, value:String(a.type === 'credit' ? -a.value : a.value), cost:String(a.cost || ''), kind:a.kind || 'stock', propertyId:a.propertyId || '' };
+  const loan = a.type === 'property' ? loanOf(a) : null;
+  const related = S.txs.filter(t => t.from === id || t.to === id).sort(sortTx).slice(0, 6);
+  const props = byType('property');
+  let fields = tField('name', '名稱', f.name, '');
+  if (a.type === 'cash') fields += mField('value', '目前餘額（直接校正）', f.value, '0', '平常記帳會自動扣款，只有對帳不符時才需要改這裡', true);
+  if (a.type === 'credit') fields += mField('value', '目前未繳金額（直接校正）', f.value, '0', '負數代表溢繳', true);
+  if (a.type === 'invest') fields += `<div class="fgroup"><div class="flabel">島上的樣子</div><div class="chips">${Object.entries(INV_KIND).map(([k, l]) => `<button type="button" class="chip-btn ${f.kind === k ? 'on' : ''}" data-set="kind:${k}">${l}</button>`).join('')}</div></div><div class="two">${mField('cost', '投入成本', f.cost, '0')}${mField('value', '更新目前市值', f.value, '0')}</div>`;
+  if (a.type === 'property') fields += mField('value', '房屋價值', f.value, '0') + (loan ? `<p class="note">連動房貸「${esc(loan.name)}」剩 ${money(loan.value)}，地基厚度是貸款成數 ${pct(loan.value / a.value)}。</p>` : `<button class="btn small" type="button" data-sub="add-loan">＋ 新增連動房貸</button>`);
+  if (a.type === 'loan') fields += mField('value', '剩餘本金', f.value, '0', '用「轉帳・還款」記錄還款，地基會自動變薄') +
+    `<div class="field"><label for="f-prop">連動房產</label>${selectBox('f-prop', [['', '不連動（海邊的灰色岩石）'], ...props.map(p => [p.id, p.name])], f.propertyId, 'name="propertyId"')}</div>`;
+  const shown = a.type === 'credit' ? -a.value : a.value;
+  openSheet(`${head(TYPES[a.type].label)}
+    <div class="detail-hero">${typeTile(a.type, 46)}<span class="num" style="${a.type === 'loan' || (a.type === 'credit' && a.value < 0) ? 'color:var(--debt)' : ''}">${a.type === 'credit' ? (a.value < 0 ? '未繳 ' : '溢繳 ') + money(Math.abs(a.value)) : (a.type === 'loan' ? '−' : '') + money(shown)}</span><span class="muted" style="font-size:13px">島上的${TYPES[a.type].island}</span></div>
+    <div style="display:flex;flex-direction:column;gap:12px">${fields}</div>
+    <p class="err" hidden></p>
+    <div class="btn-row"><button class="btn danger" id="acc-del">刪除</button><button class="btn primary" id="acc-save">儲存</button></div>
+    ${related.length ? `<div class="flabel">最近相關紀錄</div><div class="list">${related.map(txRow).join('')}</div><button class="btn small" data-action="ledger-acc:${a.id}">在帳本看全部 →</button>` : ''}`, sh => {
+    sh.addEventListener('input', e => { const n = e.target.name; if (!n) return;
+      if (e.target.dataset.money !== undefined) e.target.value = (e.target.dataset.money === 'signed' && e.target.value.trim().startsWith('-') ? '-' : '') + digits(e.target.value);
+      f[n] = e.target.value; });
+    sh.addEventListener('click', e => {
+      const k = e.target.closest('[data-set]'); if (k) { const [key, val] = k.dataset.set.split(':'); f[key] = val; $$('[data-set^="kind:"]', sh).forEach(b => b.classList.toggle('on', b.dataset.set === 'kind:' + val)); }
+      if (e.target.closest('[data-sub="add-loan"]')) addSheet('loan', { propertyId:a.id, name:a.name + '房貸' });
+    });
+    $('#acc-save', sh).addEventListener('click', () => {
+      if (!f.name.trim()) return showErr(sh, '請輸入名稱');
+      const v = parseInt(f.value, 10) || 0;
+      a.name = f.name.trim(); a.value = a.type === 'credit' ? -v : v;
+      if (a.type === 'invest') { a.cost = parseInt(f.cost, 10) || 0; a.kind = f.kind; }
+      if (a.type === 'loan') { const other = f.propertyId && loanOf(acc(f.propertyId)); if (other && other.id !== a.id) return showErr(sh, '這個房產已經有連動房貸');
+        if (f.propertyId) a.propertyId = f.propertyId; else delete a.propertyId; }
+      closeSheet(); commit([a.type === 'cash' ? 'cash' : a.type === 'credit' ? 'credit' : 'acc:' + a.id]); toast(`已更新「${a.name}」`, TYPES[a.type].island + '已同步調整');
+    });
+    armDelete($('#acc-del', sh), a.type === 'property' && loan ? '再按一次：房貸會變成岩石' : '再按一次確認刪除', () => {
+      S.accounts = S.accounts.filter(x => x.id !== a.id);
+      if (a.type === 'property') S.accounts.forEach(x => { if (x.propertyId === a.id) delete x.propertyId; });
+      closeSheet(); commit(); toast(`已刪除「${a.name}」`, '過去的記帳紀錄會保留');
+    });
+  });
+}
+function cashSheet() {
+  const t = totals(), cash = byType('cash');
+  openSheet(`${head('蓄水池')}
+    <div class="detail-hero">${typeTile('cash', 46)}<span class="num">${money(t.cash)}</span><span class="muted" style="font-size:13px">水位 ${pct(waterLevel(t.cash))} · 滿水位 ${money(S.settings.fullWater)}</span></div>
+    <p class="note">所有現金與銀行帳戶加起來就是蓄水池的水量。滿水位是你的緊急預備金目標（預設為 6 個月平均支出），可以在設定裡調整。超過滿水位時，水會從桶邊溢出來。</p>
+    <div class="list">${cash.map(accRow).join('')}</div>
+    <button class="btn block" data-action="add:cash">＋ 新增現金帳戶</button>`);
+}
+function creditSheet() {
+  const cards = byType('credit');
+  openSheet(`${head('卡債岩石')}
+    <div class="detail-hero">${typeTile('credit', 46)}<span class="num" style="color:var(--debt)">未繳 ${money(totals().creditOwed)}</span><span class="muted" style="font-size:13px">繳卡費時用「轉帳・還款」，岩石就會縮小</span></div>
+    <div class="list">${cards.map(accRow).join('')}</div>`);
+}
+
+/* dream goals */
+function goalSheet(id) {
+  const g = id ? goal(id) : null;
+  const cash = byType('cash');
+  const f = { name:g?.name || '', target:g ? String(g.target) : '', color:g?.color || GOAL_COLORS[S.goals.length % GOAL_COLORS.length], start:'', from:cash[0]?.id || '' };
+  openSheet(`${head(g ? '編輯夢想' : '新增夢想目標')}
+    ${tField('name', '夢想名稱', f.name, '例：蜜月旅行')}
+    ${mField('target', '目標金額', f.target, '例：100000')}
+    <div class="fgroup"><div class="flabel">熱氣球顏色</div><div class="swatches">${GOAL_COLORS.map(c => `<button type="button" class="swatch ${f.color === c ? 'on' : ''}" style="--c:${c}" data-color="${c}" aria-label="顏色 ${c}"></button>`).join('')}</div></div>
+    ${g ? `<p class="note">已存 ${money(g.saved)}（${pct(g.saved / g.target)}）。要再存錢，用「存入」從現金帳戶轉過來。</p>`
+      : cash.length ? `<div class="two">${mField('start', '先存入一筆（選填）', '', '0')}<div class="field"><label for="g-from">從哪個帳戶撥入</label>${selectBox('g-from', cash.map(accOpt), f.from, 'name="from"')}</div></div>` : ''}
+    <p class="err" hidden></p>
+    <div class="btn-row">${g ? '<button class="btn danger" id="g-del">刪除</button>' : ''}<button class="btn primary" id="g-save">${g ? '儲存' : '放上天空'}</button></div>`, sh => {
+    sh.addEventListener('input', e => { const n = e.target.name; if (!n) return; if (e.target.dataset.money !== undefined) e.target.value = digits(e.target.value); f[n] = e.target.value; });
+    sh.addEventListener('click', e => { const c = e.target.closest('[data-color]'); if (c) { f.color = c.dataset.color; $$('[data-color]', sh).forEach(b => b.classList.toggle('on', b === c)); } });
+    $('#g-save', sh).addEventListener('click', () => {
+      const name = f.name.trim(), target = parseInt(f.target, 10) || 0;
+      if (!name) return showErr(sh, '請輸入夢想名稱');
+      if (target <= 0) return showErr(sh, '請輸入目標金額');
+      if (g) { Object.assign(g, { name, target, color:f.color }); closeSheet(); commit(['goal:' + g.id]); toast(`已更新「${name}」`); return; }
+      const start = parseInt(f.start, 10) || 0, from = acc(f.from);
+      if (start && (!from || from.value < start)) return showErr(sh, `${from ? from.name : '帳戶'} 餘額不足`);
+      const ng = { id:uid(), name, target, saved:0, color:f.color }; S.goals.push(ng);
+      if (start) { const tx = { id:uid(), kind:'transfer', amount:start, from:from.id, to:'goal:' + ng.id, date:today(), note:'起始存入', ts:Date.now() }; applyTx(tx); S.txs.push(tx); }
+      closeSheet(); ui.tab = 'home'; commit(['goal:' + ng.id, 'cash']); window.scrollTo({ top:0, behavior:'smooth' });
+      toast(`天空多了一顆「${name}」熱氣球`, `目前進度 ${pct(ng.saved / ng.target)}，存到 50% 會上色`);
+    });
+    if (g) armDelete($('#g-del', sh), g.saved > 0 && cash.length ? `再按一次：${wan(g.saved)} 退回 ${cash[0].name}` : '再按一次確認刪除', () => {
+      if (g.saved > 0 && cash.length) { const tx = { id:uid(), kind:'income', amount:g.saved, item:'其他入帳', noStat:true, to:cash[0].id, date:today(), note:`夢想「${g.name}」取消退回`, ts:Date.now() }; applyTx(tx); S.txs.push(tx); }
+      S.goals = S.goals.filter(x => x.id !== g.id);
+      closeSheet(); commit(['cash']); toast(`已刪除夢想「${g.name}」`);
+    });
+  });
+}
+
+/* Excel import: same column layout as 2026_記帳模板.xlsx */
+function loadXLSX() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((res, rej) => { const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = () => res(window.XLSX); s.onerror = () => rej(new Error('無法載入 Excel 讀取元件，請確認網路連線')); document.head.appendChild(s); });
+}
+async function parseWorkbook(file) {
+  const X = await loadXLSX();
+  const wb = X.read(await file.arrayBuffer(), { type:'array' });
+  const rows = []; let balances = null;
+  const toDate = v => { if (typeof v === 'number') { const d = X.SSF.parse_date_code(v); return `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`; }
+    const s = String(v || '').trim().replace(/\//g, '-'); return /^\d{4}-\d{1,2}-\d{1,2}/.test(s) ? s.split(/[ T]/)[0].split('-').map((p, i) => i ? p.padStart(2, '0') : p).join('-') : ''; };
+  wb.SheetNames.forEach(name => {
+    const grid = X.utils.sheet_to_json(wb.Sheets[name], { header:1, raw:true, defval:null });
+    if (!grid.length || String(grid[0][0] || '').trim() !== '日期') return;
+    let n = 0;
+    grid.slice(1).forEach(r => { const amt = r[5]; if (amt === null || amt === '' || isNaN(Number(amt))) return; const d = toDate(r[0]); if (!d) return;
+      rows.push([d, r[1] || '', r[2] || '', r[3] || '', String(r[4] ?? '').trim(), Number(amt), r[6] || '', r[7] || '']); n++; });
+    if (!n) return;
+    const at = grid.findIndex(r => String(r[9] || '').trim() === '金流');
+    if (at >= 0) { const b = []; for (let i = at + 1; i < grid.length; i++) { const r = grid[i]; if (r[9] && r[9] !== '帳戶' && typeof r[12] === 'number') b.push([String(r[9]).trim(), r[12]]); } if (b.length) balances = b; }
+  });
+  if (!rows.length) throw new Error('找不到流水帳。工作表的 A1 需要是「日期」，欄位依序為 日期、屬性、類型、項目、備註、金額、From、To');
+  return { source:file.name, rows, balances:balances || [] };
+}
+function replaceWithTemplate(T) {   // keep what the template doesn't know: property, loans, user investments, dreams
+  const built = buildFromTemplate(T);
+  const keep = S.accounts.filter(a => a.type === 'property' || a.type === 'loan' || (a.type === 'invest' && a.src !== 'template'));
+  const keepTx = S.txs.filter(t => String(t.to).startsWith('goal:') || keep.some(a => a.id === t.to || a.id === t.from));
+  S = Object.assign({}, S, { v:2, source:T.source, importedAt:today(), accounts:[...built.accounts, ...keep], txs:[...built.txs, ...keepTx.filter(t => !built.txs.some(b => b.id === t.id))] });
+  seen = new Set(); firstPaint = true;
+  return built;
+}
+
+/* backup: on iPhone the share sheet can save it to 檔案 / iCloud 雲碟 or send it via LINE / mail */
+async function exportBackup() {
+  const name = `財富島備份-${today()}.json`;
+  const blob = new Blob([JSON.stringify(S)], { type:'application/json' });
+  const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;   // inside the claude.ai viewer, plain downloads are blocked
+  if (dl) { try { await dl.save({ filename:name, data:blob }); toast('備份已匯出', name); }
+    catch (err) { if (err.code !== 'declined') throw new Error(err.message || err.code); } return; }
+  const file =typeof File === 'function' ? new File([blob], name, { type:'application/json' }) : null;
+  if (file && navigator.canShare && navigator.canShare({ files:[file] })) { await navigator.share({ files:[file], title:name }); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function settingsSheet() {
+  const f = { name:S.settings.name, budget:String(S.settings.budget), fullWater:String(S.settings.fullWater) };
+  openSheet(`${head('設定')}
+    ${tField('name', '島嶼名稱', f.name, '我的財富島')}
+    <div class="two">${mField('budget', '每月可支配預算', f.budget, '30000')}${mField('fullWater', '蓄水池滿水位', f.fullWater, '360000')}</div>
+    <p class="note">本月可支配餘額 ＝ 每月預算 − 本月支出（不含「不計收支」的紀錄）。滿水位是緊急預備金目標，建議 6 個月生活費。</p>
+    <p class="err" hidden></p>
+    <button class="btn primary block" id="set-save">儲存設定</button>
+    <div class="flabel" style="margin-top:6px">資料來源</div>
+    <p class="note">${S.source ? `目前資料來自「${esc(S.source)}」，${S.txs.length.toLocaleString()} 筆紀錄。` : '目前沒有匯入的資料。'}匯入 Excel 會用檔案裡的流水帳與最新月份的「金流」餘額取代現有帳戶和紀錄，你另外新增的房產、貸款、投資和夢想會保留。</p>
+    <label class="btn block file-btn" id="imp-label">匯入 Excel（.xlsx）<input type="file" id="imp-file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+    ${TEMPLATE ? '<button class="btn block" id="set-tpl">重新載入 2026_記帳模板.xlsx 的資料</button>' : ''}
+    <div class="flabel" style="margin-top:6px">備份</div>
+    <p class="note">所有資料只存在這台裝置的瀏覽器（localStorage），重新整理不會遺失；但刪除主畫面 App、清除 Safari 資料或換手機就會不見。建議定期匯出備份，存到「檔案」或 iCloud 雲碟。</p>
+    <div class="btn-row"><button class="btn" id="bk-export">匯出備份</button><label class="btn file-btn" id="bk-label">還原備份<input type="file" id="bk-file" accept=".json,application/json"></label></div>
+    <button class="btn danger block" id="set-clear">清空全部資料</button>`, sh => {
+    sh.addEventListener('input', e => { const n = e.target.name; if (!n) return; if (e.target.dataset.money !== undefined) e.target.value = digits(e.target.value); f[n] = e.target.value; });
+    $('#set-save', sh).addEventListener('click', () => {
+      const budget = parseInt(f.budget, 10) || 0, fw = parseInt(f.fullWater, 10) || 0;
+      if (fw <= 0) return showErr(sh, '滿水位要大於 0');
+      Object.assign(S.settings, { name:f.name.trim() || '我的財富島', budget, fullWater:fw });
+      closeSheet(); commit(['cash']); toast('設定已儲存');
+    });
+    $('#imp-file', sh).addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      $('#imp-label', sh).firstChild.textContent = '讀取中…';
+      try { const T = await parseWorkbook(file); const b = replaceWithTemplate(T);
+        closeSheet(); ui.tab = 'home'; commit(['cash']); toast(`已匯入 ${file.name}`, `${b.txs.length} 筆紀錄、${b.accounts.length} 個帳戶`); }
+      catch (err) { $('#imp-label', sh).firstChild.textContent = '匯入 Excel（.xlsx）'; showErr(sh, err.message); }
+    });
+    $('#bk-export', sh).addEventListener('click', () => exportBackup().catch(err => { if (err.name !== 'AbortError') showErr(sh, '匯出失敗：' + err.message); }));
+    $('#bk-file', sh).addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      try { const s = JSON.parse(await file.text());
+        if (!s || !Array.isArray(s.accounts) || !Array.isArray(s.txs)) throw new Error('這不是財富島的備份檔');
+        S = Object.assign(emptyState(), s, { settings:Object.assign(emptyState().settings, s.settings), goals:s.goals || [] });
+        seen = new Set(); firstPaint = true; closeSheet(); ui.tab = 'home'; commit(); toast('已還原備份', `${S.txs.length.toLocaleString()} 筆紀錄、${S.accounts.length} 個帳戶`); }
+      catch (err) { showErr(sh, err instanceof SyntaxError ? '檔案格式錯誤，請選擇匯出的 .json 備份檔' : err.message); }
+    });
+    if (TEMPLATE) armDelete($('#set-tpl', sh), '再按一次：用範本取代目前紀錄', () => { const b = replaceWithTemplate(TEMPLATE); closeSheet(); ui.tab = 'home'; commit(); toast('已重新載入範本資料', `${b.txs.length} 筆紀錄`); });
+    armDelete($('#set-clear', sh), '再按一次確認清空', () => { S = emptyState(); seen = new Set(); firstPaint = false; closeSheet(); ui.tab = 'home'; commit(); toast('島嶼回到一片草地', '到「資產」新增第一筆'); });
+  });
+}
+
+/* ───────── global events ───────── */
+document.addEventListener('click', e => {
+  const tapEl = e.target.closest('[data-tap]');
+  const el = e.target.closest('[data-action]');
+  if (tapEl && !el) {
+    const k = tapEl.dataset.tap;
+    if (k === 'cash') return cashSheet();
+    if (k === 'credit') return creditSheet();
+    if (k.startsWith('acc:')) return accountSheet(k.slice(4));
+    if (k.startsWith('goal:')) return goalSheet(k.slice(5));
+  }
+  if (!el) return;
+  const parts = el.dataset.action.split(':'), a = parts[0], arg = parts.slice(1).join(':');
+  if (a === 'tab') { ui.tab = arg; render(); window.scrollTo({ top:0 }); }
+  else if (a === 'record') recordSheet(ui.tab === 'ledger' && ui.ledgerMode === 'cal' ? { date:ui.day } : {});
+  else if (a === 'record-today') recordSheet();
+  else if (a === 'record-on') recordSheet({ date:arg });
+  else if (a === 'add') addSheet(arg || 'cash');
+  else if (a === 'acc') accountSheet(arg);
+  else if (a === 'goal') goalSheet(arg);
+  else if (a === 'new-goal') goalSheet(null);
+  else if (a === 'deposit') recordSheet({ kind:'transfer', dest:'goal:' + arg });
+  else if (a === 'dreams') { ui.tab = 'assets'; ui.assetsView = 'dreams'; render(); window.scrollTo({ top:0 }); }
+  else if (a === 'aview') { ui.assetsView = arg; render(); }
+  else if (a === 'tx') recordSheet({}, arg);
+  else if (a === 'lmode') { ui.ledgerMode = arg; if (arg === 'cal' && ui.f.month === 'all') ui.f.month = thisYm(); render(); }
+  else if (a === 'day') { ui.day = arg; refreshLedger(); }
+  else if (a === 'cal') { ui.f.month = shiftYm(ui.f.month === 'all' ? thisYm() : ui.f.month, Number(arg)); ui.day = null; refreshLedger(); }
+  else if (a === 'more') { ui.limit += 80; refreshLedger(); }
+  else if (a === 'clear-filters') { Object.assign(ui.f, { kind:'all', cat:'all', scope:'all', acc:'all', q:'' }); render(); }
+  else if (a === 'ledger-acc') { closeSheet(); Object.assign(ui.f, { month:'all', kind:'all', cat:'all', scope:'all', acc:arg, q:'' }); ui.ledgerMode = 'list'; ui.tab = 'ledger'; ui.limit = 80; render(); window.scrollTo({ top:0 }); }
+  else if (a === 'settings') settingsSheet();
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.filter) { ui.f[el.dataset.filter] = el.value; ui.limit = 80; el.closest('.sel').classList.toggle('on', el.value !== 'all'); refreshLedger(); }
+  if (el.dataset.rep) { ui.rep[el.dataset.rep] = el.value; render(); }
+});
+let qT;
+document.addEventListener('input', e => { if (e.target.id === 'flt-q') { clearTimeout(qT); qT = setTimeout(() => { ui.f.q = e.target.value; ui.limit = 80; refreshLedger(); }, 200); } });
+// chart tooltips: hover on desktop, tap on touch
+function showTip(hit, ev) {
+  const chart = hit.closest('.chart'); if (!chart) return;
+  let tip = $('.tip', chart); if (!tip) { tip = document.createElement('div'); tip.className = 'tip'; chart.appendChild(tip); }
+  const d = JSON.parse(hit.dataset.tip);
+  tip.innerHTML = `<div style="font-weight:700">${esc(d.h)}</div>` + d.rows.map(([c, l, v]) => `<div>${c ? `<i style="background:${c}"></i>` : ''}${esc(l)} <b>${v < 0 ? '−' : ''}${fmt(v)}</b></div>`).join('');
+  const box = chart.getBoundingClientRect(), hb = hit.getBoundingClientRect();
+  const x = clamp(hb.left + hb.width / 2 - box.left, 70, box.width - 70);
+  tip.style.left = x + 'px'; tip.style.top = Math.max(40, (ev && ev.clientY ? ev.clientY - box.top - 8 : hb.top - box.top + 20)) + 'px'; tip.hidden = false;
+  $$('.hit.on', chart).forEach(h => h.classList.remove('on')); hit.classList.add('on');
+}
+document.addEventListener('pointerover', e => { const h = e.target.closest('.hit'); if (h) showTip(h, e); });
+document.addEventListener('pointerout', e => { const h = e.target.closest('.hit'); if (h && e.pointerType === 'mouse') { const t = $('.tip', h.closest('.chart')); if (t) t.hidden = true; h.classList.remove('on'); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet-root').hidden) closeSheet(); });
+window.addEventListener('scroll', () => $('#topbar').classList.toggle('scrolled', window.scrollY > 4), { passive:true });
+
+$('#ic-home').innerHTML = ic('island', 24, 1.8);
+$('#ic-ledger').innerHTML = ic('list', 24, 1.9);
+$('#ic-reports').innerHTML = ic('chart', 24, 1.9);
+$('#ic-assets').innerHTML = ic('wallet', 24, 1.8);
+$('#ic-plus').innerHTML = ic('plus', 26, 2.6);
+
+render();
+// offline support only in the installable build (build.py adds the manifest link there)
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') &&document.querySelector('link[rel="manifest"]')) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+
+</body>
+</html>
