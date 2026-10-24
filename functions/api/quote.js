@@ -15,7 +15,7 @@ async function yahoo(sym) {
   const j = (await getJSON('https://query1.finance.yahoo.com' + path)) || (await getJSON('https://query2.finance.yahoo.com' + path));
   const m = j?.chart?.result?.[0]?.meta;
   if (!m || !(m.regularMarketPrice > 0)) return null;
-  return { price: m.regularMarketPrice, currency: String(m.currency || 'USD').toUpperCase(), time: (m.regularMarketTime || 0) * 1000, name: m.shortName || m.longName || sym };
+  return { price: m.regularMarketPrice, prev: m.chartPreviousClose || m.previousClose || 0, currency: String(m.currency || 'USD').toUpperCase(), time: (m.regularMarketTime || 0) * 1000, name: m.shortName || m.longName || sym };
 }
 async function twse(code) {   // the Taiwan exchange's own quote, listed (tse) or OTC (otc); has the Chinese name
   const j = await getJSON(`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${code}.tw|otc_${code}.tw`);
@@ -24,12 +24,12 @@ async function twse(code) {   // the Taiwan exchange's own quote, listed (tse) o
   const price = parseFloat(m.z) > 0 ? parseFloat(m.z) : parseFloat(m.y);   // z = last trade, y = previous close (no trade yet today)
   const d = String(m.d || ''), t = String(m.t || '00:00:00');
   const time = d.length === 8 ? Date.parse(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}T${t}+08:00`) : 0;
-  return { price, currency: 'TWD', time: time || Date.now(), name: m.n || code };
+  return { price, prev: parseFloat(m.y) || 0, currency: 'TWD', time: time || Date.now(), name: m.n || code };
 }
 async function coingecko(sym) {   // crypto fallback, priced in USD
-  const s = sym.toLowerCase(), j = await getJSON(`https://api.coingecko.com/api/v3/simple/price?symbols=${s}&vs_currencies=usd&include_last_updated_at=true`);
+  const s = sym.toLowerCase(), j = await getJSON(`https://api.coingecko.com/api/v3/simple/price?symbols=${s}&vs_currencies=usd&include_last_updated_at=true&include_24hr_change=true`);
   const r = j?.[s];
-  return r && r.usd > 0 ? { price: r.usd, currency: 'USD', time: (r.last_updated_at || 0) * 1000, name: sym } : null;
+  return r && r.usd > 0 ? { price: r.usd, prev: r.usd_24h_change ? r.usd / (1 + r.usd_24h_change / 100) : 0, currency: 'USD', time: (r.last_updated_at || 0) * 1000, name: sym } : null;
 }
 async function fxRate(c) {   // TWD per one unit of c
   const r = await yahoo(`${c}TWD=X`);
