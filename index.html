@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="財富島">
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
@@ -13,19 +13,18 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>我的財富島</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="theme-color" content="#EEF3F0" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0C1411" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#FBF7F0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Nunito:wght@600;700;800&display=swap">
 <style>
 /* Layout: one iOS column (max 520px) · sticky frosted title bar · tab views (島嶼 / 帳本 / 報表 / 資產) · fixed frosted tab bar with a raised record button */
 :root{
-  --bg:#EEF3F0; --surface:#FFFFFF; --surface-2:#F4F7F5; --bar:rgba(238,243,240,.78); --glass:rgba(255,255,255,.72);
-  --ink:#14211B; --ink-2:#4A5A51; --ink-3:#7E8C84; --line:#DEE6E1; --scrim:rgba(10,20,15,.42);
-  --emerald:#16905E; --emerald-deep:#0E7149; --on-em:#FFFFFF; --emerald-soft:#DCF1E7; --emerald-shadow:rgba(22,144,94,.35);
-  --sky:#3F97D6; --sky-soft:#DDEEFA; --wood:#A8703F; --wood-soft:#F3E6D8;
-  --coral:#DF5C4A; --coral-soft:#FBE6E1; --debt:#78808A; --debt-soft:#E8EBEE; --amber:#C27A12;
+  --bg:#FBF7F0; --surface:#FFFFFF; --surface-2:#F7F2EA; --bar:rgba(251,247,240,.86); --glass:rgba(255,255,255,.76);
+  --ink:#2A2721; --ink-2:#5C564C; --ink-3:#857D70; --line:#ECE4D8; --scrim:rgba(45,35,25,.32);
+  --emerald:#16905E; --emerald-deep:#0E7149; --on-em:#FFFFFF; --emerald-soft:#E0F2E7; --emerald-shadow:rgba(22,144,94,.28);
+  --sky:#3F97D6; --sky-soft:#E3F0FA; --wood:#A8703F; --wood-soft:#F5E9DA;
+  --coral:#DB6450; --coral-soft:#FBE8E2; --debt:#857F78; --debt-soft:#EFEAE3; --amber:#C27A12;
   --c1:#2F7FD0; --c2:#D9741C;   /* chart pair (validated: CVD-safe on light surface) */
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",system-ui,sans-serif;
   --font-num:ui-rounded,"SF Pro Rounded","Nunito",-apple-system,"Noto Sans TC",system-ui,sans-serif;
@@ -36,44 +35,13 @@
   --wall:#FFF6E8; --roof:#D0573F; --timber:#8B5A33; --window:#A8DBF5; --found:#8C939B; --found-line:#6E757D;
   --turbine:#FFFFFF; --turbine-dim:#C3CAD1; --hub:#5B6B75; --glass-a:#A7DAF5; --glass-b:#4D9BD0;
   --rope:rgba(40,60,50,.45); --star-op:0; --tank-in:#2D5C77; --water:#5BC2F0; --rock:#8E949B; --rock-hi:#B0B6BC;
-  --tag-bg:rgba(255,255,255,.88); --tag-fg:#14211B; --hi:#FFFFFF;
+  --tag-bg:rgba(255,255,255,.9); --tag-fg:#2A2721; --hi:#FFFFFF;
+  color-scheme:light;   /* always the bright theme, even when the phone is in dark mode */
 }
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#0C1411; --surface:#151F1A; --surface-2:#1B2721; --bar:rgba(12,20,17,.78); --glass:rgba(21,31,26,.74);
-  --ink:#E7EFEA; --ink-2:#AEBDB4; --ink-3:#77877E; --line:#25322B; --scrim:rgba(0,0,0,.55);
-  --emerald:#38C287; --emerald-deep:#1F9A66; --on-em:#05140D; --emerald-soft:#123325; --emerald-shadow:rgba(56,194,135,.25);
-  --sky:#66B5EA; --sky-soft:#13283A; --wood:#D49C63; --wood-soft:#2D2218;
-  --coral:#F27A68; --coral-soft:#3A1F1A; --debt:#9AA2AB; --debt-soft:#252B31; --amber:#E9A84A;
-  --c1:#3E8FDF; --c2:#D07A2A;
-  --sky-top:#0A1830; --sky-bot:#29496E; --sea-top:#1C4E74; --sea-bot:#0D2A45; --foam:rgba(190,220,255,.35);
-  --sand:#9A8865; --soil-top:#6E4D31; --soil-bot:#3E2A19; --grass:#3F8A4F; --grass-hi:#4F9D5D; --grass-lo:#2E6D3D;
-  --tree:#2A6D3D; --tree-hi:#3A8550; --trunk:#5E3E25; --sun:#F3EAC4; --sun-glow:rgba(243,234,196,.14); --cloud:rgba(170,190,220,.32);
-  --wall:#D8CBB6; --roof:#9A4232; --timber:#5E3E25; --window:#FFD36B; --found:#5E646B; --found-line:#454A50;
-  --turbine:#D6DDE4; --turbine-dim:#7B848D; --hub:#AEB8C0; --glass-a:#2A577D; --glass-b:#15314B;
-  --rope:rgba(220,230,240,.38); --star-op:1; --tank-in:#0D2435; --water:#3A9FD8; --rock:#5E646B; --rock-hi:#7A828B;
-  --tag-bg:rgba(18,28,23,.85); --tag-fg:#E7EFEA; color-scheme:dark;
-}}
-:root[data-theme="dark"]{
-  --bg:#0C1411; --surface:#151F1A; --surface-2:#1B2721; --bar:rgba(12,20,17,.78); --glass:rgba(21,31,26,.74);
-  --ink:#E7EFEA; --ink-2:#AEBDB4; --ink-3:#77877E; --line:#25322B; --scrim:rgba(0,0,0,.55);
-  --emerald:#38C287; --emerald-deep:#1F9A66; --on-em:#05140D; --emerald-soft:#123325; --emerald-shadow:rgba(56,194,135,.25);
-  --sky:#66B5EA; --sky-soft:#13283A; --wood:#D49C63; --wood-soft:#2D2218;
-  --coral:#F27A68; --coral-soft:#3A1F1A; --debt:#9AA2AB; --debt-soft:#252B31; --amber:#E9A84A;
-  --c1:#3E8FDF; --c2:#D07A2A;
-  --sky-top:#0A1830; --sky-bot:#29496E; --sea-top:#1C4E74; --sea-bot:#0D2A45; --foam:rgba(190,220,255,.35);
-  --sand:#9A8865; --soil-top:#6E4D31; --soil-bot:#3E2A19; --grass:#3F8A4F; --grass-hi:#4F9D5D; --grass-lo:#2E6D3D;
-  --tree:#2A6D3D; --tree-hi:#3A8550; --trunk:#5E3E25; --sun:#F3EAC4; --sun-glow:rgba(243,234,196,.14); --cloud:rgba(170,190,220,.32);
-  --wall:#D8CBB6; --roof:#9A4232; --timber:#5E3E25; --window:#FFD36B; --found:#5E646B; --found-line:#454A50;
-  --turbine:#D6DDE4; --turbine-dim:#7B848D; --hub:#AEB8C0; --glass-a:#2A577D; --glass-b:#15314B;
-  --rope:rgba(220,230,240,.38); --star-op:1; --tank-in:#0D2435; --water:#3A9FD8; --rock:#5E646B; --rock-hi:#7A828B;
-  --tag-bg:rgba(18,28,23,.85); --tag-fg:#E7EFEA; color-scheme:dark;
-}
-
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{background:var(--bg)}
 body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:16;background:var(--bg)}
 /* no visible scrollbars on inner scrollers */
 *{scrollbar-width:none} *::-webkit-scrollbar{display:none}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
@@ -86,7 +54,7 @@ p{margin:0}
 .pos{color:var(--emerald)} .neg{color:var(--coral)}
 
 /* top bar */
-.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bar);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid transparent;transition:border-color .2s}
+.topbar{position:sticky;top:0;padding-top:env(safe-area-inset-top,0px);z-index:15;background:var(--bar);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid transparent;transition:border-color .2s}
 .topbar.scrolled{border-bottom-color:var(--line)}
 .topbar-in{max-width:520px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:10px}
 .topbar h1{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15}

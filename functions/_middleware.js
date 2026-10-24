@@ -44,11 +44,10 @@ function page(msg, next, status) {
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   return new Response(`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="robots" content="noindex"><title>登入・我的財富島</title>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="robots" content="noindex"><meta name="theme-color" content="#FBF7F0"><title>登入・我的財富島</title>
 <style>
-:root{--bg:#EEF3F0;--surface:#fff;--ink:#14211B;--ink-3:#7E8C84;--line:#DEE6E1;--em:#16905E;--on-em:#fff;--coral:#DF5C4A;--coral-soft:#FBE6E1}
-@media (prefers-color-scheme:dark){:root{--bg:#0C1411;--surface:#151F1A;--ink:#E7EFEA;--ink-3:#77877E;--line:#25322B;--em:#38C287;--on-em:#05140D;--coral:#F27A68;--coral-soft:#3A1F1A;color-scheme:dark}}
+:root{--bg:#FBF7F0;--surface:#fff;--ink:#2A2721;--ink-3:#857D70;--line:#ECE4D8;--em:#16905E;--on-em:#fff;--coral:#DB6450;--coral-soft:#FBE8E2;color-scheme:light}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg)}
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",system-ui,sans-serif;color:var(--ink);min-height:100vh;display:grid;place-items:center;
   padding:max(24px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
