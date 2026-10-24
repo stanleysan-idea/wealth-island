@@ -38,6 +38,13 @@ function readCookie(req, name) {
   const m = (req.headers.get('Cookie') || '').match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
   return m ? m[1] : '';
 }
+const SECURITY_HEADERS = { 'Content-Security-Policy': "frame-ancestors 'none'", 'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin' };
+function secure(res) {   // the app's own script/style policy is a <meta> tag in index.html (it needs the script's hash from build.py)
+  const out = new Response(res.body, res);
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) out.headers.set(k, v);
+  return out;
+}
 const safeNext = n => (typeof n === 'string' && n.startsWith('/') && !n.startsWith('//') ? n : '/');
 
 function page(msg, next, status) {
@@ -71,6 +78,9 @@ button{font:inherit;font-weight:700;font-size:16px;border:0;border-radius:14px;p
 }
 
 export async function onRequest(context) {
+  return secure(await gate(context));
+}
+async function gate(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const passwords = passwordsOf(env);

@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-USTEJ7uVYguivxmbQIYzUkj1tI2/l7iZkMOb3c2Ed74=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -570,6 +571,38 @@ function templateState(T = TEMPLATE) {
   return { v:2, source:T.source || '2026_記帳模板.xlsx', importedAt:today(), settings:defaultSettings(txs), accounts, goals:[], txs };
 }
 const emptyState = () => ({ v:2, source:'', settings:{ name:'我的財富島', budget:30000, fullWater:360000 }, accounts:[], goals:[], txs:[] });
+const SAFE_ID = /^[\w:-]{1,64}$/, SAFE_COLOR = /^#[0-9a-f]{6}$/i, SAFE_DATE = /^(\d{4}-\d{2}-\d{2})?$/;
+const NUM_KEYS = ['value', 'cost', 'amount', 'target', 'saved', 'ts', 'n', 'budget', 'fullWater'];
+function cleanState(s) {   // a backup file may come from anyone: ids, colours, dates, numbers and enums must look like what the app writes
+  const bad = what => { throw new Error(`備份檔的「${what}」格式不正確，已停止還原`); };
+  const list = (v, what) => v == null ? [] : Array.isArray(v) ? v : bad(what);
+  const rec = (o, what, enums = {}, needId = true) => {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) bad(what);
+    const r = {};
+    for (const [k, v] of Object.entries(o)) {
+      if (k === 'id' || k === 'from' || k === 'to' || k === 'propertyId') { if (v == null || v === '') continue; if (!SAFE_ID.test(String(v))) bad(what); r[k] = String(v); }
+      else if (k === 'color' || k === 'roof') { if (!SAFE_COLOR.test(String(v))) bad(what); r[k] = String(v); }
+      else if (k === 'date' || k === 'importedAt') { if (!SAFE_DATE.test(String(v))) bad(what); r[k] = String(v); }
+      else if (k in enums) { if (!enums[k].includes(v)) bad(what); r[k] = v; }
+      else if (NUM_KEYS.includes(k)) { if (typeof v !== 'number' || !Number.isFinite(v)) bad(what); r[k] = v; }
+      else if (typeof v === 'boolean') r[k] = v;
+      else if (typeof v === 'string') r[k] = v.slice(0, 4000);   // text is escaped wherever it is shown
+      else if (typeof v === 'number' && Number.isFinite(v)) r[k] = v;   // anything else (objects, arrays, null) is dropped
+    }
+    if (needId && !r.id) bad(what);
+    return r;
+  };
+  if (!s || typeof s !== 'object' || !Array.isArray(s.accounts) || !Array.isArray(s.txs)) throw new Error('這不是財富島的備份檔');
+  const set = rec(s.settings || {}, '設定', {}, false);
+  const folk = Array.isArray(s.settings?.folk) && s.settings.folk.length === 5
+    ? s.settings.folk.map(p => ({ kind:CRITTERS[p?.kind] ? p.kind : 'cat', name:String(p?.name || '').slice(0, 8) })) : null;
+  return { v:2, source:String(s.source || '').slice(0, 120), importedAt:rec({ date:s.importedAt || '' }, '匯入日期', {}, false).date,
+    settings:Object.assign(emptyState().settings, set, folk ? { folk } : {}),
+    accounts:list(s.accounts, '帳戶').map(a => rec(a, '帳戶', { type:Object.keys(TYPES) })),
+    goals:list(s.goals, '夢想').map(g => rec(g, '夢想')),
+    txs:list(s.txs, '紀錄').map(t => rec(t, '紀錄', { kind:['expense', 'income', 'transfer'] })),
+    keepsakes:list(s.keepsakes, '紀念品').map(k => rec(k, '紀念品', { kind:['dream', 'streak'] })) };
+}
 
 function load() {
   try {
@@ -671,7 +704,7 @@ const invHeight = v => clamp(26 + 22 * Math.log10(Math.max(v, 1e4) / 1e4), 30, 1
 const shadow = (rx, ry) => `<ellipse rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" style="fill:var(--shade)"/>`;
 
 function balloonShape(color, p) {   // a balloon carrying a present
-  return `<g class="bln ${p >= .5 ? 'vivid' : 'ghost'}" style="--bc:${color}">
+  return `<g class="bln ${p >= .5 ? 'vivid' : 'ghost'}" style="--bc:${esc(color)}">
     <path class="ropes" d="M0 -18 C-2.5 -14 2.5 -10 0 -6"/>
     <path class="env" d="M0 -50 C10 -50 15 -42 15 -35 C15 -26 8 -21 0 -19 C-8 -21 -15 -26 -15 -35 C-15 -42 -10 -50 0 -50Z" style="${OL}"/>
     <path class="env" d="M-2 -19.2 H2 L0 -16.6Z" style="${OL};stroke-width:.8"/>
@@ -938,7 +971,7 @@ function townBuilding(kind) {
 }
 function keepsake(k) {   // dream statues and record-streak trophies
   const ped = `${shadow(8, 2.4)}<rect x="-6" y="-5" width="12" height="5" rx="1" style="fill:var(--stone);${OL};stroke-width:.9"/>`;
-  if (k.kind === 'dream') return `${ped}<path d="M0 -21 L2.2 -15.8 L7.8 -15.4 L3.6 -11.8 L5 -6.4 L0 -9.3 L-5 -6.4 L-3.6 -11.8 L-7.8 -15.4 L-2.2 -15.8Z" style="fill:${k.color || '#F2C14E'};${OL};stroke-width:1"/>
+  if (k.kind === 'dream') return `${ped}<path d="M0 -21 L2.2 -15.8 L7.8 -15.4 L3.6 -11.8 L5 -6.4 L0 -9.3 L-5 -6.4 L-3.6 -11.8 L-7.8 -15.4 L-2.2 -15.8Z" style="fill:${esc(k.color || '#F2C14E')};${OL};stroke-width:1"/>
     <path d="M-1.6 -16 L-.6 -18" style="stroke:#fff;stroke-width:1;stroke-linecap:round;opacity:.8"/>`;
   return `${ped}<path d="M-5 -16 H5 V-13 Q5 -8.6 0 -8 Q-5 -8.6 -5 -13Z" style="fill:#F2C14E;${OL};stroke-width:1"/>
     <path d="M-5 -14.6 Q-8 -14.6 -7.2 -11.6 Q-6.4 -10.4 -4.4 -10.8 M5 -14.6 Q8 -14.6 7.2 -11.6 Q6.4 -10.4 4.4 -10.8" style="fill:none;stroke:var(--ol);stroke-width:.9"/>
@@ -1557,7 +1590,7 @@ function viewDreams() {
     return `<article class="card goal">
       <svg viewBox="-24 -60 48 72" aria-hidden="true"><g class="${p >= 1 ? 'float' : 'sway'}">${balloonShape(g.color, p)}</g></svg>
       <div class="main"><div class="top"><h3>${esc(g.name)}</h3><span class="pill ${state[1]}">${state[0]}</span></div>
-        <div class="bar"><i style="width:${(clamp(p, 0, 1) * 100).toFixed(1)}%;background:${g.color}"></i><span class="half" title="50% 上色"></span></div>
+        <div class="bar"><i style="width:${(clamp(p, 0, 1) * 100).toFixed(1)}%;background:${esc(g.color)}"></i><span class="half" title="50% 上色"></span></div>
         <div class="meta"><b>${money(g.saved)}</b> / ${money(g.target)} · ${p >= 1 ? '目標達成' : '還差 ' + money(g.target - g.saved)}</div>
         <div class="btn-row"><button class="btn small green-soft" data-action="deposit:${g.id}">存入</button><button class="btn small" data-action="goal:${g.id}">編輯</button></div>
       </div></article>`;
@@ -2084,8 +2117,9 @@ function goalSheet(id) {
 /* Excel import: same column layout as 2026_記帳模板.xlsx */
 function loadXLSX() {
   if (window.XLSX) return Promise.resolve(window.XLSX);
-  return new Promise((res, rej) => { const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  return new Promise((res, rej) => { const s = document.createElement('script');   // the browser refuses the file if it differs from this hash
+    s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'; s.crossOrigin = 'anonymous';
+    s.integrity = 'sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT';
     s.onload = () => res(window.XLSX); s.onerror = () => rej(new Error('無法載入 Excel 讀取元件，請確認網路連線')); document.head.appendChild(s); });
 }
 async function parseWorkbook(file) {
@@ -2178,9 +2212,7 @@ function settingsSheet() {
     $('#bk-export', sh).addEventListener('click', () => exportBackup().catch(err => { if (err.name !== 'AbortError') showErr(sh, '匯出失敗：' + err.message); }));
     $('#bk-file', sh).addEventListener('change', async e => {
       const file = e.target.files[0]; if (!file) return;
-      try { const s = JSON.parse(await file.text());
-        if (!s || !Array.isArray(s.accounts) || !Array.isArray(s.txs)) throw new Error('這不是財富島的備份檔');
-        S = Object.assign(emptyState(), s, { settings:Object.assign(emptyState().settings, s.settings), goals:s.goals || [] });
+      try { S = cleanState(JSON.parse(await file.text()));
         seen = new Set(); firstPaint = true; closeSheet(); ui.tab = 'home'; commit(); toast('已還原備份', `${S.txs.length.toLocaleString()} 筆紀錄、${S.accounts.length} 個帳戶`); }
       catch (err) { showErr(sh, err instanceof SyntaxError ? '檔案格式錯誤，請選擇匯出的 .json 備份檔' : err.message); }
     });
