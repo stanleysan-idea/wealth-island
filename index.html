@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-USTEJ7uVYguivxmbQIYzUkj1tI2/l7iZkMOb3c2Ed74=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-DdtMP3wrSHIYrtioZtbKAKWtCMSNqstzc3YCwh78f9A=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -310,6 +310,7 @@ details.tview[open] summary{margin-bottom:8px}
 .comp-legend .num{margin-left:auto;font-size:calc(13px*var(--fs))}
 .comp-legend .sw{width:9px;height:9px;border-radius:3px}
 .kline{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.quote-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 6px 0;font-size:calc(12px*var(--fs));color:var(--ink-3)}
 .group-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:4px 6px 6px}
 .group-h h3{font-size:calc(14px*var(--fs));font-weight:700;color:var(--ink-2)}
 .group-h .num{font-size:calc(14px*var(--fs));color:var(--ink-2)}
@@ -482,6 +483,7 @@ const TYPES = {
   loan:     { label:'貸款',       island:'灰色地基・岩石', c:'var(--debt)',    icon:'stone' },
 };
 const INV_KIND = { stock:'股票・加密貨幣（風車）', fund:'ETF・基金・債券（燈塔）', policy:'保單・儲蓄險（燈塔）' };
+const MARKETS = { '':'手動輸入', tw:'台股・ETF', us:'美股', crypto:'加密貨幣' };   // where an investment's price comes from
 const GOAL_COLORS = ['#E1604F','#3F97D6','#E0A030','#8E5A8B','#16905E'];
 
 const ICONS = {
@@ -572,7 +574,7 @@ function templateState(T = TEMPLATE) {
 }
 const emptyState = () => ({ v:2, source:'', settings:{ name:'我的財富島', budget:30000, fullWater:360000 }, accounts:[], goals:[], txs:[] });
 const SAFE_ID = /^[\w:-]{1,64}$/, SAFE_COLOR = /^#[0-9a-f]{6}$/i, SAFE_DATE = /^(\d{4}-\d{2}-\d{2})?$/;
-const NUM_KEYS = ['value', 'cost', 'amount', 'target', 'saved', 'ts', 'n', 'budget', 'fullWater'];
+const NUM_KEYS = ['value', 'cost', 'amount', 'target', 'saved', 'ts', 'n', 'budget', 'fullWater', 'shares', 'price', 'priceTime', 'quotedAt'];
 function cleanState(s) {   // a backup file may come from anyone: ids, colours, dates, numbers and enums must look like what the app writes
   const bad = what => { throw new Error(`備份檔的「${what}」格式不正確，已停止還原`); };
   const list = (v, what) => v == null ? [] : Array.isArray(v) ? v : bad(what);
@@ -598,7 +600,7 @@ function cleanState(s) {   // a backup file may come from anyone: ids, colours, 
     ? s.settings.folk.map(p => ({ kind:CRITTERS[p?.kind] ? p.kind : 'cat', name:String(p?.name || '').slice(0, 8) })) : null;
   return { v:2, source:String(s.source || '').slice(0, 120), importedAt:rec({ date:s.importedAt || '' }, '匯入日期', {}, false).date,
     settings:Object.assign(emptyState().settings, set, folk ? { folk } : {}),
-    accounts:list(s.accounts, '帳戶').map(a => rec(a, '帳戶', { type:Object.keys(TYPES) })),
+    accounts:list(s.accounts, '帳戶').map(a => rec(a, '帳戶', { type:Object.keys(TYPES), market:Object.keys(MARKETS) })),
     goals:list(s.goals, '夢想').map(g => rec(g, '夢想')),
     txs:list(s.txs, '紀錄').map(t => rec(t, '紀錄', { kind:['expense', 'income', 'transfer'] })),
     keepsakes:list(s.keepsakes, '紀念品').map(k => rec(k, '紀念品', { kind:['dream', 'streak'] })) };
@@ -660,11 +662,12 @@ function applyTx(t, sign = 1) {
   if (t.kind === 'expense') { const a = acc(t.from); if (a) a.value -= amt; }
   else if (t.kind === 'income') { const a = acc(t.to); if (a) a.value += amt; }
   else if (t.kind === 'transfer') {
-    const a = acc(t.from); if (a) { a.value -= amt; if (a.type === 'invest') a.cost = Math.max(0, (a.cost || 0) - amt); }
+    const a = acc(t.from); if (a) { a.value -= amt; if (a.type === 'invest') a.cost = Math.max(0, (a.cost || 0) - amt);
+      if (t.shares && a.market) a.shares = Math.max(0, +(a.shares - t.shares * sign).toFixed(8)); }
     if (String(t.to).startsWith('goal:')) { const g = goal(t.to.slice(5)); if (g) g.saved += amt; }
     else { const b = acc(t.to); if (b) {
       if (b.type === 'loan') b.value -= amt;
-      else if (b.type === 'invest') { b.value += amt; b.cost = (b.cost || 0) + amt; }
+      else if (b.type === 'invest') { b.value += amt; b.cost = (b.cost || 0) + amt; if (t.shares && b.market) b.shares = +((b.shares || 0) + t.shares * sign).toFixed(8); }
       else b.value += amt; } }
   }
 }
@@ -1216,6 +1219,69 @@ function islandSVG() {
   seen = newSeen; firstPaint = false;
   return svg;
 }
+/* ───────── live prices for stocks and crypto ───────── */
+const QUOTE_TTL = 15 * 60e3;
+const autoInv = () => S.accounts.filter(a => a.type === 'invest' && a.market && a.symbol && a.shares > 0);
+const quoteKey = a => `${a.market}:${a.symbol}`;
+async function fetchQuotes(keys) {   // our own /api/quote (functions/api/quote.js); only ticker symbols leave the phone
+  const r = await fetch('api/quote?q=' + encodeURIComponent(keys.join(',')), { credentials:'same-origin', cache:'no-store' });
+  if (!r.ok) throw new Error('報價服務暫時無法使用');
+  const j = await r.json(); if (!j || !j.quotes) throw new Error('報價服務回應不正確');
+  return j;
+}
+const toTwd = (q, fx) => q.currency === 'TWD' ? q.price : q.price * (fx[q.currency] || NaN);
+function setQuote(a, q, fx) {   // returns true when the market value changed
+  const p = toTwd(q, fx); if (!Number.isFinite(p)) return false;
+  Object.assign(a, { price:q.price, currency:q.currency, priceTime:q.time || Date.now(), quotedAt:Date.now() });
+  const v = Math.round(p * a.shares), moved = v !== a.value; a.value = v; return moved;
+}
+const hhmm = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const priceText = (p, cur) => (cur === 'TWD' ? 'NT$' : cur === 'USD' ? 'US$' : cur + ' ') + p.toLocaleString('en-US', { maximumFractionDigits:p < 10 ? 4 : p < 1000 ? 2 : 0 });
+const qtyText = a => `${a.shares.toLocaleString('en-US', { maximumFractionDigits:8 })} ${a.market === 'crypto' ? a.symbol : '股'}`;
+let quoting = false;
+async function refreshQuotes(force = false, loud = force) {   // on launch, on return to the app (every 15 min at most), and the 更新市值 button
+  const list = autoInv(); if (!list.length || quoting) return;
+  if (!force && Date.now() - Math.min(...list.map(a => a.quotedAt || 0)) < QUOTE_TTL) return;
+  quoting = true;
+  try {
+    const res = await fetchQuotes([...new Set(list.map(quoteKey))]), hl = [];
+    list.forEach(a => { const q = res.quotes[quoteKey(a)]; if (q && setQuote(a, q, res.fx)) hl.push('acc:' + a.id); });
+    const miss = [...new Set(list.filter(a => !res.quotes[quoteKey(a)]).map(a => a.symbol))];
+    commit(hl);
+    if (loud) toast(miss.length ? `${list.length - miss.length} 筆已更新，${miss.join('、')} 抓不到報價` : '市值已更新', `${list.length} 筆投資 · ${hhmm(Date.now())}`);
+  } catch (e) { if (loud) toast('無法更新市值', navigator.onLine === false ? '目前沒有網路，先沿用上次的市值' : e.message); }
+  finally { quoting = false; }
+}
+async function checkQuote(f, sh, btn) {   // before saving an auto-priced investment: is the ticker real, and what is it worth now?
+  const symbol = String(f.symbol || '').trim().toUpperCase(), shares = parseFloat(f.shares);
+  if (!/^[A-Z0-9.-]{1,12}$/.test(symbol)) { showErr(sh, `請輸入代號，例如 ${{ tw:'2330、0050', us:'AAPL、VOO', crypto:'BTC、ETH' }[f.market]}`); return null; }
+  if (!(shares > 0)) { showErr(sh, '請輸入持有數量'); return null; }
+  const key = `${f.market}:${symbol}`, label = btn.textContent;
+  btn.disabled = true; btn.textContent = '查詢報價中…';
+  try { const res = await fetchQuotes([key]), q = res.quotes[key];
+    if (!q) { showErr(sh, `找不到「${symbol}」的${MARKETS[f.market]}報價，請確認代號和市場`); return null; }
+    return { symbol, shares, q, fx:res.fx };
+  } catch (e) { return { symbol, shares, q:null }; }   // offline: save now, price it on the next refresh
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+function applyAuto(a, r) {   // a has just been made or edited as an auto-priced investment
+  Object.assign(a, { market:r.market, symbol:r.symbol, shares:r.shares });
+  if (r.q) setQuote(a, r.q, r.fx); else delete a.quotedAt;
+}
+const dropAuto = a => ['market', 'symbol', 'shares', 'price', 'currency', 'priceTime', 'quotedAt'].forEach(k => delete a[k]);
+function investFields(f, editing) {
+  const chips = (key, map) => Object.entries(map).map(([k, l]) => `<button type="button" class="chip-btn ${f[key] === k ? 'on' : ''}" data-set="${key}:${k}">${l}</button>`).join('');
+  const ph = { tw:'例：2330、0050', us:'例：AAPL、VOO', crypto:'例：BTC、ETH' }[f.market];
+  return `<div class="fgroup"><div class="flabel">市值怎麼算</div><div class="chips">${chips('market', MARKETS)}</div></div>
+    ${f.market ? `<div class="two"><div class="field"><label for="f-symbol">代號</label><input id="f-symbol" name="symbol" placeholder="${ph}" value="${esc(f.symbol)}" maxlength="12" autocapitalize="characters" autocomplete="off" spellcheck="false"></div>
+      <div class="field"><label for="f-shares">持有數量${f.market === 'crypto' ? '' : '（股）'}</label><input id="f-shares" name="shares" inputmode="decimal" placeholder="${f.market === 'tw' ? '例：1000' : f.market === 'us' ? '例：10' : '例：0.25'}" value="${esc(f.shares)}" autocomplete="off"></div></div>
+      ${mField('cost', '投入成本（台幣）', f.cost, '0')}
+      <p class="note">市值 ＝ 最新價格 × 持有數量，打開 App 時自動更新${f.market === 'tw' ? '' : '，美元報價依即時匯率換成台幣'}。用「轉帳・還款」加碼或賣出時填上股數，持有數量會跟著變。</p>`
+    : `<div class="two">${mField('cost', '投入成本', f.cost, '0')}${mField('value', editing ? '更新目前市值' : '目前市值', f.value, '0')}</div>
+      <p class="note">保單、儲蓄險和基金沒有公開的即時報價，市值請自己更新。</p>`}
+    <div class="fgroup"><div class="flabel">島上的樣子</div><div class="chips">${chips('kind', INV_KIND)}</div></div>`;
+}
+
 /* ───────── islanders talk: tips from your own records ───────── */
 function islandTips() {
   const t = totals(), m = monthStats(), mood = islandMood(), tips = [];
@@ -1557,7 +1623,7 @@ function accRow(a) {
   if (a.type === 'cash') { const t = totals(); sub = `佔蓄水池 ${pct(t.cash ? a.value / t.cash : 0)}`; }
   if (a.type === 'credit') { sub = a.value < 0 ? '未繳金額，算在負債' : a.value > 0 ? '溢繳（可抵下期）' : '已繳清'; color = a.value < 0 ? 'var(--debt)' : ''; }
   if (a.type === 'invest') { const g = a.cost ? (a.value - a.cost) / a.cost : 0;
-    sub = `${a.kind === 'stock' ? '風車' : '燈塔'} · 成本 ${wan(a.cost || 0)}`;
+    sub = a.market && a.symbol ? `${qtyText(a)}${a.price ? ' · ' + priceText(a.price, a.currency) : ''}` : `${a.kind === 'stock' ? '風車' : '燈塔'} · 成本 ${wan(a.cost || 0)}`;
     if (a.cost) under = `<span class="s ${g >= 0 ? 'pos' : 'neg'}" style="font-weight:700">${g >= 0 ? '+' : ''}${(g * 100).toFixed(1)}%</span>`; }
   if (a.type === 'property') { const l = loanOf(a);
     sub = l && l.value > 0 ? `地基：${esc(l.name)} ${wan(l.value)} · 貸款成數 ${pct(l.value / a.value)}` : '無貸款，屋頂插著綠旗'; }
@@ -1572,7 +1638,8 @@ function viewAssets() {
   const segs = [['現金', t.cash, 'var(--sky)'], ['投資', t.invest, 'var(--emerald)'], ['房產', t.prop, 'var(--wood)'], ['夢想基金', t.goal, 'var(--coral)']];
   const group = type => { const list = byType(type); const sum = list.reduce((s, a) => s + a.value, 0);
     return `<div><div class="group-h"><h3>${TYPES[type].label}<small>島上的${TYPES[type].island}</small></h3><span class="num">${(type === 'loan' && sum) || sum < 0 ? '−' : ''}${money(Math.abs(sum)).replace('−', '')}</span></div>
-    <div class="list">${list.length ? list.map(accRow).join('') : `<button class="row" data-action="add:${type}" style="justify-content:center;color:var(--ink-3);font-size:calc(13.5px*var(--fs))">＋ 新增${TYPES[type].label}</button>`}</div></div>`; };
+    <div class="list">${list.length ? list.map(accRow).join('') : `<button class="row" data-action="add:${type}" style="justify-content:center;color:var(--ink-3);font-size:calc(13.5px*var(--fs))">＋ 新增${TYPES[type].label}</button>`}</div>
+    ${type === 'invest' && autoInv().length ? `<div class="quote-bar"><span>${(at => at ? `股價 ${hhmm(at)} 更新・自動更新` : '還沒取得股價')(Math.max(...autoInv().map(a => a.quotedAt || 0)))}</span><button class="mini-btn" data-action="quotes">更新市值</button></div>` : ''}</div>`; };
   return seg + `
   <section class="card comp" aria-label="資產組成">
     <div class="kline"><span class="lbl">資產組成</span><span class="num" style="font-size:calc(15px*var(--fs))">${money(t.assets)}</span></div>
@@ -1666,9 +1733,9 @@ function recordSheet(pre = {}, editId = null) {
   const lastExp = [...S.txs].sort(sortTx).find(t => t.kind === 'expense');
   const cashFirst = byType('cash')[0] || pays[0];
   const f = Object.assign({ kind:'expense', amount:'', date:today(), scope:lastExp?.scope || '個人', cat:'食', item:'外食', from:lastExp?.from || pays[0].id,
-    income:'薪資', payer:'', to:cashFirst.id, tfrom:cashFirst.id, dest:'', note:'', noStat:false, refund:false }, pre);
+    income:'薪資', payer:'', to:cashFirst.id, tfrom:cashFirst.id, dest:'', shares:'', note:'', noStat:false, refund:false }, pre);
   if (old) Object.assign(f, { kind:old.kind, amount:String(Math.abs(old.amount)), refund:old.kind === 'expense' && old.amount < 0, date:old.date, scope:old.scope || '個人', note:old.note || '', noStat:!!old.noStat },
-    old.kind === 'expense' ? { cat:old.cat, item:old.item, from:old.from || '', payer:old.payer || '' } : old.kind === 'income' ? { income:old.item, payer:old.payer || '', to:old.to } : { tfrom:old.from, dest:old.to });
+    old.kind === 'expense' ? { cat:old.cat, item:old.item, from:old.from || '', payer:old.payer || '' } : old.kind === 'income' ? { income:old.item, payer:old.payer || '', to:old.to } : { tfrom:old.from, dest:old.to, shares:old.shares ? String(old.shares) : '' });
   const f0 = { ...f };
   openSheet(`${head(old ? '編輯紀錄' : '新增紀錄')}
     ${old ? '' : `<div class="say"><label class="say-box">${ic('mic', 20)}<input id="rec-say" placeholder="說或打一句話" autocomplete="off" enterkeyhint="done" aria-label="用一句話記帳"></label>
@@ -1694,6 +1761,8 @@ function recordSheet(pre = {}, editId = null) {
       f[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.value;
       if (el.dataset.f === 'cat') { f.item = ITEMS[f.cat][0]; draw(); return; }
       if (el.dataset.f === 'refund') { if (!f.refund && !f.from) f.from = payAccounts()[0].id; draw(); return; }
+      if (el.dataset.f === 'tfrom' || el.dataset.f === 'dest') { draw(); return; }   // the shares field depends on both ends
+      if (el.dataset.f === 'shares') { el.value = el.value.replace(/[^\d.]/g, ''); f.shares = el.value; }
       if (el.tagName === 'SELECT' || el.type === 'checkbox') preview();
     });
     const say = $('#rec-say', sh);
@@ -1744,8 +1813,11 @@ function recBody(f, old) {
     { group:'投資加碼', opts:byType('invest').filter(a => a.id !== f.tfrom).map(a => [a.id, `${a.name}（${wan(a.value)}）`]) },
   ].filter(g => g.opts.length);
   if (!f.dest || ![...dests.flatMap(g => g.opts.map(o => o[0]))].includes(f.dest)) f.dest = dests[0]?.opts[0]?.[0] || '';
+  const buy = acc(f.dest)?.market ? acc(f.dest) : null, sell = acc(f.tfrom)?.market ? acc(f.tfrom) : null, held = buy || sell;
+  const shares = held ? field(buy ? `買進數量（${esc(held.symbol)}）` : `賣出數量（${esc(held.symbol)}）`,
+    `<input id="rf-shares" data-f="shares" inputmode="decimal" placeholder="目前持有 ${qtyText(held)}" value="${esc(f.shares)}" autocomplete="off">`, true) : '';
   return date + field('轉出（From）', sel('tfrom', from, f.tfrom, '轉出帳戶')) +
-    field('轉入（To）', dests.length ? selectBox('rf-dest', dests, f.dest, 'data-f="dest" aria-label="轉入"') : '<p class="note">沒有可轉入的地方</p>', true) + note;
+    field('轉入（To）', dests.length ? selectBox('rf-dest', dests, f.dest, 'data-f="dest" aria-label="轉入"') : '<p class="note">沒有可轉入的地方</p>', true) + shares + note;
 }
 function recPreview(f, old) {
   const amt = parseInt(f.amount, 10) || 0;
@@ -1789,6 +1861,10 @@ function saveRecord(f, sh, old) {
     if (!f.dest) return showErr(sh, '請選擇轉入的地方');
     if (f.dest === f.tfrom) return showErr(sh, '轉出和轉入不能是同一個帳戶');
     Object.assign(tx, { from:f.tfrom, to:f.dest });
+    const n = parseFloat(f.shares);
+    if (n > 0 && (acc(f.dest)?.market || acc(f.tfrom)?.market)) {
+      const s = acc(f.tfrom); if (s?.market && n > s.shares + (old?.shares && old.from === s.id ? old.shares : 0)) return showErr(sh, `賣出數量超過目前持有的 ${qtyText(s)}`);
+      tx.shares = n; }
   }
   if (f.noStat && f.kind !== 'transfer') tx.noStat = true;
   const w0 = waterLevel(totals().cash);
@@ -1807,6 +1883,7 @@ function saveRecord(f, sh, old) {
   if (tx.date !== today() && ui.tab === 'ledger' && ui.ledgerMode === 'cal') ui.day = tx.date;
   if (!old && tx.kind === 'income' && (tx.item === '薪資' || tx.item === '獎金紅利')) ui.cheer = true;
   closeSheet(); commit(hl); toast(msg, sub);
+  if (tx.shares) refreshQuotes(true, false);   // re-price the holding with its new size
 }
 
 /* ───────── quick entry: one spoken or typed sentence → record form ───────── */
@@ -1965,7 +2042,7 @@ function saySummary(f, basis) {
 
 /* add asset / debt */
 function addSheet(type = 'cash', pre = {}) {
-  const f = Object.assign({ type, name:'', value:'', cost:'', kind:'stock', withLoan:false, loanName:'', loanValue:'', propertyId:'' }, pre);
+  const f = Object.assign({ type, name:'', value:'', cost:'', kind:'stock', market:'', symbol:'', shares:'', withLoan:false, loanName:'', loanValue:'', propertyId:'' }, pre);
   openSheet(`${head('新增資產或負債')}
     <div class="type-grid">${Object.entries(TYPES).map(([k, t]) => `<button type="button" class="type-btn" style="--c:${t.c}" data-type="${k}">${typeTile(k, 34)}<span><b>${t.label}</b><small>島上的${t.island}</small></span></button>`).join('')}</div>
     <div id="add-body" style="display:flex;flex-direction:column;gap:12px"></div>
@@ -1978,8 +2055,9 @@ function addSheet(type = 'cash', pre = {}) {
     sh.addEventListener('input', e => { const n = e.target.name; if (!n) return;
       if (e.target.type === 'checkbox') { f[n] = e.target.checked; draw(); return; }
       if (e.target.dataset.money !== undefined) e.target.value = (e.target.dataset.money === 'signed' && e.target.value.trim().startsWith('-') ? '-' : '') + digits(e.target.value);
+      if (n === 'shares') e.target.value = e.target.value.replace(/[^\d.]/g, '');
       f[n] = e.target.value; });
-    $('#add-save', sh).addEventListener('click', () => saveAsset(f, sh));
+    $('#add-save', sh).addEventListener('click', e => saveAsset(f, sh, e.currentTarget));
     draw();
   });
 }
@@ -1988,10 +2066,8 @@ const tField = (name, label, val, ph) => `<div class="field"><label for="f-${nam
 function addBody(f) {
   if (f.type === 'cash') return tField('name', '帳戶名稱', f.name, '例：中信銀行、現金、LinePay Money') + mField('value', '目前餘額', f.value, '0', '所有現金與銀行帳戶合起來就是島上蓄水池的水量');
   if (f.type === 'credit') return tField('name', '信用卡名稱', f.name, '例：玉山信用卡') + mField('value', '目前未繳金額', f.value, '0', '刷卡會增加未繳金額，用「轉帳・還款」繳卡費就會減少');
-  if (f.type === 'invest') return tField('name', '投資名稱', f.name, '例：台積電、0050') +
-    `<div class="fgroup"><div class="flabel">島上要長成</div><div class="chips">${Object.entries(INV_KIND).map(([k, l]) => `<button type="button" class="chip-btn ${f.kind === k ? 'on' : ''}" data-set="kind:${k}">${l}</button>`).join('')}</div></div>
-    <div class="two">${mField('cost', '投入成本', f.cost, '0')}${mField('value', '目前市值', f.value, '0')}</div>
-    <p class="note">市值越高，建物越高；股票賺錢時風車轉得快，虧損時轉得慢、葉片變灰。</p>`;
+  if (f.type === 'invest') return tField('name', '投資名稱', f.name, f.market ? '可留空，會用股票名稱' : '例：台積電、0050、儲蓄險') + investFields(f, false) +
+    `<p class="note">市值越高，建物越高；股票賺錢時風車轉得快，虧損時轉得慢、葉片變灰。</p>`;
   if (f.type === 'property') return tField('name', '房產名稱', f.name, '例：板橋兩房公寓') + mField('value', '房屋價值', f.value, '例：10000000') +
     `<label class="toggle">同時新增連動房貸<span class="switch"><input type="checkbox" name="withLoan" ${f.withLoan ? 'checked' : ''}><i></i></span></label>
     ${f.withLoan ? `<div class="two">${tField('loanName', '房貸名稱', f.loanName, '例：房貸')}${mField('loanValue', '剩餘貸款', f.loanValue, '例：6000000')}</div><p class="note">房貸會變成壓在小屋底下的灰色地基，貸款佔房價越高，地基越厚。</p>` : ''}`;
@@ -1999,17 +2075,20 @@ function addBody(f) {
   return tField('name', '貸款名稱', f.name, '例：房貸、信貸、車貸') + mField('value', '剩餘本金', f.value, '0') +
     `<div class="field"><label for="f-prop">連動房產</label>${selectBox('f-prop', [['', '不連動（海邊的灰色岩石）'], ...props.map(p => [p.id, p.name + (loanOf(p) ? '（已有房貸）' : '')])], f.propertyId, 'name="propertyId"')}</div>`;
 }
-function saveAsset(f, sh) {
-  const name = f.name.trim(), value = parseInt(f.value, 10) || 0;
+async function saveAsset(f, sh, btn) {
+  let name = f.name.trim(), value = parseInt(f.value, 10) || 0;
+  const auto = f.type === 'invest' && f.market ? await checkQuote(f, sh, btn) : null;
+  if (f.type === 'invest' && f.market && !auto) return;
+  if (auto) { auto.market = f.market; name = name || (auto.q ? auto.q.name.replace(/ USD$/, '') : auto.symbol); value = parseInt(f.cost, 10) || 0; }
   if (!name) return showErr(sh, '請輸入名稱');
   if ((f.type === 'property' || f.type === 'loan') && value <= 0) return showErr(sh, '請輸入金額');
   if (f.type === 'loan' && f.propertyId && loanOf(acc(f.propertyId))) return showErr(sh, '這個房產已經有連動房貸');
   const a = { id:uid(), type:f.type, name, value:f.type === 'credit' ? -Math.abs(value) : value };
-  if (f.type === 'invest') { a.kind = f.kind; a.cost = parseInt(f.cost, 10) || value; }
+  if (f.type === 'invest') { a.kind = f.kind; a.cost = parseInt(f.cost, 10) || value; if (auto) { applyAuto(a, auto); if (!f.cost) a.cost = a.value; } }
   if (f.type === 'loan' && f.propertyId) a.propertyId = f.propertyId;
   S.accounts.push(a);
   const hl = [f.type === 'cash' ? 'cash' : f.type === 'credit' ? 'credit' : 'acc:' + a.id];
-  let msg = `島上多了「${name}」`, sub = TYPES[f.type].island;
+  let msg = `島上多了「${name}」`, sub = auto ? (a.price ? `${qtyText(a)} × ${priceText(a.price, a.currency)} ＝ ${money(a.value)}` : '暫時抓不到報價，連上網路後會自動更新') : TYPES[f.type].island;
   if (f.type === 'property' && f.withLoan) {
     const lv = parseInt(f.loanValue, 10) || 0;
     if (lv > 0) { S.accounts.push({ id:uid(), type:'loan', name:f.loanName.trim() || name + '房貸', value:lv, propertyId:a.id }); sub = `小屋底下壓著 ${wan(lv)} 的灰色地基`; }
@@ -2023,14 +2102,16 @@ function saveAsset(f, sh) {
 /* account detail / edit */
 function accountSheet(id) {
   const a = acc(id); if (!a) return;
-  const f = { name:a.name, value:String(a.type === 'credit' ? -a.value : a.value), cost:String(a.cost || ''), kind:a.kind || 'stock', propertyId:a.propertyId || '' };
+  const f = { name:a.name, value:String(a.type === 'credit' ? -a.value : a.value), cost:String(a.cost || ''), kind:a.kind || 'stock', propertyId:a.propertyId || '',
+    market:a.market || '', symbol:a.symbol || '', shares:a.shares ? String(a.shares) : '' };
   const loan = a.type === 'property' ? loanOf(a) : null;
   const related = S.txs.filter(t => t.from === id || t.to === id).sort(sortTx).slice(0, 6);
   const props = byType('property');
   let fields = tField('name', '名稱', f.name, '');
   if (a.type === 'cash') fields += mField('value', '目前餘額（直接校正）', f.value, '0', '平常記帳會自動扣款，只有對帳不符時才需要改這裡', true);
   if (a.type === 'credit') fields += mField('value', '目前未繳金額（直接校正）', f.value, '0', '負數代表溢繳', true);
-  if (a.type === 'invest') fields += `<div class="fgroup"><div class="flabel">島上的樣子</div><div class="chips">${Object.entries(INV_KIND).map(([k, l]) => `<button type="button" class="chip-btn ${f.kind === k ? 'on' : ''}" data-set="kind:${k}">${l}</button>`).join('')}</div></div><div class="two">${mField('cost', '投入成本', f.cost, '0')}${mField('value', '更新目前市值', f.value, '0')}</div>`;
+  if (a.type === 'invest') fields += `<div id="inv-fields" style="display:flex;flex-direction:column;gap:12px">${investFields(f, true)}</div>` +
+    (a.market && a.price ? `<p class="note">現價 ${priceText(a.price, a.currency)}（${hhmm(a.priceTime)}）× ${qtyText(a)}${a.currency !== 'TWD' ? '，已換成台幣' : ''}</p>` : '');
   if (a.type === 'property') fields += mField('value', '房屋價值', f.value, '0') + (loan ? `<p class="note">連動房貸「${esc(loan.name)}」剩 ${money(loan.value)}，地基厚度是貸款成數 ${pct(loan.value / a.value)}。</p>` : `<button class="btn small" type="button" data-sub="add-loan">＋ 新增連動房貸</button>`);
   if (a.type === 'loan') fields += mField('value', '剩餘本金', f.value, '0', '用「轉帳・還款」記錄還款，地基會自動變薄') +
     `<div class="field"><label for="f-prop">連動房產</label>${selectBox('f-prop', [['', '不連動（海邊的灰色岩石）'], ...props.map(p => [p.id, p.name])], f.propertyId, 'name="propertyId"')}</div>`;
@@ -2043,16 +2124,20 @@ function accountSheet(id) {
     ${related.length ? `<div class="flabel">最近相關紀錄</div><div class="list">${related.map(txRow).join('')}</div><button class="btn small" data-action="ledger-acc:${a.id}">在帳本看全部 →</button>` : ''}`, sh => {
     sh.addEventListener('input', e => { const n = e.target.name; if (!n) return;
       if (e.target.dataset.money !== undefined) e.target.value = (e.target.dataset.money === 'signed' && e.target.value.trim().startsWith('-') ? '-' : '') + digits(e.target.value);
+      if (n === 'shares') e.target.value = e.target.value.replace(/[^\d.]/g, '');
       f[n] = e.target.value; });
     sh.addEventListener('click', e => {
-      const k = e.target.closest('[data-set]'); if (k) { const [key, val] = k.dataset.set.split(':'); f[key] = val; $$('[data-set^="kind:"]', sh).forEach(b => b.classList.toggle('on', b.dataset.set === 'kind:' + val)); }
+      const k = e.target.closest('[data-set]'); if (k) { const [key, val] = k.dataset.set.split(':'); f[key] = val; $('#inv-fields', sh).innerHTML = investFields(f, true); }
       if (e.target.closest('[data-sub="add-loan"]')) addSheet('loan', { propertyId:a.id, name:a.name + '房貸' });
     });
-    $('#acc-save', sh).addEventListener('click', () => {
+    $('#acc-save', sh).addEventListener('click', async e => {
       if (!f.name.trim()) return showErr(sh, '請輸入名稱');
+      const auto = a.type === 'invest' && f.market ? await checkQuote(f, sh, e.currentTarget) : null;
+      if (a.type === 'invest' && f.market && !auto) return;
       const v = parseInt(f.value, 10) || 0;
-      a.name = f.name.trim(); a.value = a.type === 'credit' ? -v : v;
-      if (a.type === 'invest') { a.cost = parseInt(f.cost, 10) || 0; a.kind = f.kind; }
+      a.name = f.name.trim(); if (!auto) a.value = a.type === 'credit' ? -v : v;
+      if (a.type === 'invest') { a.cost = parseInt(f.cost, 10) || 0; a.kind = f.kind;
+        if (auto) { auto.market = f.market; applyAuto(a, auto); } else dropAuto(a); }
       if (a.type === 'loan') { const other = f.propertyId && loanOf(acc(f.propertyId)); if (other && other.id !== a.id) return showErr(sh, '這個房產已經有連動房貸');
         if (f.propertyId) a.propertyId = f.propertyId; else delete a.propertyId; }
       closeSheet(); commit([a.type === 'cash' ? 'cash' : a.type === 'credit' ? 'credit' : 'acc:' + a.id]); toast(`已更新「${a.name}」`, TYPES[a.type].island + '已同步調整');
@@ -2236,6 +2321,7 @@ document.addEventListener('click', e => {
   if (!el) return;
   const parts = el.dataset.action.split(':'), a = parts[0], arg = parts.slice(1).join(':');
   if (a === 'tab') { ui.tab = arg; render(); window.scrollTo({ top:0 }); }
+  if (a === 'quotes') return refreshQuotes(true);
   else if (a === 'record') recordSheet(ui.tab === 'ledger' && ui.ledgerMode === 'cal' ? { date:ui.day } : {});
   else if (a === 'record-today') recordSheet();
   else if (a === 'record-on') recordSheet({ date:arg });
@@ -2285,6 +2371,8 @@ $('#ic-assets').innerHTML = ic('wallet', 24, 1.8);
 $('#ic-plus').innerHTML = ic('plus', 26, 2.6);
 
 render();
+refreshQuotes();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshQuotes(); });
 // offline support only in the installable build (build.py adds the manifest link there)
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') &&document.querySelector('link[rel="manifest"]')) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

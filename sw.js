@@ -1,11 +1,11 @@
 // Offline cache for the Home Screen app. Pages are network-first, so a new upload shows up on the next launch.
-const CACHE = 'wealth-island-22ad500c03';
+const CACHE = 'wealth-island-e8c0171f70';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET') return;
+  if (req.method !== 'GET' || new URL(req.url).pathname.includes('/api/')) return;   // live prices never come from the cache
   // keep only real answers: behind Cloudflare Access an expired sign-in comes back as a redirect to the login page
   const put = res => { if (res.ok || res.type === 'opaque') { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; };
   if (new URL(req.url).origin === location.origin) {   // network first, cached copy when offline
