@@ -317,6 +317,12 @@ main > .seg{background:var(--debt-soft)}
 .flabel{font-size:calc(12.5px*var(--fs));font-weight:700;color:var(--ink-3);letter-spacing:.03em}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .two .wide{grid-column:1 / -1}
+.say{display:flex;flex-direction:column;gap:6px}
+.say-box{display:flex;align-items:center;gap:8px;background:var(--emerald-soft);color:var(--emerald);border:1.5px solid transparent;border-radius:14px;padding:0 12px}
+.say-box:focus-within{border-color:var(--emerald)}
+.say-box input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:calc(16px*var(--fs));padding:12px 0}
+.say-hint{font-size:calc(12.5px*var(--fs));color:var(--ink-3);line-height:1.55}
+.say-hint b{color:var(--ink-2);font-weight:700} .say-hint .warn{color:var(--coral)}
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .field label{font-size:calc(12.5px*var(--fs));font-weight:700;color:var(--ink-3)}
 .field input,.field select{width:100%;min-width:0;border:1.5px solid transparent;border-radius:12px;background:var(--surface-2);padding:11px 12px;font-size:calc(16px*var(--fs));outline:0;appearance:none;-webkit-appearance:none}
@@ -443,6 +449,7 @@ const ICONS = {
   plus:'<path d="M12 5v14M5 12h14"/>',
   close:'<path d="M6 6l12 12M18 6L6 18"/>',
   chev:'<path d="M9 6l6 6-6 6"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
   chevl:'<path d="M15 6l-6 6 6 6"/>',
 };
 const ic = (n, s=22, w=1.9) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
@@ -1168,7 +1175,10 @@ function recordSheet(pre = {}, editId = null) {
     income:'薪資', payer:'', to:cashFirst.id, tfrom:cashFirst.id, dest:'', note:'', noStat:false, refund:false }, pre);
   if (old) Object.assign(f, { kind:old.kind, amount:String(Math.abs(old.amount)), refund:old.kind === 'expense' && old.amount < 0, date:old.date, scope:old.scope || '個人', note:old.note || '', noStat:!!old.noStat },
     old.kind === 'expense' ? { cat:old.cat, item:old.item, from:old.from || '', payer:old.payer || '' } : old.kind === 'income' ? { income:old.item, payer:old.payer || '', to:old.to } : { tfrom:old.from, dest:old.to });
+  const f0 = { ...f };
   openSheet(`${head(old ? '編輯紀錄' : '新增紀錄')}
+    ${old ? '' : `<div class="say"><label class="say-box">${ic('mic', 20)}<input id="rec-say" placeholder="說或打一句話" autocomplete="off" enterkeyhint="done" aria-label="用一句話記帳"></label>
+      <p class="say-hint" id="say-hint">點鍵盤上的 🎤 說一句話，例如「昨天中餐 220 富邦信用卡」，下面的欄位會自動填好</p></div>`}
     <div class="seg" role="tablist">${[['expense', '支出'], ['income', '收入'], ['transfer', '轉帳・還款']].map(([k, l]) => `<button type="button" data-kind="${k}">${l}</button>`).join('')}</div>
     <label class="amount" id="amt-box"><span>NT$</span><input id="rec-amt" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="金額" value="${esc(f.amount)}"></label>
     <div id="rec-body" class="two"></div>
@@ -1192,13 +1202,24 @@ function recordSheet(pre = {}, editId = null) {
       if (el.dataset.f === 'refund') { if (!f.refund && !f.from) f.from = payAccounts()[0].id; draw(); return; }
       if (el.tagName === 'SELECT' || el.type === 'checkbox') preview();
     });
+    const say = $('#rec-say', sh);
+    if (say) {
+      let timer;
+      say.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => {   // dictation streams words in; wait for a pause
+        if (!say.value.trim()) { Object.assign(f, f0); amt.value = f.amount; $('#say-hint', sh).textContent = '點鍵盤上的 🎤 說一句話，下面的欄位會自動填好'; draw(); return; }
+        const r = parseSay(say.value, f0);
+        Object.assign(f, f0, r.f); amt.value = f.amount; $('.err', sh).hidden = true; draw();
+        $('#say-hint', sh).innerHTML = saySummary(f, r.basis);
+      }, 300); });
+      say.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); say.blur(); } });
+    }
     $('#rec-save', sh).addEventListener('click', () => saveRecord(f, sh, old));
     if (old) armDelete($('#rec-del', sh), '再按一次確認刪除', () => {
       applyTx(old, -1); S.txs = S.txs.filter(x => x.id !== old.id);
       closeSheet(); commit(['cash']); refreshLedger(); toast('已刪除紀錄', '金額已退回原帳戶，島嶼也跟著還原');
     });
     draw();
-    if (!f.amount) setTimeout(() => amt.focus({ preventScroll:true }), 350);
+    if (!f.amount) setTimeout(() => (say || amt).focus({ preventScroll:true }), 350);
   });
 }
 function recBody(f, old) {
@@ -1291,6 +1312,160 @@ function saveRecord(f, sh, old) {
     else { hl.push('acc:' + tx.to); if (b?.propertyId) hl.push('acc:' + b.propertyId); if (b?.type === 'credit') hl.push('credit'); } }
   if (tx.date !== today() && ui.tab === 'ledger' && ui.ledgerMode === 'cal') ui.day = tx.date;
   closeSheet(); commit(hl); toast(msg, sub);
+}
+
+/* ───────── quick entry: one spoken or typed sentence → record form ───────── */
+// The iPhone keyboard's dictation turns speech into text. Date, amount and account are read from the words;
+// type, category, scope and the usual account come from past records whose note looks like this one.
+const CN_D = { 零:0, 〇:0, 一:1, 二:2, 兩:2, 三:3, 四:4, 五:5, 六:6, 七:7, 八:8, 九:9 }, CN_U = { 十:10, 百:100, 千:1000 };
+function cnNum(s) {   // 兩百二 → 220, 一百零五 → 105, 一萬二 → 12000
+  let total = 0, sec = 0, num = 0, unit = 0, zero = false;
+  for (const ch of s) {
+    if (ch in CN_D) { num = CN_D[ch]; if (!num) zero = true; }
+    else if (ch in CN_U) { sec += (num || (ch === '十' ? 1 : 0)) * CN_U[ch]; unit = CN_U[ch]; num = 0; zero = false; }
+    else if (ch === '萬') { total += (sec + num) * 1e4; sec = num = 0; unit = 1e4; zero = false; }
+  }
+  if (num && unit >= 100 && !zero) num *= unit / 10;
+  return total + sec + num;
+}
+const CN_N = '[0-9零〇一二兩三四五六七八九十]+';
+const sayInt = s => /\d/.test(s) ? Number(s) : cnNum(s);
+function sayDate(text) {   // → [yyyy-mm-dd, matched words] or []
+  const now = new Date(), y = now.getFullYear(), back = n => ymd(new Date(y, now.getMonth(), now.getDate() - n));
+  let m;
+  if ((m = text.match(/大前天/))) return [back(3), m[0]];
+  if ((m = text.match(/前天/))) return [back(2), m[0]];
+  if ((m = text.match(/昨天|昨日|昨晚/))) return [back(1), m[0]];
+  if ((m = text.match(/今天|今日|今晚|剛剛/))) return [back(0), m[0]];
+  if ((m = text.match(/(上+)?個?(?:週|周|星期|禮拜)([一二三四五六日天])/))) {
+    const want = Math.min('一二三四五六日天'.indexOf(m[2]), 6) + 1, cur = now.getDay() || 7;   // 1 = Monday … 7 = Sunday
+    let diff = cur - want + 7 * (m[1] ? m[1].length : 0);
+    if (!m[1] && diff < 0) diff += 7;
+    return [back(diff), m[0]];
+  }
+  const valid = (mo, d) => mo >= 1 && mo <= 12 && d >= 1 && d <= 31;
+  if ((m = text.match(new RegExp(`(${CN_N})\\s*月\\s*(${CN_N})\\s*[日號]?`))) || (m = text.match(/(\d{1,2})\/(\d{1,2})(?!\d)/))) {
+    const mo = sayInt(m[1]), d = sayInt(m[2]);
+    if (valid(mo, d)) { let s = `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`; if (s > today()) s = (y - 1) + s.slice(4); return [s, m[0]]; }
+  }
+  if ((m = text.match(new RegExp(`(${CN_N})\\s*[日號](?!幣)`)))) {
+    const d = sayInt(m[1]);
+    if (valid(1, d)) { const ym = d > now.getDate() ? shiftYm(thisYm(), -1) : thisYm(); return [`${ym}-${String(d).padStart(2, '0')}`, m[0]]; }
+  }
+  return [];
+}
+function sayAmount(text) {   // → {v, s} for the spoken amount; prefers a number said with 元／塊
+  const c = [];
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)(\s*萬)?(\s*(?:元|塊錢|塊|圓))?/g)) {
+    const before = text[m.index - 1] || '', after = text[m.index + m[0].length] || '';
+    if (/[-*x×/a-z]/i.test(before) || (!m[3] && /[-a-z度號月]/i.test(after))) continue;   // 7-11、3C、21K、*2
+    c.push({ v:Number(m[1]) * (m[2] ? 1e4 : 1), s:m[0], unit:!!m[3] });
+  }
+  for (const m of text.matchAll(/([零〇一二兩三四五六七八九十百千萬]+)(\s*(?:元|塊錢|塊|圓))?/g))
+    if (m[2] || (m[1].length >= 2 && /^[一二兩三四五六七八九]/.test(m[1]) && /[十百千萬]/.test(m[1]))) c.push({ v:cnNum(m[1]), s:m[0], unit:!!m[2] });
+  const ok = c.filter(x => x.v > 0);
+  return ok.filter(x => x.unit).pop() || ok.pop() || null;
+}
+function sayAccounts(text) {   // accounts and dreams named in the sentence, in spoken order
+  const use = {}; S.txs.forEach(t => { use[t.from] = (use[t.from] || 0) + 1; use[t.to] = (use[t.to] || 0) + 1; });
+  const keys = [];
+  S.accounts.forEach(a => {
+    const n = a.name.replace(/\s+/g, ''), base = n.replace(/(信用卡|銀行|帳戶|money)$/i, '');
+    keys.push({ id:a.id, k:n, full:1 });
+    if (base && base !== n) { keys.push({ id:a.id, k:base, full:0 }); if (a.type === 'credit') keys.push({ id:a.id, k:base + '卡', full:1 }); }
+    if (/^etag$/i.test(n)) keys.push({ id:a.id, k:'e-tag', full:1 });
+  });
+  S.goals.forEach(g => keys.push({ id:'goal:' + g.id, k:g.name.replace(/\s+/g, ''), full:1 }));
+  const hits = [];
+  keys.forEach(x => { const m = text.match(new RegExp(x.k.split('').map(ch => ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s*'), 'i'));
+    if (m) hits.push({ id:x.id, i:m.index, s:m[0], pre:text.slice(0, m.index), full:x.full, use:use[x.id] || 0 }); });
+  // longest words first; "中信" alone could be the bank or the card, so the account used more often wins
+  hits.sort((a, b) => b.s.length - a.s.length || b.full - a.full || b.use - a.use);
+  const taken = [];
+  hits.forEach(h => { if (!taken.some(t => h.i < t.i + t.s.length && t.i < h.i + h.s.length || t.id === h.id)) taken.push(h); });
+  return taken.sort((a, b) => a.i - b.i);
+}
+const noteKey = s => String(s).toLowerCase().replace(/[^\p{L}]+/gu, '');   // 早餐-香噴噴漢堡*2 → 早餐香噴噴漢堡
+const grams = k => { const g = new Set(k.length === 1 ? [k] : []); for (let i = 0; i < k.length - 1; i++) g.add(k.slice(i, i + 2)); return g; };
+let sayIdx = null;
+function sayIndex() {
+  if (sayIdx && sayIdx.n === S.txs.length) return sayIdx.recs;
+  const recs = S.txs.filter(t => t.note).map(t => { const k = noteKey(t.note); return { t, k, g:grams(k) }; }).filter(r => r.k);
+  sayIdx = { n:S.txs.length, recs }; return recs;
+}
+const profileOf = t => t.kind === 'expense' ? `expense|${t.cat}|${t.item}|${t.amount < 0 ? 'r' : ''}` : t.kind === 'income' ? `income|${t.item}` : 'transfer';
+function learnFrom(note) {   // what past records with a similar note looked like
+  const k = noteKey(note); if (!k) return null;
+  const g = grams(k), hits = [];
+  sayIndex().forEach(r => {
+    let n = 0; g.forEach(x => { if (r.g.has(x)) n++; });
+    let sim = 2 * n / (g.size + r.g.size);
+    if (r.k === k) sim = 1; else if (k.length >= 2 && r.k.length >= 2 && (r.k.includes(k) || k.includes(r.k))) sim = Math.max(sim, .75);
+    if (sim >= .45) hits.push({ t:r.t, sim });
+  });
+  if (!hits.length) return null;
+  const best = Math.max(...hits.map(h => h.sim)), close = hits.filter(h => h.sim >= best - .15);   // only the closest notes vote
+  const vote = (list, key) => { const c = new Map(); list.forEach(h => { const v = key(h.t); if (v != null && v !== '') c.set(v, (c.get(v) || 0) + h.sim); });
+    return [...c].sort((a, b) => b[1] - a[1])[0]?.[0]; };
+  const profile = vote(close, profileOf), same = close.filter(h => profileOf(h.t) === profile), t0 = same[0].t;
+  return { kind:t0.kind, cat:t0.cat, item:t0.item, refund:t0.kind === 'expense' && t0.amount < 0,
+    scope:vote(same, t => t.scope), noStat:vote(same, t => t.noStat ? 1 : 0) === 1,
+    from:vote(same, t => acc(t.from) ? t.from : null), to:vote(same, t => acc(t.to) || goal(String(t.to).slice(5)) ? t.to : null),
+    payer:vote(same, t => t.payer), note:vote(same, t => t.note), n:same.length };
+}
+const SAY_CATS = [   // used only when no past record looks like the note
+  [/早餐|午餐|中餐|晚餐|宵夜|便當|咖啡|飲料|小吃|餐廳|麵|飯/, '食', '外食'], [/買菜|菜市場|超市|全聯|家樂福|好市多|水果|肉/, '食', '食材'],
+  [/加油|油錢/, '行', '汽油費'], [/停車|捷運|高鐵|台鐵|火車|公車|計程車|uber|通行費/i, '行', '交通費'], [/保養|輪胎|洗車|維修/, '行', '汽機車保養'],
+  [/電費|水費|瓦斯|天然氣|網路|手機|電話費|管理費|房貸|車貸/, '住', '固定支出'], [/房租|住宿|飯店|民宿/, '住', '住宿'], [/日用|衛生紙|洗衣|清潔/, '住', '生活用品'],
+  [/衣|褲|鞋|外套/, '衣', '衣'], [/電影|遊戲|旅遊|門票|唱歌|訂閱/, '樂', '樂'], [/書|課|學費|補習/, '育', '育'],
+];
+const SAY_FILL = /^(?:幫我記一筆|幫我記|記一筆|幫我|然後|總共|一共|共|在|用了|用|刷了|刷|付了|付款|付|花了|花|是|了|的|元|塊錢|塊|錢|從|到|給)+|(?:用了|用|刷了|刷|付了|付款|付|花了|花|是|了|的|元|塊錢|塊|錢|從|到|給)+$/g;
+function parseSay(raw, f0) {
+  let text = String(raw).replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/(\d),(?=\d{3})/g, '$1');
+  const cut = s => { text = text.replace(s, '｜'); };   // words already used up; whatever is left becomes the note
+  const f = {}, said = {};
+  const [date, dm] = sayDate(text); if (dm) { f.date = date; cut(dm); }
+  const accs = sayAccounts(text); accs.forEach(a => cut(a.s));
+  const amt = sayAmount(text); if (amt) { f.amount = String(Math.round(amt.v)); cut(amt.s); }
+  const sc = text.match(/家庭|家用|全家|個人|自己/); if (sc) { said.scope = /個人|自己/.test(sc[0]) ? '個人' : '家庭'; cut(sc[0]); }
+  const kw = /薪水|薪資|獎金|紅利|股利|股息|配息|利息|中獎|收入|入帳/.test(raw) ? 'income' : /轉帳|轉到|轉給|轉入|轉出|匯款|匯到|卡費|繳款|還款|提款|提領|存到|存入/.test(raw) ? 'transfer' : '';
+  const note = text.split(/[｜,，.。!！?？、\s]+/).map(s => s.replace(SAY_FILL, '')).join('').slice(0, 80);
+  const L = learnFrom(note);
+  const kind = kw || L?.kind || 'expense', use = L && L.kind === kind ? L : null;
+  Object.assign(f, { kind, note, noStat:!!use?.noStat });
+  const flow = accs.filter(a => isFlow(acc(a.id)));
+  let basis = use ? `依過去 ${use.n} 筆「${use.note}」` : '';
+  if (kind === 'expense') {
+    const k = !use && SAY_CATS.find(([re]) => re.test(note));
+    if (use && ITEMS[use.cat]) Object.assign(f, { cat:use.cat, item:use.item, refund:use.refund });
+    else if (k) { Object.assign(f, { cat:k[1], item:k[2] }); basis = '依關鍵字判斷類型'; }
+    if (/退款|退費|退錢/.test(raw)) f.refund = true;
+    f.from = flow[0]?.id || use?.from || f0.from;
+    if (f.refund && !flow.length && use && !use.from) Object.assign(f, { from:'', payer:use.payer || '' });
+    f.scope = said.scope || use?.scope || f0.scope;
+  } else if (kind === 'income') {
+    const k = /薪水|薪資/.test(raw) ? '薪資' : /獎金|紅利/.test(raw) ? '獎金紅利' : /股|息/.test(raw) ? '利息、股息' : '';
+    const income = k || (INCOME.some(i => i.key === use?.item) ? use.item : '其它收入');
+    const usual = {}; S.txs.forEach(t => { if (t.kind === 'income' && t.item === income && acc(t.to)) usual[t.to] = (usual[t.to] || 0) + 1; });   // where this income usually lands
+    const usualTo = Object.entries(usual).sort((a, b) => b[1] - a[1])[0]?.[0];
+    Object.assign(f, { income, to:flow[0]?.id || use?.to || usualTo || f0.to,
+      payer:use?.payer || '', scope:said.scope || use?.scope || f0.scope });
+  } else {   // transfer: two names → from, to; one name → a card, loan or dream (or "到 X") is where the money goes
+    const into = a => { const t = acc(a.id); return a.id.startsWith('goal:') || t?.type === 'credit' || t?.type === 'loan' || /(到|給|進|存入|存到|繳)\s*$/.test(a.pre); };
+    const [a, b] = accs;
+    if (b) Object.assign(f, { tfrom:a.id, dest:b.id });
+    else if (a && into(a)) Object.assign(f, { dest:a.id, tfrom:use?.from || f0.tfrom });
+    else Object.assign(f, { tfrom:a?.id || use?.from || f0.tfrom, dest:use?.to || '' });
+  }
+  return { f, basis };
+}
+function saySummary(f, basis) {
+  const parts = [f.date === today() ? '今天' : dayLabel(f.date).replace(/ · .*/, '')];
+  if (f.kind === 'expense') parts.push(`${f.refund ? '退款・' : ''}${f.cat}・${f.item}`, f.scope, f.from ? accName(f.from) : '');
+  else if (f.kind === 'income') parts.push(`收入・${f.income}`, accName(f.to));
+  else parts.push(`轉帳 ${accName(f.tfrom)} → ${f.dest ? destName(f.dest) : '？'}`);
+  const amt = f.amount ? esc(money(Number(f.amount))) : '<span class="warn">還沒聽到金額</span>';
+  return `已帶入：<b>${amt} · ${parts.filter(Boolean).map(esc).join(' · ')}</b>${basis ? `<br>${esc(basis)}，不對可以直接改下面的欄位` : ''}`;
 }
 
 /* add asset / debt */

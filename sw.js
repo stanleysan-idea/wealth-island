@@ -1,5 +1,5 @@
 // Offline cache for the Home Screen app. Pages are network-first, so a new upload shows up on the next launch.
-const CACHE = 'wealth-island-0702edf6ba';
+const CACHE = 'wealth-island-ea754fe80a';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
