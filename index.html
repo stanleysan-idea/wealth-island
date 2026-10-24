@@ -29,13 +29,16 @@
   --fs:1.12;   /* text size: 標準 1 · 大 1.12 · 特大 1.25, picked in 設定 and kept per device */
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",system-ui,sans-serif;
   --font-num:ui-rounded,"SF Pro Rounded","Nunito",-apple-system,"Noto Sans TC",system-ui,sans-serif;
-  /* island scene */
-  --sky-top:#7EC8F2; --sky-bot:#E1F3FB; --sea-top:#5BBDE1; --sea-bot:#2C86BC; --foam:rgba(255,255,255,.75);
-  --sand:#EFDCB2; --soil-top:#B88556; --soil-bot:#7D5434; --grass:#7AC66A; --grass-hi:#9EDB88; --grass-lo:#56A958;
-  --tree:#3E9954; --tree-hi:#5DB86A; --trunk:#8A5A35; --sun:#FFD25E; --sun-glow:rgba(255,210,94,.28); --cloud:#FFFFFF;
-  --wall:#FFF6E8; --roof:#D0573F; --timber:#8B5A33; --window:#A8DBF5; --found:#8C939B; --found-line:#6E757D;
-  --turbine:#FFFFFF; --turbine-dim:#C3CAD1; --hub:#5B6B75; --glass-a:#A7DAF5; --glass-b:#4D9BD0;
-  --rope:rgba(40,60,50,.45); --star-op:0; --tank-in:#2D5C77; --water:#5BC2F0; --rock:#8E949B; --rock-hi:#B0B6BC;
+  /* island scene: cozy, outlined, seen from above */
+  --sky-top:#8ED3F5; --sky-bot:#D6F0FA; --sea-top:#63CBE0; --sea-bot:#3FA6CC; --shallow:#9FE5E1; --foam:rgba(255,255,255,.85);
+  --sand:#F5E4B6; --sand-dk:#E2C98E; --soil-top:#C99567; --soil-bot:#A9744B; --grass:#8ED16E; --grass-hi:#AEE28F; --grass-lo:#67B455;
+  --tree:#5DB451; --tree-hi:#8CD16E; --tree-dk:#3B8C3E; --trunk:#9A6B45; --fruit:#F48C4E; --shade:rgba(70,90,40,.22);
+  --sun:#FFD86B; --sun-glow:rgba(255,216,107,.3); --cloud:#FFFFFF; --cloud-sh:#E3F1F8;
+  --ol:#6E5136; --wall:#FFF4DF; --roof:#E3795E; --roof-dk:#C45F46; --door:#B9804F; --window:#A3DDF5; --found:#C9C2B4; --found-line:#9C9384;
+  --mill:#FFF4DF; --turbine:#FFFFFF; --turbine-dim:#D6CEC0; --hub:#7A5A3C; --lh-band:#E36B5B; --gift:#FFF8EC;
+  --pine:#47A35C; --pine-dk:#2F7D46; --pine-hi:#6FC27A; --bush:#5AB34F; --fence:#FFFDF5; --path:#EFDBAA; --path-dk:#D7BB83;
+  --fire:#FF9A3C; --fire-in:#FFE07A; --log:#A86F43; --log-in:#ECC690; --hill-far:#BCE5C8; --hill-tree:#8DCDA0;
+  --rope:rgba(110,81,54,.55); --water:#5EC6EE; --mud:#C9A87C; --stone:#D9D3C6; --rock:#A9ADB4; --rock-hi:#CDD0D5;
   --tag-bg:rgba(255,255,255,.9); --tag-fg:#2A2721; --hi:#FFFFFF;
   color-scheme:light;   /* always the bright theme, even when the phone is in dark mode */
 }
@@ -136,12 +139,30 @@ main{max-width:520px;margin:0 auto;padding-block:6px calc(110px + env(safe-area-
 @keyframes glow{50%{filter:drop-shadow(0 0 5px var(--sun)) brightness(1.15)}}
 .tether{stroke:var(--rope);stroke-width:.7;stroke-dasharray:2 2;fill:none}
 .bln .env{fill:var(--bc)}
-.bln .stripe{fill:var(--hi);opacity:.3}
-.bln .ropes{stroke:var(--rope);stroke-width:.8;fill:none}
-.bln .basket{fill:var(--wood)}
-.bln.ghost{opacity:.45}
-.bln.ghost .env{filter:saturate(.3);stroke:var(--hi);stroke-width:1;stroke-dasharray:3 2}
-.tag rect{fill:var(--tag-bg)} .tag text{fill:var(--tag-fg);font:800 7.5px var(--font-num);text-anchor:middle}
+.bln .shine{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;opacity:.6}
+.bln .ropes{stroke:var(--ol);stroke-width:.8;fill:none}
+.bln .gift{fill:var(--gift)}
+.bln .ribbon{fill:none;stroke:var(--bc);stroke-width:2.2}
+.bln .ribbon.thin{stroke-width:1.4}
+.bln.ghost{opacity:.5}
+.bln.ghost .env{filter:saturate(.35)}
+.pond-w{transform-box:fill-box;transform-origin:50% 50%}
+.flame{transform-box:fill-box;transform-origin:50% 100%;animation:flick .45s ease-in-out infinite alternate}
+@keyframes flick{to{transform:scale(.88,1.14)}}
+.spark{animation:smoke 1.6s ease-out infinite;opacity:0;transform-box:fill-box}
+.hop{animation:hop 2s ease-in-out infinite}
+@keyframes hop{0%,55%,100%{transform:translateY(0)}70%{transform:translateY(-2.6px)}85%{transform:translateY(0)}}
+.stroll{animation:stroll 16s ease-in-out infinite}
+@keyframes stroll{0%,8%{transform:translateX(0)}42%,58%{transform:translateX(24px)}92%,100%{transform:translateX(0)}}
+.face{transform-box:fill-box;transform-origin:50% 50%;animation:face 16s steps(1) infinite}
+@keyframes face{0%{transform:scaleX(1)}50%{transform:scaleX(-1)}}
+.eye{transform-box:fill-box;transform-origin:50% 50%;animation:eye 4.5s infinite}
+@keyframes eye{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.15)}}
+.flap{transform-box:fill-box;transform-origin:50% 50%;animation:flap .28s ease-in-out infinite alternate}
+@keyframes flap{to{transform:scaleX(.35)}}
+@media (prefers-reduced-motion:reduce){.island *{animation:none!important}}
+.beam{opacity:.35;animation:blink 2.4s steps(1) infinite}
+.tag rect{fill:var(--tag-bg);stroke:var(--ol);stroke-width:.8} .tag text{fill:var(--tag-fg);font:800 7.5px var(--font-num);text-anchor:middle}
 
 /* budget */
 .budget{display:flex;flex-direction:column;gap:10px}
@@ -428,11 +449,11 @@ const FIXED = [['房貸', ['房貸']], ['水電瓦斯網路手機', ['水費', '
 const TYPES = {
   cash:     { label:'現金與銀行', island:'蓄水池',         c:'var(--sky)',     icon:'drop' },
   credit:   { label:'信用卡',     island:'卡債岩石',       c:'var(--amber)',   icon:'card' },
-  invest:   { label:'投資與保單', island:'風車・科技大樓', c:'var(--emerald)', icon:'turbine' },
-  property: { label:'房產',       island:'歐式小屋',       c:'var(--wood)',    icon:'house' },
+  invest:   { label:'投資與保單', island:'風車・燈塔', c:'var(--emerald)', icon:'turbine' },
+  property: { label:'房產',       island:'小屋',       c:'var(--wood)',    icon:'house' },
   loan:     { label:'貸款',       island:'灰色地基・岩石', c:'var(--debt)',    icon:'stone' },
 };
-const INV_KIND = { stock:'股票・加密貨幣（風車）', fund:'ETF・基金・債券（科技大樓）', policy:'保單・儲蓄險（科技大樓）' };
+const INV_KIND = { stock:'股票・加密貨幣（風車）', fund:'ETF・基金・債券（燈塔）', policy:'保單・儲蓄險（燈塔）' };
 const GOAL_COLORS = ['#E1604F','#3F97D6','#E0A030','#8E5A8B','#16905E'];
 
 const ICONS = {
@@ -609,7 +630,9 @@ function txInfo(t) {
 }
 
 /* ───────── island scene ───────── */
-const GY = 172;
+// A cozy island seen from above: chunky shapes with a warm outline, a grass plateau on a two-tone cliff, a sand beach
+// and shallow water. Things standing on the island are drawn back to front by where they stand.
+const OL = 'stroke:var(--ol);stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round';
 function growAttr(key, mode = 'grow') {
   newSeen.add(key);
   if (seen.has(key) || firstPaint) return 'class="gw"';   // first paint shows the island at rest; only newly added things grow in
@@ -618,89 +641,183 @@ function growAttr(key, mode = 'grow') {
 function ak(key, to) { return `data-ak="${key}" data-to="${to}" style="transform:${prevAnim[key] || to}"`; }
 const lin = (a, b, n) => n === 1 ? [(a+b)/2] : Array.from({ length:n }, (_, i) => a + (b-a) * i / (n-1));
 const invHeight = v => clamp(26 + 22 * Math.log10(Math.max(v, 1e4) / 1e4), 30, 100);
+const shadow = (rx, ry) => `<ellipse rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" style="fill:var(--shade)"/>`;
 
-function balloonShape(color, p) {
+function balloonShape(color, p) {   // a balloon carrying a present
   return `<g class="bln ${p >= .5 ? 'vivid' : 'ghost'}" style="--bc:${color}">
-    <path class="env" d="M0 -52 C18 -52 21 -31 13 -19 L5 -9 L-5 -9 L-13 -19 C-21 -31 -18 -52 0 -52Z"/>
-    <path class="stripe" d="M0 -52 C7 -52 8.5 -31 5 -19 L2 -9 L-2 -9 L-5 -19 C-8.5 -31 -7 -52 0 -52Z"/>
-    <path class="ropes" d="M-5 -9 L-3.5 -2 M5 -9 L3.5 -2"/>
-    <rect class="basket" x="-4.5" y="-2.5" width="9" height="7" rx="1.5"/></g>`;
+    <path class="ropes" d="M0 -18 C-2.5 -14 2.5 -10 0 -6"/>
+    <path class="env" d="M0 -50 C10 -50 15 -42 15 -35 C15 -26 8 -21 0 -19 C-8 -21 -15 -26 -15 -35 C-15 -42 -10 -50 0 -50Z" style="${OL}"/>
+    <path class="env" d="M-2 -19.2 H2 L0 -16.6Z" style="${OL};stroke-width:.8"/>
+    <path class="shine" d="M-8.5 -38 C-8 -43 -4.5 -46 -1 -46.2"/>
+    <rect class="gift" x="-6" y="-6" width="12" height="10" rx="1.6" style="${OL}"/>
+    <path class="ribbon" d="M0 -6 V4 M-6 -1.6 H6"/>
+    <path class="ribbon thin" d="M0 -6 C-3.5 -10 -7 -8 -3 -6 M0 -6 C3.5 -10 7 -8 3 -6"/></g>`;
 }
-function tree(x, y, s, i) {
-  return `<g transform="translate(${x} ${y}) scale(${s})"><g ${growAttr('tree' + i)}>
-    <rect x="-1.6" y="-10" width="3.2" height="10" rx="1" style="fill:var(--trunk)"/>
-    <circle cx="0" cy="-17" r="9" style="fill:var(--tree)"/><circle cx="-5" cy="-12" r="6" style="fill:var(--tree)"/>
-    <circle cx="5" cy="-12.5" r="6" style="fill:var(--tree)"/><circle cx="-2.5" cy="-20" r="4.5" style="fill:var(--tree-hi)"/></g></g>`;
+// silhouette: draw the shapes once fat in the outline color, then again in their fill, so only the outer edge gets a line
+const blob = (shapes, fill) => `<g style="fill:var(--ol);stroke:var(--ol);stroke-width:2.6;stroke-linejoin:round">${shapes}</g><g style="fill:${fill}">${shapes}</g>`;
+const circ = list => list.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('');
+const ticks = (list, c) => `<path d="${list.map(([x, y]) => `M${x} ${y} l1.4 1.7 l1.4 -1.7`).join(' ')}" style="fill:none;stroke:${c};stroke-width:.9;stroke-linecap:round"/>`;
+function tree(x, y, s, i, fruit) {   // a fluffy round tree: dark under-leaves, lighter top, a few leaf marks
+  const fr = fruit ? [[-7, -17], [6, -22], [9, -14], [-3, -27], [-11, -24]].map(([fx, fy]) => `<circle cx="${fx}" cy="${fy}" r="2.3" style="fill:var(--fruit);${OL};stroke-width:.8"/><circle cx="${fx - .7}" cy="${fy - .8}" r=".7" fill="#fff" opacity=".8"/>`).join('') : '';
+  return `<g transform="translate(${x} ${y}) scale(${s})"><g ${growAttr('tree' + i)}>${shadow(14, 4)}
+    <path d="M-3.4 0 C-2.6 -4 -2.4 -8 -2.4 -12 H2.4 C2.4 -8 2.6 -4 3.4 0 Q0 1.2 -3.4 0Z" style="fill:var(--trunk);${OL}"/>
+    ${blob(circ([[-10, -15, 8.5], [10, -15, 8.5], [0, -13, 9], [-8.5, -25, 9], [8.5, -25, 9], [0, -33, 9.5]]), 'var(--tree-dk)')}
+    <g style="fill:var(--tree)">${circ([[-8, -26.5, 7.6], [8, -26.5, 7.6], [0, -34, 8], [0, -22, 9], [-10, -18, 5.6], [10, -18, 5.6]])}</g>
+    <g style="fill:var(--tree-hi)">${circ([[-6, -31, 4], [4, -36, 3.2], [-11, -21, 2.4], [7, -24, 2.2]])}</g>
+    ${ticks([[-4, -22], [5, -17], [-10, -28], [2, -29], [9, -29]], 'var(--tree-dk)')}${fr}</g></g>`;
 }
-function tank(cash, x) {
-  const lvl = waterLevel(cash), f = clamp(lvl, 0, 1), off = (34 * (1 - f)).toFixed(1);
-  let wave = 'M-30 -46'; for (let i = 0; i < 8; i++) wave += ' q2.5 -2 5 0 t5 0'; wave += ' V-8 H-30Z';
-  const over = lvl >= 1 ? `<g style="fill:var(--water)"><circle class="drip" cx="-19" cy="-48" r="1.6"/><circle class="drip" cx="19" cy="-47" r="1.4"/><circle class="drip" cx="-18" cy="-44" r="1.2"/></g>` : '';
-  return `<g transform="translate(${x} ${GY})" class="obj" data-tap="cash"><g ${growAttr('tank')}>
-    <rect x="-17" y="-10" width="3" height="10" rx="1" style="fill:var(--timber)"/><rect x="14" y="-10" width="3" height="10" rx="1" style="fill:var(--timber)"/>
-    <path d="M-24 -50 L0 -63 L24 -50Z" style="fill:var(--roof)"/>
-    <rect x="-20" y="-50" width="40" height="42" rx="5" style="fill:var(--wood)"/>
-    <rect x="-15" y="-46" width="30" height="34" rx="3" style="fill:var(--tank-in)"/>
-    <g clip-path="url(#tankClip)"><g ${ak('water', `translate(0px,${off}px)`)}><path class="water-wave" d="${wave}" style="fill:var(--water)"/></g></g>
-    <path d="M-20 -40 H-15 M15 -40 H20 M-20 -20 H-15 M15 -20 H20" style="stroke:var(--timber);stroke-width:2"/>
-    ${over}
-    <g class="tag" transform="translate(0 -76)"><rect x="-17" y="-6" width="34" height="12" rx="6"/><text y="2.6">${lvl >= 1 ? '滿水位' : pct(f)}</text></g>
+function pine(x, y, s, i) {   // a layered evergreen
+  const tiers = [[13, -7], [10.5, -15], [7.5, -23]].map(([w, yb]) => `<path d="M${-w} ${yb} Q0 ${yb + 4} ${w} ${yb} L0 ${yb - 15}Z"/>`).join('');
+  return `<g transform="translate(${x} ${y}) scale(${s})"><g ${growAttr('tree' + i)}>${shadow(11, 3.4)}
+    <rect x="-2.2" y="-8" width="4.4" height="8" rx="1" style="fill:var(--trunk);${OL}"/>
+    ${blob(tiers, 'var(--pine)')}
+    <path d="M-8 -9 Q-4 -7.5 -1 -8 M-6.5 -17 Q-3 -15.5 -.5 -16 M-4.5 -25 Q-2 -23.8 0 -24" style="fill:none;stroke:var(--pine-hi);stroke-width:2;stroke-linecap:round"/>
+    <path d="M3 -10 l1.4 1.6 l1.4 -1.6 M2 -18 l1.3 1.5 l1.3 -1.5" style="fill:none;stroke:var(--pine-dk);stroke-width:.9;stroke-linecap:round"/></g></g>`;
+}
+const bush = (x, y, berries) => `<g transform="translate(${x} ${y})">${shadow(10, 2.8)}
+  ${blob(circ([[-5.5, -4.5, 5.2], [5.5, -4.5, 5.2], [0, -8, 6]]), 'var(--bush)')}
+  <g style="fill:var(--tree-hi)">${circ([[-3, -10, 2.4], [4, -8, 1.8]])}</g>
+  ${berries ? `<g style="fill:${berries}">${circ([[-6, -4, 1.3], [1, -6, 1.3], [6, -3, 1.3], [-1, -2.5, 1.2]])}</g>` : ''}</g>`;
+const flowerPatch = (x, y, c) => `<g>${flower(x - 3.5, y, c)}${flower(x + 3, y + 1, c)}${flower(x, y - 2.5, c)}</g>`;
+function fence(pts) {   // white picket fence along a line of points
+  const rail = dy => `<path d="M${pts.map(([px, py]) => `${px} ${py + dy}`).join(' L')}" style="fill:none;stroke:var(--ol);stroke-width:3;stroke-linecap:round"/>
+    <path d="M${pts.map(([px, py]) => `${px} ${py + dy}`).join(' L')}" style="fill:none;stroke:var(--fence);stroke-width:1.6;stroke-linecap:round"/>`;
+  return `<g>${rail(-3)}${rail(-7)}${pts.map(([px, py]) => `<path d="M${px - 1.9} ${py} V${py - 8.5} L${px} ${py - 11} L${px + 1.9} ${py - 8.5} V${py}Z" style="fill:var(--fence);${OL};stroke-width:.9"/>`).join('')}</g>`;
+}
+const logSeat = (x, y) => `<g transform="translate(${x} ${y})">${shadow(10, 2.6)}
+  <rect x="-9" y="-6" width="18" height="6.4" rx="3.2" style="fill:var(--log);${OL}"/>
+  <path d="M-5 -3.6 H3 M-2 -1.6 H5" style="stroke:var(--ol);stroke-width:.6;opacity:.5"/>
+  <ellipse cx="8.4" cy="-2.8" rx="2" ry="3" style="fill:var(--log-in);${OL};stroke-width:.8"/></g>`;
+function campfire(x, y) {
+  const stones = [[-9, 0], [-6, 3], [0, 4], [6, 3], [9, 0], [6, -2.6], [-6, -2.6]].map(([sx, sy]) => `<ellipse cx="${sx}" cy="${sy}" rx="2.6" ry="1.9" style="fill:var(--stone);${OL};stroke-width:.8"/>`).join('');
+  return `<g transform="translate(${x} ${y})">
+    <ellipse rx="16" ry="6" style="fill:var(--fire);opacity:.18"/>
+    <rect x="-8" y="-2.6" width="16" height="3.6" rx="1.8" transform="rotate(16)" style="fill:var(--log);${OL};stroke-width:.9"/>
+    <rect x="-8" y="-2.6" width="16" height="3.6" rx="1.8" transform="rotate(-16)" style="fill:var(--log);${OL};stroke-width:.9"/>
+    <path class="flame" d="M0 0 C-6 -1 -6 -8 -2.5 -11 C-2.5 -8 -.5 -8 -.5 -6.5 C.5 -10 3 -12.5 2 -17 C7 -13 7 -3 0 0Z" style="fill:var(--fire);${OL};stroke-width:.9"/>
+    <path class="flame" style="animation-delay:-.25s" d="M0 -1 C-3 -1.5 -3 -5 -1 -7 C-.5 -5 .5 -5 .8 -6.5 C2.6 -5 2.6 -1.5 0 -1Z" fill="var(--fire-in)"/>
+    ${stones}
+    <g style="fill:var(--fire-in)"><circle class="spark" cx="-2" cy="-16" r=".9"/><circle class="spark" style="animation-delay:-.8s" cx="3" cy="-19" r=".7"/></g></g>`;
+}
+// original little islanders: big heads, dot eyes, rosy cheeks
+const CRITTERS = {
+  cat:   { fur:'#F7B56E', ear:'tri', shirt:'#7DB6EA', inner:'#F6C2BA' },
+  bear:  { fur:'#BE8B5C', ear:'round', shirt:'#EC8A72', inner:'#EBCB9F', muzzle:'#F0DCBA' },
+  bunny: { fur:'#FFFDF8', ear:'long', shirt:'#F3A6C2', inner:'#F7C3D3' },
+  pup:   { fur:'#EBD3A6', ear:'flop', shirt:'#8ACF72', inner:'#BF8D5C', muzzle:'#FFF6E6' },
+};
+function critter(kind, sit) {
+  const c = CRITTERS[kind], o = `${OL};stroke-width:1`;
+  const ears = {
+    tri:`<path d="M-6.6 -19 L-5.6 -26 L-1.6 -21.2Z" style="fill:${c.fur};${o}"/><path d="M6.6 -19 L5.6 -26 L1.6 -21.2Z" style="fill:${c.fur};${o}"/><path d="M-5.4 -21 L-5 -24 L-3.3 -22Z M5.4 -21 L5 -24 L3.3 -22Z" fill="${c.inner}"/>`,
+    round:`<circle cx="-5.4" cy="-21" r="2.9" style="fill:${c.fur};${o}"/><circle cx="5.4" cy="-21" r="2.9" style="fill:${c.fur};${o}"/><circle cx="-5.4" cy="-21" r="1.4" fill="${c.inner}"/><circle cx="5.4" cy="-21" r="1.4" fill="${c.inner}"/>`,
+    long:`<ellipse cx="-2.8" cy="-26.5" rx="2.1" ry="5.8" transform="rotate(-10 -2.8 -26.5)" style="fill:${c.fur};${o}"/><ellipse cx="2.8" cy="-26.5" rx="2.1" ry="5.8" transform="rotate(10 2.8 -26.5)" style="fill:${c.fur};${o}"/><ellipse cx="-2.8" cy="-26" rx=".9" ry="3.8" transform="rotate(-10 -2.8 -26)" fill="${c.inner}"/><ellipse cx="2.8" cy="-26" rx=".9" ry="3.8" transform="rotate(10 2.8 -26)" fill="${c.inner}"/>`,
+    flop:'',
+  }[c.ear];
+  const flops = c.ear === 'flop' ? `<ellipse cx="-6.8" cy="-15.5" rx="2.5" ry="4.6" transform="rotate(14 -6.8 -15.5)" style="fill:${c.inner};${o}"/><ellipse cx="6.8" cy="-15.5" rx="2.5" ry="4.6" transform="rotate(-14 6.8 -15.5)" style="fill:${c.inner};${o}"/>` : '';
+  const body = sit
+    ? `<ellipse cx="-2.6" cy="-.6" rx="2.2" ry="1.5" style="fill:${c.fur};${o}"/><ellipse cx="2.6" cy="-.6" rx="2.2" ry="1.5" style="fill:${c.fur};${o}"/><rect x="-5" y="-8" width="10" height="7" rx="3" style="fill:${c.shirt};${o}"/>`
+    : `<ellipse cx="-2.4" cy="-.8" rx="2" ry="1.4" style="fill:${c.fur};${o}"/><ellipse cx="2.4" cy="-.8" rx="2" ry="1.4" style="fill:${c.fur};${o}"/><rect x="-5" y="-9.5" width="10" height="8.5" rx="3" style="fill:${c.shirt};${o}"/>`;
+  return `${ears}${body}
+    <ellipse cx="-5.6" cy="-6" rx="1.7" ry="2.5" style="fill:${c.fur};${o}"/><ellipse cx="5.6" cy="-6" rx="1.7" ry="2.5" style="fill:${c.fur};${o}"/>
+    ${flops}<circle cy="-15" r="7.3" style="fill:${c.fur};${o}"/>
+    ${c.muzzle ? `<ellipse cy="-12.6" rx="3.2" ry="2.3" fill="${c.muzzle}"/>` : ''}
+    <g class="eye"><ellipse cx="-2.7" cy="-15.4" rx=".95" ry="1.25" fill="#3B2A1E"/><ellipse cx="2.7" cy="-15.4" rx=".95" ry="1.25" fill="#3B2A1E"/></g>
+    <circle cx="-2.4" cy="-15.9" r=".35" fill="#fff"/><circle cx="3" cy="-15.9" r=".35" fill="#fff"/>
+    <ellipse cx="-4.7" cy="-12.6" rx="1.5" ry=".9" fill="#F59AA8" opacity=".75"/><ellipse cx="4.7" cy="-12.6" rx="1.5" ry=".9" fill="#F59AA8" opacity=".75"/>
+    <ellipse cy="-13.5" rx=".9" ry=".6" fill="#6B4632"/><path d="M-1.2 -12.2 q.6 .7 1.2 0 q.6 .7 1.2 0" style="fill:none;stroke:#6B4632;stroke-width:.5;stroke-linecap:round"/>`;
+}
+const butterfly = (x, y, c, d) => `<g transform="translate(${x} ${y})"><g class="float" style="animation-duration:5s;animation-delay:${d}s"><g class="flap" style="animation-delay:${d}s">
+  <ellipse cx="-1.9" cy="-.4" rx="2.1" ry="1.6" fill="${c}"/><ellipse cx="1.9" cy="-.4" rx="2.1" ry="1.6" fill="${c}"/><ellipse cx="-1.4" cy="1.2" rx="1.3" ry="1" fill="${c}"/><ellipse cx="1.4" cy="1.2" rx="1.3" ry="1" fill="${c}"/></g>
+  <path d="M0 -1.5 V2" style="stroke:var(--ol);stroke-width:.8;stroke-linecap:round"/></g></g>`;
+function palm(x, y, flip) {
+  return `<g transform="translate(${x} ${y}) scale(${flip ? -1 : 1} 1)">${shadow(8, 2.6)}
+    <path d="M-1.6 0 C-1 -10 2 -20 7 -28 L9.6 -27 C5 -19 2.6 -10 2.2 0Z" style="fill:var(--trunk);${OL}"/>
+    <g style="fill:var(--tree);${OL}"><path d="M8 -28 C2 -34 -8 -33 -12 -26 C-5 -30 2 -29 8 -28Z"/><path d="M8 -28 C14 -35 23 -33 26 -25 C20 -30 14 -30 8 -28Z"/>
+      <path d="M8 -28 C5 -37 10 -42 16 -41 C12 -38 10 -33 8 -28Z"/><path d="M8 -28 C1 -27 -4 -21 -4 -15 C0 -21 4 -25 8 -28Z"/><path d="M8 -28 C15 -26 20 -20 20 -14 C15 -20 12 -24 8 -28Z"/></g>
+    <circle cx="6" cy="-25.5" r="2" style="fill:var(--door);${OL};stroke-width:.8"/><circle cx="9.5" cy="-25" r="2" style="fill:var(--door);${OL};stroke-width:.8"/></g>`;
+}
+const flower = (x, y, c) => `<g transform="translate(${x} ${y})"><path d="M0 0 V-4" style="stroke:var(--grass-lo);stroke-width:1.2;stroke-linecap:round"/>${
+  [0, 72, 144, 216, 288].map(a => `<circle cx="${(Math.sin(a * Math.PI / 180) * 2.3).toFixed(2)}" cy="${(-5.5 - Math.cos(a * Math.PI / 180) * 2.3).toFixed(2)}" r="1.8" style="fill:${c};stroke:var(--ol);stroke-width:.4"/>`).join('')
+  }<circle cy="-5.5" r="1.2" style="fill:#FFD86B"/></g>`;
+const sparkle = (x, y, r, d) => `<path class="blink" style="animation-delay:${d}s" d="M${x} ${y - r} L${x + r * .28} ${y - r * .28} L${x + r} ${y} L${x + r * .28} ${y + r * .28} L${x} ${y + r} L${x - r * .28} ${y + r * .28} L${x - r} ${y} L${x - r * .28} ${y - r * .28}Z" fill="#fff"/>`;
+
+function pond(cash, x, y) {   // the 蓄水池: the water shrinks toward the middle as cash runs low
+  const lvl = waterLevel(cash), f = clamp(lvl, 0, 1), s = Math.max(.08, Math.sqrt(f)).toFixed(3), full = lvl >= 1;
+  const stones = [[-38, -2], [-32, 8], [-17, 13.5], [2, 15], [20, 13], [33, 7], [38, -3], [26, -12], [5, -15.5], [-18, -14]]
+    .map(([sx, sy], i) => `<ellipse cx="${sx}" cy="${sy}" rx="${i % 2 ? 4.4 : 5.2}" ry="3.3" style="fill:var(--stone);${OL};stroke-width:1"/>`).join('');
+  return `<g transform="translate(${x} ${y})" class="obj" data-tap="cash"><g ${growAttr('tank')}>
+    <ellipse rx="36" ry="14.5" style="fill:var(--mud);${OL}"/>
+    <g ${ak('water', `scale(${s})`)} class="pond-w"><ellipse rx="34" ry="13" style="fill:var(--water)"/>
+      <path d="M-20 -3 q4 -2.6 8 0 M6 4 q4 -2.6 8 0 M-5 -7.5 q3 -2 6 0" style="fill:none;stroke:#fff;stroke-width:1.3;stroke-linecap:round;opacity:.8"/></g>
+    ${full ? `<ellipse cx="-14" cy="4" rx="5" ry="2.4" style="fill:var(--grass-lo);${OL};stroke-width:.8"/><ellipse cx="17" cy="-3" rx="4.2" ry="2" style="fill:var(--grass-lo);${OL};stroke-width:.8"/>
+      <circle cx="17" cy="-4.4" r="1.7" style="fill:#F59AB0"/>${sparkle(-24, -6, 3, 0)}${sparkle(24, 5, 2.4, .8)}` : ''}
+    ${stones}
+    <g class="tag" transform="translate(0 -27)"><rect x="-17" y="-6" width="34" height="12" rx="6"/><text y="2.6">${full ? '滿水位' : pct(f)}</text></g>
   </g></g>`;
 }
-function house(p, loan, x, s) {
+function house(p, loan, x, y, s) {   // the loan is the stone foundation: the more is owed, the higher the house sits on it
   const ratio = loan ? clamp(loan.value / Math.max(1, p.value), 0, 1) : 0;
-  const fh = loan && loan.value > 0 ? 4 + 22 * ratio : 0;
+  const fh = loan && loan.value > 0 ? 3 + 17 * ratio : 0;
   const free = !loan || loan.value <= 0;
-  return `<g transform="translate(${x} ${GY}) scale(${s})" class="obj" data-tap="acc:${p.id}"><g ${growAttr('h' + p.id)}>
-    <rect x="-31" y="-1" width="62" height="3" rx="1.5" style="fill:var(--grass-lo)"/>
-    <g ${ak('fd' + p.id, `scaleY(${(fh / 26).toFixed(3)})`)} class="gw">
-      <rect x="-30" y="-26" width="60" height="26" rx="1.5" style="fill:var(--found)"/>
-      <path d="M-30 -19.5 H30 M-30 -13 H30 M-30 -6.5 H30 M-15 -26 V-19.5 M5 -26 V-19.5 M-5 -19.5 V-13 M15 -19.5 V-13 M-15 -13 V-6.5 M5 -13 V-6.5 M-5 -6.5 V0 M15 -6.5 V0" style="stroke:var(--found-line);stroke-width:.8"/>
+  const win = wx => `<rect x="${wx}" y="-20" width="9" height="9" rx="2" style="fill:var(--window);${OL}"/><path d="M${wx + 4.5} -20 V-11 M${wx} -15.5 H${wx + 9}" style="stroke:var(--ol);stroke-width:.8"/>
+    <rect x="${wx - 1}" y="-11" width="11" height="3" rx="1" style="fill:var(--door);${OL};stroke-width:.8"/>
+    <circle cx="${wx + 2}" cy="-11.5" r="1.4" style="fill:#F07A8A"/><circle cx="${wx + 5}" cy="-12" r="1.4" style="fill:#FFD86B"/><circle cx="${wx + 8}" cy="-11.5" r="1.4" style="fill:#fff"/>`;
+  return `<g transform="translate(${x} ${y}) scale(${s})" class="obj" data-tap="acc:${p.id}"><g ${growAttr('h' + p.id)}>
+    ${shadow(33, 6.5)}
+    <g ${ak('fd' + p.id, `scaleY(${(fh / 20).toFixed(3)})`)} class="gw">
+      <rect x="-25" y="-20" width="50" height="20" rx="3" style="fill:var(--found);${OL}"/>
+      <path d="M-25 -13.3 H25 M-25 -6.7 H25 M-12 -20 V-13.3 M8 -20 V-13.3 M-2 -13.3 V-6.7 M17 -13.3 V-6.7 M-14 -6.7 V0 M6 -6.7 V0" style="stroke:var(--found-line);stroke-width:.9"/>
     </g>
     <g ${ak('hb' + p.id, `translate(0px,${-fh}px)`)}>
-      <rect x="11" y="-50" width="7" height="14" style="fill:var(--timber)"/>
-      <g class="smoke" style="fill:var(--cloud)"><circle cx="14.5" cy="-53" r="2.4"/><circle cx="14.5" cy="-53" r="2.4"/><circle cx="14.5" cy="-53" r="2.4"/></g>
-      <rect x="-24" y="-30" width="48" height="30" style="fill:var(--wall)"/>
-      <path d="M-24 -30 H24 V0 H-24Z M-24 -15 H24 M-8 -30 V-15 M8 -30 V-15 M-24 -30 L-8 -15 M24 -30 L8 -15" style="fill:none;stroke:var(--timber);stroke-width:1.4"/>
-      <rect x="-19" y="-26" width="7" height="8" rx="1" style="fill:var(--window)"/><rect x="12" y="-26" width="7" height="8" rx="1" style="fill:var(--window)"/>
-      <rect x="-18" y="-11" width="8" height="7" rx="1" style="fill:var(--window)"/><rect x="10" y="-11" width="8" height="7" rx="1" style="fill:var(--window)"/>
-      <path d="M-5 0 V-9 a5 5 0 0 1 10 0 V0Z" style="fill:var(--timber)"/>
-      <path d="M-30 -29 L0 -55 L30 -29 Z" style="fill:var(--roof)"/>
-      <path d="M-30 -29 L0 -55 L30 -29" style="fill:none;stroke:var(--timber);stroke-width:1.6;stroke-linejoin:round"/>
-      <circle cx="0" cy="-38" r="3.2" style="fill:var(--window)"/>
-      ${free ? `<path d="M0 -55 V-70" style="stroke:var(--timber);stroke-width:1.3"/><path d="M0 -70 L11 -66.5 L0 -63Z" style="fill:var(--emerald)"/>` : ''}
+      <rect x="11" y="-49" width="7" height="13" rx="1.5" style="fill:var(--roof-dk);${OL}"/>
+      <g class="smoke" style="fill:var(--cloud)"><circle cx="14.5" cy="-52" r="2.4"/><circle cx="14.5" cy="-52" r="2.4"/><circle cx="14.5" cy="-52" r="2.4"/></g>
+      <rect x="-23" y="-27" width="46" height="27" rx="3" style="fill:var(--wall);${OL}"/>
+      <path d="M-5.5 0 V-11 a5.5 5.5 0 0 1 11 0 V0Z" style="fill:var(--door);${OL}"/><circle cx="3" cy="-5.5" r=".9" style="fill:var(--ol)"/>
+      ${win(-19)}${win(10)}
+      <path d="M-31 -24 Q-32 -29 -27 -31 L-3.5 -47.5 Q0 -50 3.5 -47.5 L27 -31 Q32 -29 31 -24 Q30 -21.5 27 -22.5 H-27 Q-30 -21.5 -31 -24Z" style="fill:var(--roof);${OL}"/>
+      <path d="M-24 -29 L-5 -42.5" style="stroke:#fff;stroke-width:2.4;stroke-linecap:round;opacity:.45"/>
+      <circle cy="-33" r="3.6" style="fill:var(--window);${OL};stroke-width:1"/>
+      ${free ? `<path d="M0 -49 V-62" style="stroke:var(--ol);stroke-width:1.2"/><path d="M0 -62 L10 -58.5 L0 -55Z" style="fill:var(--emerald);${OL};stroke-width:.8"/>` : ''}
     </g>
+    <g transform="translate(34 0)"><path d="M0 0 V-9" style="stroke:var(--door);stroke-width:1.8"/>
+      <rect x="-4.5" y="-15" width="9" height="7" rx="3" style="fill:var(--sky);${OL};stroke-width:1"/><path d="M3.5 -13 V-18.5 H7 V-16 H3.5" style="fill:var(--coral);${OL};stroke-width:.8"/></g>
   </g></g>`;
 }
-function turbine(a, x) {
-  const h = invHeight(a.value), gain = a.cost ? (a.value - a.cost) / a.cost : 0;
-  const dur = clamp(3.4 - gain * 5, 0.9, 9).toFixed(2), L = clamp(h * .36, 12, 22), loss = gain < 0;
-  const blade = r => `<path transform="rotate(${r})" d="M0 0 C2.2 -3 2.8 ${-L*.5} .7 ${-L} L-.7 ${-L} C-1.6 ${-L*.5} -1.8 -3 0 0Z" style="fill:var(${loss ? '--turbine-dim' : '--turbine'})"/>`;
-  return `<g transform="translate(${x} ${GY})" class="obj" data-tap="acc:${a.id}"><g ${growAttr('i' + a.id)}>
-    <path d="M-2.4 0 L-1 ${-h} L1 ${-h} L2.4 0Z" style="fill:var(--turbine)"/>
-    <path d="M1 ${-h} L2.4 0 L.9 0Z" style="fill:var(--turbine-dim)"/>
-    <g transform="translate(0 ${-h})"><g class="spin" style="animation-duration:${dur}s">${blade(0)}${blade(120)}${blade(240)}</g>
-      <circle r="2.2" style="fill:var(--hub)"/></g></g></g>`;
+function windmill(a, x, y) {   // stocks: taller with more money, sails spin faster the more it has gained
+  const h = invHeight(a.value) * .8, gain = a.cost ? (a.value - a.cost) / a.cost : 0;
+  const dur = clamp(3.4 - gain * 5, 0.9, 9).toFixed(2), L = clamp(h * .45, 13, 27), loss = gain < 0;
+  const sail = r => `<g transform="rotate(${r})"><path d="M0 0 V${-L}" style="stroke:var(--ol);stroke-width:1.4"/>
+    <rect x="1" y="${-L}" width="5.5" height="${(L - 4).toFixed(1)}" rx="1" style="fill:var(${loss ? '--turbine-dim' : '--turbine'});${OL};stroke-width:.9"/>
+    <path d="M1 ${(-L * .66).toFixed(1)} H6.5 M1 ${(-L * .33).toFixed(1)} H6.5" style="stroke:var(--ol);stroke-width:.6"/></g>`;
+  return `<g transform="translate(${x} ${y})" class="obj" data-tap="acc:${a.id}"><g ${growAttr('i' + a.id)}>${shadow(13, 4)}
+    <path d="M-10 0 L-6.5 ${-h} H6.5 L10 0Z" style="fill:var(--mill);${OL}"/>
+    <path d="M-3.2 0 V-6.5 a3.2 3.2 0 0 1 6.4 0 V0Z" style="fill:var(--door);${OL};stroke-width:1"/>
+    <circle cy="${(-h * .55).toFixed(1)}" r="2.5" style="fill:var(--window);${OL};stroke-width:.9"/>
+    <path d="M-9 ${-h} Q0 ${-h - 12} 9 ${-h}Z" style="fill:var(--roof);${OL}"/>
+    <g transform="translate(0 ${-h - 3})"><g class="spin" style="animation-duration:${dur}s">${sail(0)}${sail(90)}${sail(180)}${sail(270)}</g>
+      <circle r="2.5" style="fill:var(--hub);${OL};stroke-width:.9"/></g></g></g>`;
 }
-function tower(a, x) {
-  const h = invHeight(a.value) * .92, w = 20, rows = Math.max(2, Math.floor((h - 10) / 7));
-  let win = '';
-  for (let r = 0; r < rows; r++) for (let c = 0; c < 3; c++) {
-    const lit = ((r * 7 + c * 3 + a.id.length) % 4) !== 0;
-    win += `<rect x="${-7 + c * 5}" y="${(-h + 7 + r * 7).toFixed(1)}" width="3.4" height="3.6" rx=".6" style="fill:var(--window);opacity:${lit ? .95 : .35}"/>`;
-  }
-  return `<g transform="translate(${x} ${GY})" class="obj" data-tap="acc:${a.id}"><g ${growAttr('i' + a.id)}>
-    <path d="M0 ${-h} V${-h - 12}" style="stroke:var(--hub);stroke-width:1.2"/>
-    <circle class="blink" cx="0" cy="${-h - 12}" r="1.5" style="fill:var(--coral)"/>
-    <rect x="${-w/2}" y="${-h}" width="${w}" height="${h}" rx="2.5" fill="url(#gGlass)"/>
-    <rect x="${-w/2}" y="${-h}" width="${w}" height="3" rx="1.5" style="fill:var(--hub)"/>
-    ${win}</g></g>`;
+function lighthouse(a, x, y) {   // funds and policies: a striped lighthouse that grows with the money in it
+  const h = invHeight(a.value) * .82, bw = 9.5, tw = 6.5, wAt = yy => bw - (bw - tw) * yy / h;
+  let bands = '';
+  for (let i = 1; i < 4; i += 2) { const y0 = h * i / 4, y1 = h * (i + 1) / 4;
+    bands += `<path d="M${(-wAt(y0)).toFixed(1)} ${(-y0).toFixed(1)} L${(-wAt(y1)).toFixed(1)} ${(-y1).toFixed(1)} H${wAt(y1).toFixed(1)} L${wAt(y0).toFixed(1)} ${(-y0).toFixed(1)}Z" style="fill:var(--lh-band)"/>`; }
+  const body = `M${-bw} 0 L${-tw} ${-h} H${tw} L${bw} 0Z`;
+  return `<g transform="translate(${x} ${y})" class="obj" data-tap="acc:${a.id}"><g ${growAttr('i' + a.id)}>${shadow(12, 4)}
+    <path d="${body}" style="fill:var(--wall)"/>${bands}<path d="${body}" style="fill:none;${OL}"/>
+    <path d="M-2.8 0 V-6.5 a2.8 2.8 0 0 1 5.6 0 V0Z" style="fill:var(--door);${OL};stroke-width:1"/>
+    <path class="beam" d="M4 ${-h - 6} L26 ${-h - 13} V${-h + 1}Z" style="fill:var(--sun)"/>
+    <rect x="${-tw - 1.5}" y="${-h - 2}" width="${2 * tw + 3}" height="3" rx="1" style="fill:var(--hub);${OL};stroke-width:.9"/>
+    <rect x="-4.5" y="${-h - 10}" width="9" height="8" rx="1.5" style="fill:var(--sun);${OL};stroke-width:.9"/>
+    <path d="M-6 ${-h - 10} Q0 ${-h - 18} 6 ${-h - 10}Z" style="fill:var(--lh-band);${OL};stroke-width:1"/></g></g>`;
 }
-function boulder(id, value, tap, x, y) {
-  const r = clamp(5 + 3.2 * Math.log10(Math.max(value, 1e4) / 1e4), 5, 15);
-  return `<g transform="translate(${x} ${y})" class="obj" data-tap="${tap}"><g ${growAttr('r' + id)}>
-    <path d="M${-r} 0 C${-r} ${-r*.9} ${-r*.4} ${-r*1.2} ${r*.2} ${-r*1.1} C${r*.9} ${-r} ${r*1.1} ${-r*.4} ${r} 0Z" style="fill:var(--rock)"/>
-    <path d="M${-r*.5} ${-r*.75} C${-r*.2} ${-r*1.05} ${r*.3} ${-r*1.05} ${r*.5} ${-r*.8}" style="fill:none;stroke:var(--rock-hi);stroke-width:1.6;stroke-linecap:round"/></g></g>`;
+function boulder(id, value, tap, x, y) {   // debts: rocks sized by what is owed
+  const r = clamp(6 + 3.4 * Math.log10(Math.max(value, 1e4) / 1e4), 6, 16), n = v => (v * r).toFixed(1);
+  return `<g transform="translate(${x} ${y})" class="obj" data-tap="${tap}"><g ${growAttr('r' + id)}>${shadow(r * 1.15, r * .32)}
+    <path d="M${n(-1)} 0 C${n(-1.05)} ${n(-.7)} ${n(-.6)} ${n(-1.15)} ${n(.05)} ${n(-1.1)} C${n(.75)} ${n(-1.05)} ${n(1.1)} ${n(-.55)} ${n(1)} 0 Q0 ${n(.22)} ${n(-1)} 0Z" style="fill:var(--rock);${OL}"/>
+    <path d="M${n(-.55)} ${n(-.7)} C${n(-.3)} ${n(-.95)} ${n(.05)} ${n(-.98)} ${n(.3)} ${n(-.9)}" style="fill:none;stroke:var(--rock-hi);stroke-width:2;stroke-linecap:round"/>
+    <path d="M${n(.35)} ${n(-.38)} l${n(.15)} ${n(.15)} l${n(-.05)} ${n(.15)}" style="fill:none;stroke:var(--ol);stroke-width:.8;opacity:.6"/></g></g>`;
 }
 function islandSVG() {
   newSeen = new Set();
@@ -710,76 +827,122 @@ function islandSVG() {
   const props = byType('property').sort((a, b) => b.value - a.value).slice(0, 2);
   const rockList = byType('loan').filter(l => !byType('property').some(p => p.id === l.propertyId) && l.value > 0).map(l => [l.id, l.value, 'acc:' + l.id]);
   if (t.creditOwed > 0) rockList.unshift(['credit', t.creditOwed, 'credit']);
-  const rocks3 = rockList.slice(0, 3);
   const goals = S.goals.slice(0, 3);
   const empty = !S.accounts.length && !S.goals.length;
+  const stage = t.net < 1e5 ? 0 : t.net < 1e6 ? 1 : t.net < 5e6 ? 2 : 3;   // same steps as stageName
 
-  let waves1 = 'M-40 186', waves2 = 'M-40 200';
-  for (let i = 0; i < 12; i++) { waves1 += ' q10 -3.5 20 0 t20 0'; waves2 += ' q10 3 20 0 t20 0'; }
-  const stars = [[24,22],[60,48],[96,16],[140,36],[188,14],[226,44],[262,20],[342,70],[20,86],[120,70]]
-    .map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i % 3 ? .9 : 1.3}" style="fill:var(--sun)"/>`).join('');
-  const cloud = (y, s, dur, delay) => `<g class="cloud" style="animation-duration:${dur}s;animation-delay:${delay}s"><g transform="translate(0 ${y}) scale(${s})" style="fill:var(--cloud)">
-    <ellipse cx="0" cy="0" rx="22" ry="7"/><circle cx="-8" cy="-4" r="8"/><circle cx="5" cy="-7" r="10"/><circle cx="15" cy="-2" r="6"/></g></g>`;
+  const GRASS = 'M30 150 C26 118 70 96 120 94 C150 86 200 84 240 92 C300 96 338 116 334 150 C340 182 300 204 240 206 C200 214 150 212 112 206 C62 204 32 184 30 150Z';
+  const around = (sx, sy, dy) => `transform="translate(180 ${150 + dy}) scale(${sx} ${sy}) translate(-180 -150)"`;
+  const cloud = (y, s, dur, delay) => `<g class="cloud" style="animation-duration:${dur}s;animation-delay:${delay}s"><g transform="translate(0 ${y}) scale(${s})">
+    <path d="M-24 5 C-31 5 -31 -4 -23 -4 C-24 -12 -13 -16 -7 -10 C-5 -19 10 -19 12 -9 C16 -13 25 -10 23 -3 C30 -3 30 5 23 5Z" style="fill:var(--cloud)"/>
+    <path d="M-22 4 C-10 6 10 6 22 4" style="fill:none;stroke:var(--cloud-sh);stroke-width:2.4;stroke-linecap:round"/></g></g>`;
+  const ripples = [[40, 72], [118, 66], [292, 68], [346, 94], [14, 110], [350, 146], [80, 244], [334, 238], [196, 246]]
+    .map(([x, y], i) => `<path class="sway" style="animation-delay:-${(i * .7).toFixed(1)}s" d="M${x - 5} ${y} q2.5 -2.4 5 0 t5 0" fill="none" stroke="var(--foam)" stroke-width="1.3" stroke-linecap="round"/>`).join('');
+  const birds = [[0, 16, 70, -10], [0, 26, 85, -50]].map(([x, y, dur, d]) => `<g class="cloud" style="animation-duration:${dur}s;animation-delay:${d}s">
+    <path d="M${x} ${y} q2.5 -2.6 5 0 q2.5 -2.6 5 0" style="fill:none;stroke:var(--ol);stroke-width:1.1;stroke-linecap:round"/></g>`).join('');
+  const far = `<path d="M-10 60 C6 40 34 34 62 44 C80 50 94 55 104 60Z" style="fill:var(--hill-far)"/>
+    <g style="fill:var(--hill-tree)"><path d="M26 46 l4 -9 l4 9Z M38 44 l3.5 -8 l3.5 8Z M48 47 l3 -7 l3 7Z M16 50 l3 -7 l3 7Z"/></g>
+    <path d="M292 60 C304 49 322 47 340 60Z" style="fill:var(--hill-far)"/><path d="M312 52 l3 -7 l3 7Z" style="fill:var(--hill-tree)"/>`;
+  const boat = `<g transform="translate(34 236)"><g class="sway" style="animation-duration:3.2s">
+    <path d="M-12 0 H12 L8 5.5 H-8Z" style="fill:var(--wall);${OL}"/><path d="M-12 0 H12" style="stroke:var(--coral);stroke-width:1.6"/>
+    <path d="M0 0 V-22" style="stroke:var(--ol);stroke-width:1.2"/><path d="M1.2 -2.5 V-21 L12 -3.5Z" style="fill:#fff;${OL};stroke-width:1"/>
+    <path d="M-1.2 -2.5 V-17 L-9 -3.5Z" style="fill:var(--sky);${OL};stroke-width:1"/><path d="M0 -22 L5 -20.5 L0 -19Z" fill="var(--coral)"/></g></g>`;
 
-  const nTrees = t.net >= 1e5 ? clamp(Math.floor(Math.log10(t.net / 1e5) * 2) + 1, 1, 6) : 0;
-  const treeSpots = [[104, 160, .8], [214, 159, .75], [42, 164, .7], [326, 164, .72], [146, 157, .62], [262, 157, .6]];
-  const trees = treeSpots.slice(0, nTrees).map(([x, y, s], i) => tree(x, y, s, i)).join('');
+  // dirt paths from the campfire plaza to everything on the island
+  const hX = props.length === 2 ? [[150, 122], [216, 128]] : [[184, 128]];
+  const iX = lin(inv.length <= 2 ? 262 : 252, inv.length <= 2 ? 306 : 318, inv.length);
+  const trails = [];
+  if (!empty) {
+    props.forEach((p, i) => trails.push(`M${hX[i][0]} ${hX[i][1] + 2} C${hX[i][0]} ${hX[i][1] + 22} 180 158 180 168`));
+    if (hasCash) trails.push('M168 172 C146 172 132 166 122 158');
+    if (inv.length) trails.push(`M194 172 C224 172 246 166 ${iX[0].toFixed(0)} 150`);
+    trails.push('M184 180 C190 192 198 198 208 204');
+  }
+  const trailSVG = trails.length ? `<g style="fill:none;stroke-linecap:round">
+    ${trails.map(d => `<path d="${d}" style="stroke:var(--path-dk);stroke-width:12.5"/>`).join('')}<ellipse cx="180" cy="174" rx="26" ry="11" style="fill:var(--path-dk)"/>
+    ${trails.map(d => `<path d="${d}" style="stroke:var(--path);stroke-width:10"/>`).join('')}<ellipse cx="180" cy="174" rx="24.5" ry="9.6" style="fill:var(--path)"/>
+    <g style="fill:var(--path-dk)">${circ([[170, 178, .9], [192, 170, .8], [176, 168, .7], [190, 179, .9], [160, 172, .7]])}</g></g>` : '';
+
+  // everything that stands on the island, drawn back to front
+  const items = [];
+  const put = (y, svg) => items.push([y, svg]);
+  const nTrees = t.net >= 1e5 ? clamp(Math.floor(Math.log10(t.net / 1e5) * 2) + 1, 1, 7) : 0;
+  [[120, 100, .95, 'r'], [244, 98, .9, 'p'], [56, 126, .82, 'p'], [306, 118, .82, 'r'], [86, 194, .72, 'r'], [292, 194, .72, 'p'], [214, 96, .7, 'p']]
+    .slice(0, nTrees).forEach(([x, y, s, k], i) => put(y, k === 'p' ? pine(x, y, s, i) : tree(x, y, s, i, t.net >= 2e6)));
+  [[40, 148, '#F07A8A'], [326, 150, ''], [72, 112, ''], [152, 104, '#FFD25E'], [276, 122, '#F07A8A'], [258, 188, '']]
+    .slice(0, empty ? 0 : 2 + stage).forEach(([x, y, b]) => put(y, bush(x, y, b)));
+  const petals = ['#F07A8A', '#FFFFFF', '#FFD25E', '#F59AB0', '#B48CF2'];
+  [[108, 180], [228, 186], [62, 170], [292, 176], [168, 110], [140, 142], [234, 150], [100, 122], [320, 166], [206, 112]]
+    .slice(0, clamp(3 + nTrees, 3, 10)).forEach(([x, y], i) => put(y, flowerPatch(x, y, petals[i % petals.length])));
+  put(180, palm(18, 180, false)); put(176, palm(344, 176, true));
+  if (hasCash) put(148, pond(t.cash, 88, 148));
+  props.forEach((p, i) => { const s = clamp(.8 + .2 * Math.log10(p.value / 5e6), .68, 1.1) * (props.length === 2 ? .84 : 1);
+    put(hX[i][1], house(p, loanOf(p), hX[i][0], hX[i][1], s.toFixed(3))); });
+  inv.forEach((a, i) => { const y = [138, 152, 130, 156][i]; put(y, a.kind === 'stock' ? windmill(a, iX[i], y) : lighthouse(a, iX[i], y)); });
+  rockList.slice(0, 3).forEach(([id, v, tap], i) => { const [x, y] = [[46, 176], [318, 184], [262, 204]][i]; put(y, boulder(id, v, tap, x, y)); });
+  if (!empty) {
+    put(204, fence([[100, 199], [108, 201], [116, 202.5], [124, 203.5], [132, 204], [140, 204.2]]));
+    put(172, campfire(180, 172));
+    put(178, logSeat(161, 178)); put(179, logSeat(199, 179));
+    // islanders move in as the island grows
+    const folk = [['cat', 120, 168, 0, 'stroll'], ['bear', 161, 174.5, 1, 'hop'], ['bunny', 199, 175.5, 1, 'hop'], ['pup', 236, 188, 0, 'hop']].slice(0, stage + 1);
+    folk.forEach(([k, x, y, sit, anim], i) => put(y + (sit ? 4.2 : 0),
+      `<g transform="translate(${x} ${y})"><g class="${anim}" style="animation-delay:-${i * .6}s"><g class="${anim === 'stroll' ? 'face' : ''}">${critter(k, sit)}</g></g></g>`));
+    if (stage >= 1) put(160, `<g transform="translate(208 160)">${shadow(4, 1.2)}<path d="M0 0 V-17" style="stroke:var(--ol);stroke-width:1.8"/>
+      <rect x="-3.2" y="-23" width="6.4" height="6.5" rx="1.5" style="fill:var(--fire-in);${OL};stroke-width:.9"/><path d="M-4 -23 L0 -26 L4 -23Z" style="fill:var(--hub);${OL};stroke-width:.9"/></g>`);
+  }
+  if (empty) put(150, `<g transform="translate(180 150)"><g ${growAttr('sprout')}>
+    <path d="M0 0 V-12" style="stroke:var(--grass-lo);stroke-width:2;stroke-linecap:round"/>
+    <path d="M0 -8 C-8 -10 -10 -16 -9 -18 C-3 -18 0 -14 0 -8Z M0 -11 C7 -13 10 -19 9 -21 C3 -21 0 -17 0 -11Z" style="fill:var(--grass-hi);${OL};stroke-width:1"/></g></g>`);
+  items.sort((a, b) => a[0] - b[0]);
+  const flutter = empty ? '' : butterfly(132, 128, '#F59AB0', 0) + (stage >= 2 ? butterfly(252, 112, '#FFD25E', -2) : '');
 
   const blnX = [[204], [110, 210], [106, 206, 282]][Math.max(0, goals.length - 1)] || [];
+  let tethers = '';   // strings go behind the houses and trees; the balloons float in front
   const balloons = goals.map((g, i) => {
     const p = g.target ? g.saved / g.target : 0, up = p >= 1;
-    const by = up ? 50 : 104 - 44 * clamp(p, 0, 1);
+    const by = up ? 50 : 102 - 42 * clamp(p, 0, 1);
+    if (!up) tethers += `<g ${ak('bt' + g.id, `translate(${blnX[i]}px,${by.toFixed(1)}px)`)}><g class="sway" style="animation-delay:-${i * 1.4}s">
+      <path class="tether" d="M0 4 V${(114 - by).toFixed(1)}"/></g></g>`;
     return `<g ${ak('bl' + g.id, `translate(${blnX[i]}px,${by.toFixed(1)}px)`)} class="obj" data-tap="goal:${g.id}">
       <g ${growAttr('g' + g.id, 'fadein')}><g class="${up ? 'float' : 'sway'}" style="animation-delay:-${i * 1.4}s">
-        ${up ? '' : '<path class="tether" d="M0 4.5 V240"/>'}
         <g transform="scale(${up ? .85 : 1})">${balloonShape(g.color, p)}</g>
-        <g class="tag" transform="translate(0 ${up ? 14 : 15})"><rect x="-15" y="-6" width="30" height="12" rx="6"/><text y="2.6">${up ? '升空!' : pct(p)}</text></g>
+        <g class="tag" transform="translate(0 ${up ? 13 : 14})"><rect x="-15" y="-6" width="30" height="12" rx="6"/><text y="2.6">${up ? '升空!' : pct(p)}</text></g>
       </g></g></g>`;
   }).join('');
 
-  const hX = props.length === 2 ? [128, 190] : [160];
-  const houses = props.map((p, i) => {
-    const s = clamp(.8 + .2 * Math.log10(p.value / 5e6), .68, 1.1) * (props.length === 2 ? .84 : 1);
-    return house(p, loanOf(p), hX[i], s.toFixed(3));
-  }).join('');
-  const iX = lin(inv.length <= 2 ? 248 : 230, inv.length <= 2 ? 296 : 316, inv.length);
-  const invs = inv.map((a, i) => a.kind === 'stock' ? turbine(a, iX[i]) : tower(a, iX[i])).join('');
-  const rocks = rocks3.map(([id, v, tap], i) => boulder(id, v, tap, [30, 334, 52][i], [186, 188, 194][i])).join('');
-
-  let tufts = '';
-  [[40, 182], [92, 186], [150, 188], [205, 188], [250, 186], [300, 183], [122, 178], [232, 178]].forEach(([x, y], i) => {
-    tufts += `<path d="M${x-3} ${y} q1 -5 2 -1 q1 -6 2 0 q1 -4 2 1" style="fill:none;stroke:var(--grass-lo);stroke-width:1.2;stroke-linecap:round"/>`;
-    if (i % 2) tufts += `<circle cx="${x+5}" cy="${y-2}" r="1.4" style="fill:${['#FFD25E','#F59AB0','#FFFFFF'][i % 3]}"/>`;
-  });
-  const sprout = empty ? `<g transform="translate(180 ${GY})"><g ${growAttr('sprout')}>
-    <path d="M0 0 V-12" style="stroke:var(--grass-lo);stroke-width:2;stroke-linecap:round"/>
-    <path d="M0 -8 C-8 -10 -10 -16 -9 -18 C-3 -18 0 -14 0 -8Z M0 -11 C7 -13 10 -19 9 -21 C3 -21 0 -17 0 -11Z" style="fill:var(--grass-hi)"/></g></g>` : '';
-
-  const desc = `財富島：蓄水池水位 ${pct(waterLevel(t.cash))}，${props.length} 棟房屋，${inv.length} 座投資建物，${goals.length} 顆夢想熱氣球`;
+  const desc = `財富島：蓄水池水位 ${pct(waterLevel(t.cash))}，${props.length} 棟房屋，${inv.length} 座投資建物，${goals.length} 顆夢想氣球`;
   const svg = `<svg viewBox="0 0 360 250" role="img" aria-label="${esc(desc)}">
   <defs>
     <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sky-top)"/><stop offset="1" style="stop-color:var(--sky-bot)"/></linearGradient>
     <linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sea-top)"/><stop offset="1" style="stop-color:var(--sea-bot)"/></linearGradient>
-    <linearGradient id="gSoil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--soil-top)"/><stop offset="1" style="stop-color:var(--soil-bot)"/></linearGradient>
-    <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--glass-a)"/><stop offset="1" style="stop-color:var(--glass-b)"/></linearGradient>
-    <clipPath id="tankClip"><rect x="-15" y="-46" width="30" height="34" rx="3"/></clipPath>
+    <radialGradient id="gLawn" cx=".45" cy=".3" r=".75"><stop offset="0" style="stop-color:var(--grass-hi)"/><stop offset="1" style="stop-color:var(--grass)"/></radialGradient>
+    <pattern id="gPat" width="18" height="16" patternUnits="userSpaceOnUse"><path d="M3 4 l2 3 h-4Z" style="fill:var(--grass-lo);opacity:.4"/><path d="M12 12 l2 3 h-4Z" style="fill:var(--grass-lo);opacity:.3"/><path d="M13 3 l1.5 2.2 h-3Z" style="fill:#fff;opacity:.25"/></pattern>
   </defs>
-  <rect width="360" height="250" fill="url(#gSky)"/>
-  <g style="opacity:var(--star-op)">${stars}</g>
-  <circle cx="314" cy="40" r="27" style="fill:var(--sun-glow)"/><circle cx="314" cy="40" r="15" style="fill:var(--sun)"/>
-  ${cloud(34, 1, 90, -20)}${cloud(70, .75, 120, -85)}${cloud(22, .6, 140, -40)}
+  <rect width="360" height="60" fill="url(#gSky)"/>
+  <circle cx="318" cy="28" r="22" style="fill:var(--sun-glow)"/><circle cx="318" cy="28" r="13" style="fill:var(--sun);${OL}"/>
+  ${cloud(22, .9, 90, -20)}${cloud(42, .7, 120, -85)}${cloud(14, .55, 140, -40)}${birds}
+  ${far}
+  <rect y="57" width="360" height="193" fill="url(#gSea)"/>
+  <path d="M0 57.5 H360" style="stroke:#fff;stroke-width:1.2;opacity:.6"/>
+  ${ripples}
+  <path d="${GRASS}" ${around(1.15, 1.34, 20)} style="fill:var(--shallow);stroke:var(--foam);stroke-width:1.6"/>
+  <path d="${GRASS}" ${around(1.07, 1.17, 16)} style="fill:var(--sand);stroke:var(--sand-dk);stroke-width:1.2"/>
+  <g style="fill:#fff;opacity:.8"><circle cx="70" cy="222" r="1.2"/><circle cx="252" cy="224" r="1"/><path d="M118 226 l2 -2.4 l2 2.4Z" fill="#F7B6A8"/></g>
+  ${boat}
+  <g transform="translate(272 220) rotate(26)" style="${OL}">
+    <rect x="0" y="-5" width="40" height="10" rx="1.5" style="fill:var(--door)"/>
+    <path d="M8 -5 V5 M16 -5 V5 M24 -5 V5 M32 -5 V5" style="stroke:var(--ol);stroke-width:.8"/>
+    <circle cx="38" cy="-6" r="2" style="fill:var(--trunk)"/><circle cx="38" cy="6" r="2" style="fill:var(--trunk)"/></g>
+  <path d="${GRASS}" transform="translate(0 13)" style="fill:var(--soil-bot);${OL}"/>
+  <path d="${GRASS}" transform="translate(0 7)" style="fill:var(--soil-top)"/>
+  <path d="${GRASS}" style="fill:url(#gLawn);${OL}"/>
+  <path d="${GRASS}" fill="url(#gPat)"/>
+  ${trailSVG}
+  ${tethers}
+  ${items.map(i => i[1]).join('')}
+  ${flutter}
   ${balloons}
-  <rect y="178" width="360" height="72" fill="url(#gSea)"/>
-  <path class="wave" d="${waves1}" style="fill:none;stroke:var(--foam);stroke-width:1.4"/>
-  <path class="wave b" d="${waves2}" style="fill:none;stroke:var(--foam);stroke-width:1;opacity:.6"/>
-  <ellipse cx="180" cy="196" rx="172" ry="18" style="fill:none;stroke:var(--foam);stroke-width:1.5"/>
-  <path d="M18 174 C22 196 70 212 180 214 C290 212 338 196 342 174Z" fill="url(#gSoil)"/>
-  <ellipse cx="180" cy="176" rx="166" ry="18" style="fill:var(--sand)"/>
-  <ellipse cx="180" cy="171" rx="157" ry="18" style="fill:var(--grass)"/>
-  <ellipse cx="168" cy="166" rx="118" ry="9" style="fill:var(--grass-hi);opacity:.55"/>
-  ${trees}${rocks}
-  ${hasCash ? tank(t.cash, 66) : ''}
-  ${houses}${invs}${sprout}${tufts}
   </svg>`;
   seen = newSeen; firstPaint = false;
   return svg;
@@ -816,7 +979,7 @@ function viewHome() {
     inv.length && `<button data-action="tab:assets"><span class="sw" style="background:var(--emerald)"></span>投資建物 ${inv.length} 座</button>`,
     props.length && `<button data-action="tab:assets"><span class="sw" style="background:var(--wood)"></span>小屋 ${props.length} 棟</button>`,
     t.debts > 0 && `<button data-action="tab:assets"><span class="sw" style="background:var(--debt)"></span>地基・岩石 ${wan(t.debts)}</button>`,
-    S.goals.length && `<button data-action="dreams"><span class="sw" style="background:var(--coral)"></span>熱氣球 ${S.goals.length} 顆</button>`,
+    S.goals.length && `<button data-action="dreams"><span class="sw" style="background:var(--coral)"></span>禮物氣球 ${S.goals.length} 顆</button>`,
   ].filter(Boolean).join('');
   // the template records monthly 房貸/車貸 payments but no property value or loan balance
   const lastPay = k => { const x = [...S.txs].sort(sortTx).find(t => t.kind === 'expense' && t.note === k); return x ? x.amount : 0; };
@@ -1065,7 +1228,7 @@ function accRow(a) {
   if (a.type === 'cash') { const t = totals(); sub = `佔蓄水池 ${pct(t.cash ? a.value / t.cash : 0)}`; }
   if (a.type === 'credit') { sub = a.value < 0 ? '未繳金額，算在負債' : a.value > 0 ? '溢繳（可抵下期）' : '已繳清'; color = a.value < 0 ? 'var(--debt)' : ''; }
   if (a.type === 'invest') { const g = a.cost ? (a.value - a.cost) / a.cost : 0;
-    sub = `${a.kind === 'stock' ? '風車' : '科技大樓'} · 成本 ${wan(a.cost || 0)}`;
+    sub = `${a.kind === 'stock' ? '風車' : '燈塔'} · 成本 ${wan(a.cost || 0)}`;
     if (a.cost) under = `<span class="s ${g >= 0 ? 'pos' : 'neg'}" style="font-weight:700">${g >= 0 ? '+' : ''}${(g * 100).toFixed(1)}%</span>`; }
   if (a.type === 'property') { const l = loanOf(a);
     sub = l && l.value > 0 ? `地基：${esc(l.name)} ${wan(l.value)} · 貸款成數 ${pct(l.value / a.value)}` : '無貸款，屋頂插著綠旗'; }
@@ -1103,8 +1266,8 @@ function viewDreams() {
         <div class="btn-row"><button class="btn small green-soft" data-action="deposit:${g.id}">存入</button><button class="btn small" data-action="goal:${g.id}">編輯</button></div>
       </div></article>`;
   }).join('');
-  return `<p class="intro">每個夢想都是天空中的一顆熱氣球。存到 50% 會上色，存滿 100% 就升空。存入的錢從現金帳戶轉出，仍算在你的總資產。</p>
-  ${cards || `<div class="card"><div class="empty-row">還沒有夢想。設一個目標金額，島上就會出現熱氣球。</div></div>`}
+  return `<p class="intro">每個夢想都是天空中的一顆禮物氣球。存到 50% 會上色，存滿 100% 就升空。存入的錢從現金帳戶轉出，仍算在你的總資產。</p>
+  ${cards || `<div class="card"><div class="empty-row">還沒有夢想。設一個目標金額，島上就會出現禮物氣球。</div></div>`}
   <button class="btn dashed block" data-action="new-goal">${ic('plus', 18, 2.2)}新增夢想目標</button>`;
 }
 
@@ -1245,7 +1408,7 @@ function recBody(f, old) {
   const dests = [
     { group:'現金與銀行', opts:byType('cash').filter(a => a.id !== f.tfrom).map(accOpt) },
     { group:'信用卡（繳款）', opts:byType('credit').filter(a => a.id !== f.tfrom).map(accOpt) },
-    { group:'夢想（熱氣球）', opts:S.goals.map(g => ['goal:' + g.id, `${g.name}（${pct(g.saved / g.target)}）`]) },
+    { group:'夢想（禮物氣球）', opts:S.goals.map(g => ['goal:' + g.id, `${g.name}（${pct(g.saved / g.target)}）`]) },
     { group:'貸款還款（地基變薄）', opts:byType('loan').map(l => [l.id, `${l.name}（剩 ${wan(l.value)}）`]) },
     { group:'投資加碼', opts:byType('invest').filter(a => a.id !== f.tfrom).map(a => [a.id, `${a.name}（${wan(a.value)}）`]) },
   ].filter(g => g.opts.length);
@@ -1275,7 +1438,7 @@ function recPreview(f, old) {
   else { const a = acc(f.tfrom); line(a, -amt);
     if (a?.type === 'cash') water(-amt);
     if (String(f.dest).startsWith('goal:')) { const g = goal(f.dest.slice(5)), p0 = g.saved / g.target, p1 = (g.saved + amt) / g.target;
-      lines.push(`熱氣球「${esc(g.name)}」 <b>${pct(p0)}</b> → <b>${pct(p1)}</b>${p0 < 1 && p1 >= 1 ? '，會升空！' : p0 < .5 && p1 >= .5 ? '，會變鮮豔' : ''}`); }
+      lines.push(`禮物氣球「${esc(g.name)}」 <b>${pct(p0)}</b> → <b>${pct(p1)}</b>${p0 < 1 && p1 >= 1 ? '，會升空！' : p0 < .5 && p1 >= .5 ? '，會變鮮豔' : ''}`); }
     else { const b = acc(f.dest);
       if (b?.type === 'loan') lines.push(`「${esc(b.name)}」剩餘 <b>${wan(cur[b.id])}</b> → <b>${wan(Math.max(0, b.value - amt))}</b>${b.propertyId ? '，地基變薄' : '，岩石縮小'}`);
       else if (b) { line(b, amt); if (b.type === 'cash') water(amt); } } }
@@ -1308,7 +1471,7 @@ function saveRecord(f, sh, old) {
   if (tx.kind === 'expense') { msg = `${old ? '已更新' : '記下'} ${tx.note || tx.item} ${tx.amount < 0 ? '退款 +' : '−'}${money(amt)}`; if (tx.amount > 0 && acc(tx.from)?.type === 'credit') { hl.push('credit'); sub = `${acc(tx.from).name} 刷卡，島邊的卡債岩石變大`; } }
   else if (tx.kind === 'income') msg = `${old ? '已更新' : ''}${tx.item} +${money(amt)} 存入 ${accName(tx.to)}`;
   else { const k = transferKind(tx.to); msg = `${old ? '已更新 ' : ''}${k.label} ${money(amt)} → ${destName(tx.to)}`;
-    if (tx.to.startsWith('goal:')) { const g = goal(tx.to.slice(5)); hl.push('goal:' + g.id); const p = g.saved / g.target; sub = p >= 1 ? '熱氣球升空了！' : `熱氣球進度 ${pct(p)}`; }
+    if (tx.to.startsWith('goal:')) { const g = goal(tx.to.slice(5)); hl.push('goal:' + g.id); const p = g.saved / g.target; sub = p >= 1 ? '禮物氣球升空了！' : `禮物氣球進度 ${pct(p)}`; }
     else { hl.push('acc:' + tx.to); if (b?.propertyId) hl.push('acc:' + b.propertyId); if (b?.type === 'credit') hl.push('credit'); } }
   if (tx.date !== today() && ui.tab === 'ledger' && ui.ledgerMode === 'cal') ui.day = tx.date;
   closeSheet(); commit(hl); toast(msg, sub);
@@ -1592,7 +1755,7 @@ function goalSheet(id) {
   openSheet(`${head(g ? '編輯夢想' : '新增夢想目標')}
     ${tField('name', '夢想名稱', f.name, '例：蜜月旅行')}
     ${mField('target', '目標金額', f.target, '例：100000')}
-    <div class="fgroup"><div class="flabel">熱氣球顏色</div><div class="swatches">${GOAL_COLORS.map(c => `<button type="button" class="swatch ${f.color === c ? 'on' : ''}" style="--c:${c}" data-color="${c}" aria-label="顏色 ${c}"></button>`).join('')}</div></div>
+    <div class="fgroup"><div class="flabel">禮物氣球顏色</div><div class="swatches">${GOAL_COLORS.map(c => `<button type="button" class="swatch ${f.color === c ? 'on' : ''}" style="--c:${c}" data-color="${c}" aria-label="顏色 ${c}"></button>`).join('')}</div></div>
     ${g ? `<p class="note">已存 ${money(g.saved)}（${pct(g.saved / g.target)}）。要再存錢，用「存入」從現金帳戶轉過來。</p>`
       : cash.length ? `<div class="two">${mField('start', '先存入一筆（選填）', '', '0')}<div class="field"><label for="g-from">從哪個帳戶撥入</label>${selectBox('g-from', cash.map(accOpt), f.from, 'name="from"')}</div></div>` : ''}
     <p class="err" hidden></p>
@@ -1609,7 +1772,7 @@ function goalSheet(id) {
       const ng = { id:uid(), name, target, saved:0, color:f.color }; S.goals.push(ng);
       if (start) { const tx = { id:uid(), kind:'transfer', amount:start, from:from.id, to:'goal:' + ng.id, date:today(), note:'起始存入', ts:Date.now() }; applyTx(tx); S.txs.push(tx); }
       closeSheet(); ui.tab = 'home'; commit(['goal:' + ng.id, 'cash']); window.scrollTo({ top:0, behavior:'smooth' });
-      toast(`天空多了一顆「${name}」熱氣球`, `目前進度 ${pct(ng.saved / ng.target)}，存到 50% 會上色`);
+      toast(`天空多了一顆「${name}」禮物氣球`, `目前進度 ${pct(ng.saved / ng.target)}，存到 50% 會上色`);
     });
     if (g) armDelete($('#g-del', sh), g.saved > 0 && cash.length ? `再按一次：${wan(g.saved)} 退回 ${cash[0].name}` : '再按一次確認刪除', () => {
       if (g.saved > 0 && cash.length) { const tx = { id:uid(), kind:'income', amount:g.saved, item:'其他入帳', noStat:true, to:cash[0].id, date:today(), note:`夢想「${g.name}」取消退回`, ts:Date.now() }; applyTx(tx); S.txs.push(tx); }
