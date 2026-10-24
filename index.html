@@ -104,7 +104,7 @@ main{max-width:520px;margin:0 auto;padding-block:6px calc(110px + env(safe-area-
 .island .chip-tl i{width:8px;height:8px;border-radius:50%;background:var(--emerald)}
 .island .empty-tip{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);font-size:calc(12.5px*var(--fs));font-weight:600;text-align:center;padding:8px 12px;border-radius:14px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:-4px}
-.legend button{display:inline-flex;align-items:center;gap:6px;font-size:calc(12px*var(--fs));font-weight:600;color:var(--ink-2);padding:6px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.legend button,.legend .chip{display:inline-flex;align-items:center;gap:6px;font-size:calc(12px*var(--fs));font-weight:600;color:var(--ink-2);padding:6px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
 .legend .sw{width:8px;height:8px;border-radius:2px}
 
 .obj{cursor:pointer}
@@ -160,7 +160,34 @@ main{max-width:520px;margin:0 auto;padding-block:6px calc(110px + env(safe-area-
 @keyframes eye{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.15)}}
 .flap{transform-box:fill-box;transform-origin:50% 50%;animation:flap .28s ease-in-out infinite alternate}
 @keyframes flap{to{transform:scaleX(.35)}}
+.fall{animation:fall 8s linear infinite}
+@keyframes fall{from{transform:translate(0,-8px) rotate(0)}to{transform:translate(-34px,262px) rotate(320deg)}}
+.rain{animation:rain .7s linear infinite}
+@keyframes rain{from{transform:translate(0,-10px)}to{transform:translate(-18px,252px)}}
+.burst{opacity:0;animation:burst 1.8s ease-out 4 both}
+@keyframes burst{0%{transform:scale(.1);opacity:0}12%,65%{opacity:1}100%{transform:scale(1.3);opacity:0}}
+.leap{opacity:0;animation:leap 4.5s ease-in-out infinite}
+@keyframes leap{0%,55%{opacity:0;transform:translate(0,4px) rotate(30deg)}60%{opacity:1}70%{transform:translate(5px,-9px) rotate(-10deg)}80%{opacity:1;transform:translate(10px,2px) rotate(-50deg)}86%,100%{opacity:0;transform:translate(10px,4px) rotate(-50deg)}}
+.leap-splash{opacity:0;animation:splash 4.5s ease-out infinite}
+@keyframes splash{0%,80%{opacity:0}84%{opacity:.9}100%{opacity:0}}
+.buzz{animation:buzz 1.6s ease-in-out infinite}
+@keyframes buzz{0%,100%{transform:translate(0,0)}25%{transform:translate(3px,-2px)}50%{transform:translate(0,-3px)}75%{transform:translate(-3px,-1px)}}
+.drop{opacity:0;animation:drop 6s ease-in infinite}
+@keyframes drop{0%,70%{opacity:0;transform:translateY(0)}72%{opacity:1}88%{opacity:1;transform:translateY(14px)}100%{opacity:0;transform:translateY(14px)}}
+.jet{transform-box:fill-box;transform-origin:50% 100%;animation:jet 1.1s ease-in-out infinite alternate}
+@keyframes jet{to{transform:scaleY(.8)}}
+.island.cheer .folk{animation:jump .45s ease-in-out 6}
+@keyframes jump{50%{transform:translateY(-8px)}}
+.confetti{position:absolute;top:-6%;width:7px;height:10px;border-radius:2px;pointer-events:none;animation:confetti 2.8s ease-in forwards}
+@keyframes confetti{to{top:104%;transform:translateX(var(--dx)) rotate(var(--r))}}
+.bubble{position:absolute;z-index:3;width:max-content;max-width:min(80%,270px);padding:8px 12px 9px;border-radius:16px;background:#FFFDF6;border:1.5px solid var(--ol);color:var(--ink);font-size:calc(13px*var(--fs));line-height:1.5;box-shadow:0 8px 18px -10px rgba(80,60,30,.55);pointer-events:none;transform-origin:var(--ax) 100%;animation:pop .28s cubic-bezier(.2,1.4,.4,1) both}
+.bubble.below{transform-origin:var(--ax) 0}
+.bubble b{display:block;font-size:calc(11.5px*var(--fs));color:var(--ink-2);margin-bottom:1px}
+.bubble::after{content:"";position:absolute;left:calc(var(--ax) - 6px);bottom:-7px;width:11px;height:11px;background:#FFFDF6;border:1.5px solid var(--ol);border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+.bubble.below::after{bottom:auto;top:-7px;border-width:1.5px 0 0 1.5px}
+@keyframes pop{from{transform:scale(.5);opacity:0}}
 @media (prefers-reduced-motion:reduce){.island *{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.confetti,.bubble{animation:none!important}.confetti{display:none}}
 .beam{opacity:.35;animation:blink 2.4s steps(1) infinite}
 .tag rect{fill:var(--tag-bg);stroke:var(--ol);stroke-width:.8} .tag text{fill:var(--tag-fg);font:800 7.5px var(--font-num);text-anchor:middle}
 
@@ -657,31 +684,47 @@ function balloonShape(color, p) {   // a balloon carrying a present
 const blob = (shapes, fill) => `<g style="fill:var(--ol);stroke:var(--ol);stroke-width:2.6;stroke-linejoin:round">${shapes}</g><g style="fill:${fill}">${shapes}</g>`;
 const circ = list => list.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('');
 const ticks = (list, c) => `<path d="${list.map(([x, y]) => `M${x} ${y} l1.4 1.7 l1.4 -1.7`).join(' ')}" style="fill:none;stroke:${c};stroke-width:.9;stroke-linecap:round"/>`;
-function tree(x, y, s, i, fruit) {   // a fluffy round tree: dark under-leaves, lighter top, a few leaf marks
-  const fr = fruit ? [[-7, -17], [6, -22], [9, -14], [-3, -27], [-11, -24]].map(([fx, fy]) => `<circle cx="${fx}" cy="${fy}" r="2.3" style="fill:var(--fruit);${OL};stroke-width:.8"/><circle cx="${fx - .7}" cy="${fy - .8}" r=".7" fill="#fff" opacity=".8"/>`).join('') : '';
+const snowCap = d => `<path d="${d}" style="fill:#fff;${OL};stroke-width:.9"/>`;
+function tree(x, y, s, i, o = {}) {   // a fluffy round tree; o: fruit, drop (fruit falls), snow
+  const spots = [[-7, -17], [6, -22], [9, -14], [-3, -27], [-11, -24]];
+  const fr = o.fruit ? spots.map(([fx, fy]) => `<circle cx="${fx}" cy="${fy}" r="2.3" style="fill:var(--fruit);${OL};stroke-width:.8"/><circle cx="${fx - .7}" cy="${fy - .8}" r=".7" fill="#fff" opacity=".8"/>`).join('') : '';
+  const drop = o.drop ? `<circle class="drop" style="animation-delay:-${(i * 1.7).toFixed(1)}s" cx="9" cy="-14" r="2.3" fill="var(--fruit)" stroke="var(--ol)" stroke-width=".8"/>` : '';
   return `<g transform="translate(${x} ${y}) scale(${s})"><g ${growAttr('tree' + i)}>${shadow(14, 4)}
     <path d="M-3.4 0 C-2.6 -4 -2.4 -8 -2.4 -12 H2.4 C2.4 -8 2.6 -4 3.4 0 Q0 1.2 -3.4 0Z" style="fill:var(--trunk);${OL}"/>
     ${blob(circ([[-10, -15, 8.5], [10, -15, 8.5], [0, -13, 9], [-8.5, -25, 9], [8.5, -25, 9], [0, -33, 9.5]]), 'var(--tree-dk)')}
     <g style="fill:var(--tree)">${circ([[-8, -26.5, 7.6], [8, -26.5, 7.6], [0, -34, 8], [0, -22, 9], [-10, -18, 5.6], [10, -18, 5.6]])}</g>
     <g style="fill:var(--tree-hi)">${circ([[-6, -31, 4], [4, -36, 3.2], [-11, -21, 2.4], [7, -24, 2.2]])}</g>
-    ${ticks([[-4, -22], [5, -17], [-10, -28], [2, -29], [9, -29]], 'var(--tree-dk)')}${fr}</g></g>`;
+    ${ticks([[-4, -22], [5, -17], [-10, -28], [2, -29], [9, -29]], 'var(--tree-dk)')}${fr}
+    ${o.snow ? snowCap('M-9 -37 C-6 -44 6 -44 9 -37 C6 -35 4 -38 1 -36 C-2 -38 -5 -35 -9 -37Z') : ''}</g>${drop}</g>`;
 }
-function pine(x, y, s, i) {   // a layered evergreen
+function pine(x, y, s, i, o = {}) {   // a layered evergreen; o: xmas (ornaments + star), snow
   const tiers = [[13, -7], [10.5, -15], [7.5, -23]].map(([w, yb]) => `<path d="M${-w} ${yb} Q0 ${yb + 4} ${w} ${yb} L0 ${yb - 15}Z"/>`).join('');
+  const balls = o.xmas ? [[-6, -9, '#E3564A'], [5, -11, '#F2C14E'], [-3, -17, '#5EB8E0'], [4, -20, '#E3564A'], [-1, -27, '#F2C14E']]
+    .map(([bx, by, c]) => `<circle cx="${bx}" cy="${by}" r="1.6" style="fill:${c};${OL};stroke-width:.6"/>`).join('') +
+    `<path d="M0 -42 L1.3 -39 L4.4 -38.8 L2 -36.8 L2.8 -33.8 L0 -35.5 L-2.8 -33.8 L-2 -36.8 L-4.4 -38.8 L-1.3 -39Z" style="fill:#FFD86B;${OL};stroke-width:.8"/>` : '';
   return `<g transform="translate(${x} ${y}) scale(${s})"><g ${growAttr('tree' + i)}>${shadow(11, 3.4)}
     <rect x="-2.2" y="-8" width="4.4" height="8" rx="1" style="fill:var(--trunk);${OL}"/>
     ${blob(tiers, 'var(--pine)')}
     <path d="M-8 -9 Q-4 -7.5 -1 -8 M-6.5 -17 Q-3 -15.5 -.5 -16 M-4.5 -25 Q-2 -23.8 0 -24" style="fill:none;stroke:var(--pine-hi);stroke-width:2;stroke-linecap:round"/>
-    <path d="M3 -10 l1.4 1.6 l1.4 -1.6 M2 -18 l1.3 1.5 l1.3 -1.5" style="fill:none;stroke:var(--pine-dk);stroke-width:.9;stroke-linecap:round"/></g></g>`;
+    <path d="M3 -10 l1.4 1.6 l1.4 -1.6 M2 -18 l1.3 1.5 l1.3 -1.5" style="fill:none;stroke:var(--pine-dk);stroke-width:.9;stroke-linecap:round"/>
+    ${o.snow ? snowCap('M-4 -33 L0 -38 L4 -33 Q2 -31.5 0 -33 Q-2 -31.5 -4 -33Z') + snowCap('M-8 -23 Q-4 -21 0 -23 Q4 -21 8 -23 Q4 -25.5 0 -25 Q-4 -25.5 -8 -23Z') : ''}${balls}</g></g>`;
 }
 const bush = (x, y, berries) => `<g transform="translate(${x} ${y})">${shadow(10, 2.8)}
   ${blob(circ([[-5.5, -4.5, 5.2], [5.5, -4.5, 5.2], [0, -8, 6]]), 'var(--bush)')}
   <g style="fill:var(--tree-hi)">${circ([[-3, -10, 2.4], [4, -8, 1.8]])}</g>
   ${berries ? `<g style="fill:${berries}">${circ([[-6, -4, 1.3], [1, -6, 1.3], [6, -3, 1.3], [-1, -2.5, 1.2]])}</g>` : ''}</g>`;
-const flowerPatch = (x, y, c) => `<g>${flower(x - 3.5, y, c)}${flower(x + 3, y + 1, c)}${flower(x, y - 2.5, c)}</g>`;
+const flower = (x, y, c) => `<g transform="translate(${x} ${y})"><path d="M0 0 V-4" style="stroke:var(--grass-lo);stroke-width:1.2;stroke-linecap:round"/>${
+  [0, 72, 144, 216, 288].map(a => `<circle cx="${(Math.sin(a * Math.PI / 180) * 2.3).toFixed(2)}" cy="${(-5.5 - Math.cos(a * Math.PI / 180) * 2.3).toFixed(2)}" r="1.8" style="fill:${c};stroke:var(--ol);stroke-width:.4"/>`).join('')
+  }<circle cy="-5.5" r="1.2" style="fill:#FFD86B"/></g>`;
+const sunflower = (x, y) => `<g transform="translate(${x} ${y})"><path d="M0 0 V-11" style="stroke:var(--grass-lo);stroke-width:1.4;stroke-linecap:round"/><path d="M0 -5 q3 -2 4 -5 q-3 0 -4 3" fill="var(--grass-lo)"/>
+  ${Array.from({ length:10 }, (_, k) => { const a = k * 36 * Math.PI / 180; return `<ellipse cx="${(Math.sin(a) * 3.2).toFixed(2)}" cy="${(-13 - Math.cos(a) * 3.2).toFixed(2)}" rx="1.3" ry="2.2" transform="rotate(${k * 36} ${(Math.sin(a) * 3.2).toFixed(2)} ${(-13 - Math.cos(a) * 3.2).toFixed(2)})" fill="#FFCF3F" stroke="var(--ol)" stroke-width=".35"/>`; }).join('')}
+  <circle cy="-13" r="2.2" fill="#8B5A2B" stroke="var(--ol)" stroke-width=".5"/></g>`;
+const flowerPatch = (x, y, c, sunny) => sunny ? `<g>${sunflower(x - 3, y)}${sunflower(x + 3.5, y + 1.5)}</g>` : `<g>${flower(x - 3.5, y, c)}${flower(x + 3, y + 1, c)}${flower(x, y - 2.5, c)}</g>`;
+const sparkle = (x, y, r, d) => `<path class="blink" style="animation-delay:${d}s" d="M${x} ${y - r} L${x + r * .28} ${y - r * .28} L${x + r} ${y} L${x + r * .28} ${y + r * .28} L${x} ${y + r} L${x - r * .28} ${y + r * .28} L${x - r} ${y} L${x - r * .28} ${y - r * .28}Z" fill="#fff"/>`;
 function fence(pts) {   // white picket fence along a line of points
-  const rail = dy => `<path d="M${pts.map(([px, py]) => `${px} ${py + dy}`).join(' L')}" style="fill:none;stroke:var(--ol);stroke-width:3;stroke-linecap:round"/>
-    <path d="M${pts.map(([px, py]) => `${px} ${py + dy}`).join(' L')}" style="fill:none;stroke:var(--fence);stroke-width:1.6;stroke-linecap:round"/>`;
+  const line = pts.map(([px, py]) => `${px} ${py}`).join(' L');
+  const rail = dy => `<path transform="translate(0 ${dy})" d="M${line}" style="fill:none;stroke:var(--ol);stroke-width:3;stroke-linecap:round"/>
+    <path transform="translate(0 ${dy})" d="M${line}" style="fill:none;stroke:var(--fence);stroke-width:1.6;stroke-linecap:round"/>`;
   return `<g>${rail(-3)}${rail(-7)}${pts.map(([px, py]) => `<path d="M${px - 1.9} ${py} V${py - 8.5} L${px} ${py - 11} L${px + 1.9} ${py - 8.5} V${py}Z" style="fill:var(--fence);${OL};stroke-width:.9"/>`).join('')}</g>`;
 }
 const logSeat = (x, y) => `<g transform="translate(${x} ${y})">${shadow(10, 2.6)}
@@ -699,33 +742,70 @@ function campfire(x, y) {
     ${stones}
     <g style="fill:var(--fire-in)"><circle class="spark" cx="-2" cy="-16" r=".9"/><circle class="spark" style="animation-delay:-.8s" cx="3" cy="-19" r=".7"/></g></g>`;
 }
+const grill = (x, y) => `<g transform="translate(${x} ${y})">${shadow(12, 3)}   <!-- 中秋烤肉 -->
+  <path d="M-8 0 L-6 -7 M8 0 L6 -7" style="stroke:var(--ol);stroke-width:1.4;stroke-linecap:round"/>
+  <path d="M-10 -8 H10 L8 -4 H-8Z" style="fill:#5B5F66;${OL}"/><path d="M-9 -9.5 H9" style="stroke:var(--ol);stroke-width:1.2"/>
+  <rect x="-7" y="-12.5" width="5" height="2.4" rx="1.2" style="fill:#C9744A;${OL};stroke-width:.7"/><rect x="1" y="-12.5" width="6" height="2.4" rx="1.2" style="fill:#E8A55A;${OL};stroke-width:.7"/>
+  <g style="fill:#fff;opacity:.7"><circle class="spark" cx="-3" cy="-16" r="1.4"/><circle class="spark" style="animation-delay:-.7s" cx="3" cy="-18" r="1.2"/></g></g>`;
+const pomelos = (x, y) => `<g transform="translate(${x} ${y})">${shadow(8, 2.2)}${[[-4, -3], [4, -3], [0, -8]].map(([px, py]) => `<circle cx="${px}" cy="${py}" r="4" style="fill:#C5DE6A;${OL};stroke-width:.9"/><path d="M${px} ${py - 4} l1.2 -1.6" style="stroke:var(--grass-lo);stroke-width:1.2"/>`).join('')}</g>`;
+const pumpkin = (x, y, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})">${shadow(7, 2)}
+  <ellipse cy="-4" rx="7" ry="4.6" style="fill:#F59B3A;${OL}"/><path d="M-2.5 -8.4 Q-3.6 -4 -2.5 0 M2.5 -8.4 Q3.6 -4 2.5 0" style="fill:none;stroke:#D9772E;stroke-width:.9"/>
+  <path d="M0 -8.4 q.4 -2.4 2 -3" style="fill:none;stroke:var(--grass-lo);stroke-width:1.6;stroke-linecap:round"/>
+  <path d="M-3.6 -5 l1.2 -1.8 l1.2 1.8Z M1.2 -5 l1.2 -1.8 l1.2 1.8Z M-2.4 -2.6 q2.4 1.6 4.8 0" style="fill:#7A3E10;stroke:#7A3E10;stroke-width:.5"/></g>`;
+const snowman = (x, y) => `<g transform="translate(${x} ${y})">${shadow(8, 2.2)}
+  <circle cy="-6" r="6.4" style="fill:#fff;${OL}"/><circle cy="-16" r="4.8" style="fill:#fff;${OL}"/>
+  <circle cx="-1.6" cy="-16.8" r=".7" fill="#3B2A1E"/><circle cx="1.6" cy="-16.8" r=".7" fill="#3B2A1E"/><path d="M0 -15.6 l3.4 .8 l-3.4 .8Z" fill="#F6A13A"/>
+  <path d="M-4.6 -12.4 Q0 -10.6 4.6 -12.4" style="fill:none;stroke:#E3564A;stroke-width:2;stroke-linecap:round"/>
+  <path d="M-4 -20 H4 M-2.6 -20 V-24 H2.6 V-20" style="fill:#4A5568;stroke:var(--ol);stroke-width:1"/></g>`;
+function lanterns(x1, x2, y) {   // 春節燈籠 strung across the plaza
+  const n = 5, pts = Array.from({ length:n }, (_, k) => { const f = (k + .5) / n; return [x1 + (x2 - x1) * f, y + 10 * Math.sin(Math.PI * f)]; });
+  return `<g><path d="M${x1} ${y} Q${(x1 + x2) / 2} ${y + 20} ${x2} ${y}" style="fill:none;stroke:var(--ol);stroke-width:.8"/>
+    <path d="M${x1} ${y} V${y + 26} M${x2} ${y} V${y + 26}" style="stroke:var(--trunk);stroke-width:1.8"/>
+    ${pts.map(([lx, ly], k) => `<g transform="translate(${lx.toFixed(1)} ${ly.toFixed(1)})"><g class="sway" style="animation-delay:-${k * .5}s">
+      <ellipse cy="3.6" rx="3.4" ry="3" style="fill:#E3473C;${OL};stroke-width:.8"/><path d="M-1.4 .6 H1.4 M-1.4 6.6 H1.4 M0 6.6 V9" style="stroke:#F2C14E;stroke-width:1"/></g></g>`).join('')}</g>`;
+}
+
 // original little islanders: big heads, dot eyes, rosy cheeks
 const CRITTERS = {
-  cat:   { fur:'#F7B56E', ear:'tri', shirt:'#7DB6EA', inner:'#F6C2BA' },
-  bear:  { fur:'#BE8B5C', ear:'round', shirt:'#EC8A72', inner:'#EBCB9F', muzzle:'#F0DCBA' },
-  bunny: { fur:'#FFFDF8', ear:'long', shirt:'#F3A6C2', inner:'#F7C3D3' },
-  pup:   { fur:'#EBD3A6', ear:'flop', shirt:'#8ACF72', inner:'#BF8D5C', muzzle:'#FFF6E6' },
+  cat:     { label:'貓', fur:'#F7B56E', ear:'tri', shirt:'#7DB6EA', inner:'#F6C2BA' },
+  bear:    { label:'熊', fur:'#BE8B5C', ear:'round', shirt:'#EC8A72', inner:'#EBCB9F', muzzle:'#F0DCBA' },
+  bunny:   { label:'兔子', fur:'#FFFDF8', ear:'long', shirt:'#F3A6C2', inner:'#F7C3D3' },
+  pup:     { label:'小狗', fur:'#EBD3A6', ear:'flop', shirt:'#8ACF72', inner:'#BF8D5C', muzzle:'#FFF6E6' },
+  panda:   { label:'熊貓', fur:'#FFFFFF', ear:'round', earC:'#3E3A39', shirt:'#9ED2F0', inner:'#3E3A39', patch:'#3E3A39' },
+  penguin: { label:'企鵝', fur:'#4F5B6E', ear:'none', shirt:'#4F5B6E', inner:'#4F5B6E', face:'#FFFFFF', beak:'#F6A13A', belly:'#FFFFFF' },
 };
-function critter(kind, sit) {
-  const c = CRITTERS[kind], o = `${OL};stroke-width:1`;
+const FOLK_DEFAULT = [{ kind:'cat', name:'小橘' }, { kind:'bear', name:'阿熊' }, { kind:'bunny', name:'白白' }, { kind:'pup', name:'豆豆' }, { kind:'penguin', name:'企企' }];
+const ROOFS = [['#E3795E', '#C45F46'], ['#6FA8DC', '#4F86BA'], ['#7CC48A', '#5AA36A'], ['#B49AE0', '#9178C2'], ['#F2C14E', '#D19E2C']];
+function critter(kind, sit, extra = {}) {   // extra: hat ('santa' | 'witch'), umbrella
+  const c = CRITTERS[kind] || CRITTERS.cat, o = `${OL};stroke-width:1`, ec = c.earC || c.fur;
   const ears = {
     tri:`<path d="M-6.6 -19 L-5.6 -26 L-1.6 -21.2Z" style="fill:${c.fur};${o}"/><path d="M6.6 -19 L5.6 -26 L1.6 -21.2Z" style="fill:${c.fur};${o}"/><path d="M-5.4 -21 L-5 -24 L-3.3 -22Z M5.4 -21 L5 -24 L3.3 -22Z" fill="${c.inner}"/>`,
-    round:`<circle cx="-5.4" cy="-21" r="2.9" style="fill:${c.fur};${o}"/><circle cx="5.4" cy="-21" r="2.9" style="fill:${c.fur};${o}"/><circle cx="-5.4" cy="-21" r="1.4" fill="${c.inner}"/><circle cx="5.4" cy="-21" r="1.4" fill="${c.inner}"/>`,
+    round:`<circle cx="-5.4" cy="-21" r="2.9" style="fill:${ec};${o}"/><circle cx="5.4" cy="-21" r="2.9" style="fill:${ec};${o}"/><circle cx="-5.4" cy="-21" r="1.4" fill="${c.inner}"/><circle cx="5.4" cy="-21" r="1.4" fill="${c.inner}"/>`,
     long:`<ellipse cx="-2.8" cy="-26.5" rx="2.1" ry="5.8" transform="rotate(-10 -2.8 -26.5)" style="fill:${c.fur};${o}"/><ellipse cx="2.8" cy="-26.5" rx="2.1" ry="5.8" transform="rotate(10 2.8 -26.5)" style="fill:${c.fur};${o}"/><ellipse cx="-2.8" cy="-26" rx=".9" ry="3.8" transform="rotate(-10 -2.8 -26)" fill="${c.inner}"/><ellipse cx="2.8" cy="-26" rx=".9" ry="3.8" transform="rotate(10 2.8 -26)" fill="${c.inner}"/>`,
-    flop:'',
-  }[c.ear];
+  }[c.ear] || '';
   const flops = c.ear === 'flop' ? `<ellipse cx="-6.8" cy="-15.5" rx="2.5" ry="4.6" transform="rotate(14 -6.8 -15.5)" style="fill:${c.inner};${o}"/><ellipse cx="6.8" cy="-15.5" rx="2.5" ry="4.6" transform="rotate(-14 6.8 -15.5)" style="fill:${c.inner};${o}"/>` : '';
+  const feet = c.beak ? '#F6A13A' : c.fur;
   const body = sit
-    ? `<ellipse cx="-2.6" cy="-.6" rx="2.2" ry="1.5" style="fill:${c.fur};${o}"/><ellipse cx="2.6" cy="-.6" rx="2.2" ry="1.5" style="fill:${c.fur};${o}"/><rect x="-5" y="-8" width="10" height="7" rx="3" style="fill:${c.shirt};${o}"/>`
-    : `<ellipse cx="-2.4" cy="-.8" rx="2" ry="1.4" style="fill:${c.fur};${o}"/><ellipse cx="2.4" cy="-.8" rx="2" ry="1.4" style="fill:${c.fur};${o}"/><rect x="-5" y="-9.5" width="10" height="8.5" rx="3" style="fill:${c.shirt};${o}"/>`;
-  return `${ears}${body}
+    ? `<ellipse cx="-2.6" cy="-.6" rx="2.2" ry="1.5" style="fill:${feet};${o}"/><ellipse cx="2.6" cy="-.6" rx="2.2" ry="1.5" style="fill:${feet};${o}"/><rect x="-5" y="-8" width="10" height="7" rx="3" style="fill:${c.shirt};${o}"/>`
+    : `<ellipse cx="-2.4" cy="-.8" rx="2" ry="1.4" style="fill:${feet};${o}"/><ellipse cx="2.4" cy="-.8" rx="2" ry="1.4" style="fill:${feet};${o}"/><rect x="-5" y="-9.5" width="10" height="8.5" rx="3" style="fill:${c.shirt};${o}"/>`;
+  const belly = c.belly ? `<ellipse cy="${sit ? -4.4 : -5.2}" rx="3" ry="${sit ? 2.6 : 3.2}" fill="${c.belly}"/>` : '';
+  const eyeC = c.patch ? '#fff' : '#3B2A1E';
+  const hat = extra.hat === 'santa' ? `<path d="M-6.4 -19.6 Q0 -23.6 6.4 -19.6 L2.4 -30 Z" style="fill:#E3564A;${o}"/><ellipse cy="-20" rx="7" ry="1.9" style="fill:#fff;${o}"/><circle cx="2.6" cy="-30" r="1.7" style="fill:#fff;${o}"/>`
+    : extra.hat === 'witch' ? `<ellipse cy="-20.6" rx="8.6" ry="2" style="fill:#7E5BB5;${o}"/><path d="M-4.6 -21 L1.4 -32.5 L4.6 -21Z" style="fill:#7E5BB5;${o}"/><path d="M-4.2 -22.4 H4.2" style="stroke:#F2C14E;stroke-width:1.2"/>` : '';
+  const umbrella = extra.umbrella ? `<path d="M2 -28 L5.6 -6 q.4 2 -1.4 2.2" style="fill:none;stroke:var(--ol);stroke-width:.9;stroke-linecap:round"/>
+    <path d="M-10 -27 Q2 -41 14 -27 Q11 -29.4 8 -27 Q5 -29.4 2 -27 Q-1 -29.4 -4 -27 Q-7 -29.4 -10 -27Z" style="fill:${c.shirt === '#4F5B6E' ? '#F3A6C2' : c.shirt};${o}"/>` : '';
+  return `${ears}${body}${belly}
     <ellipse cx="-5.6" cy="-6" rx="1.7" ry="2.5" style="fill:${c.fur};${o}"/><ellipse cx="5.6" cy="-6" rx="1.7" ry="2.5" style="fill:${c.fur};${o}"/>
     ${flops}<circle cy="-15" r="7.3" style="fill:${c.fur};${o}"/>
+    ${c.face ? `<ellipse cy="-13.8" rx="5.4" ry="4.8" fill="${c.face}"/>` : ''}
+    ${c.patch ? `<ellipse cx="-2.8" cy="-15" rx="2" ry="2.5" transform="rotate(-20 -2.8 -15)" fill="${c.patch}"/><ellipse cx="2.8" cy="-15" rx="2" ry="2.5" transform="rotate(20 2.8 -15)" fill="${c.patch}"/>` : ''}
     ${c.muzzle ? `<ellipse cy="-12.6" rx="3.2" ry="2.3" fill="${c.muzzle}"/>` : ''}
-    <g class="eye"><ellipse cx="-2.7" cy="-15.4" rx=".95" ry="1.25" fill="#3B2A1E"/><ellipse cx="2.7" cy="-15.4" rx=".95" ry="1.25" fill="#3B2A1E"/></g>
-    <circle cx="-2.4" cy="-15.9" r=".35" fill="#fff"/><circle cx="3" cy="-15.9" r=".35" fill="#fff"/>
+    <g class="eye"><ellipse cx="-2.7" cy="-15.4" rx=".95" ry="1.25" fill="${eyeC}"/><ellipse cx="2.7" cy="-15.4" rx=".95" ry="1.25" fill="${eyeC}"/></g>
+    ${c.patch ? '' : '<circle cx="-2.4" cy="-15.9" r=".35" fill="#fff"/><circle cx="3" cy="-15.9" r=".35" fill="#fff"/>'}
     <ellipse cx="-4.7" cy="-12.6" rx="1.5" ry=".9" fill="#F59AA8" opacity=".75"/><ellipse cx="4.7" cy="-12.6" rx="1.5" ry=".9" fill="#F59AA8" opacity=".75"/>
-    <ellipse cy="-13.5" rx=".9" ry=".6" fill="#6B4632"/><path d="M-1.2 -12.2 q.6 .7 1.2 0 q.6 .7 1.2 0" style="fill:none;stroke:#6B4632;stroke-width:.5;stroke-linecap:round"/>`;
+    ${c.beak ? `<path d="M-1.6 -13.4 H1.6 L0 -11.4Z" style="fill:${c.beak};${o};stroke-width:.6"/>`
+      : `<ellipse cy="-13.5" rx=".9" ry=".6" fill="#6B4632"/><path d="M-1.2 -12.2 q.6 .7 1.2 0 q.6 .7 1.2 0" style="fill:none;stroke:#6B4632;stroke-width:.5;stroke-linecap:round"/>`}
+    ${hat}${umbrella}`;
 }
 const butterfly = (x, y, c, d) => `<g transform="translate(${x} ${y})"><g class="float" style="animation-duration:5s;animation-delay:${d}s"><g class="flap" style="animation-delay:${d}s">
   <ellipse cx="-1.9" cy="-.4" rx="2.1" ry="1.6" fill="${c}"/><ellipse cx="1.9" cy="-.4" rx="2.1" ry="1.6" fill="${c}"/><ellipse cx="-1.4" cy="1.2" rx="1.3" ry="1" fill="${c}"/><ellipse cx="1.4" cy="1.2" rx="1.3" ry="1" fill="${c}"/></g>
@@ -733,14 +813,10 @@ const butterfly = (x, y, c, d) => `<g transform="translate(${x} ${y})"><g class=
 function palm(x, y, flip) {
   return `<g transform="translate(${x} ${y}) scale(${flip ? -1 : 1} 1)">${shadow(8, 2.6)}
     <path d="M-1.6 0 C-1 -10 2 -20 7 -28 L9.6 -27 C5 -19 2.6 -10 2.2 0Z" style="fill:var(--trunk);${OL}"/>
-    <g style="fill:var(--tree);${OL}"><path d="M8 -28 C2 -34 -8 -33 -12 -26 C-5 -30 2 -29 8 -28Z"/><path d="M8 -28 C14 -35 23 -33 26 -25 C20 -30 14 -30 8 -28Z"/>
+    <g style="fill:var(--tree-pal, var(--pine));${OL}"><path d="M8 -28 C2 -34 -8 -33 -12 -26 C-5 -30 2 -29 8 -28Z"/><path d="M8 -28 C14 -35 23 -33 26 -25 C20 -30 14 -30 8 -28Z"/>
       <path d="M8 -28 C5 -37 10 -42 16 -41 C12 -38 10 -33 8 -28Z"/><path d="M8 -28 C1 -27 -4 -21 -4 -15 C0 -21 4 -25 8 -28Z"/><path d="M8 -28 C15 -26 20 -20 20 -14 C15 -20 12 -24 8 -28Z"/></g>
     <circle cx="6" cy="-25.5" r="2" style="fill:var(--door);${OL};stroke-width:.8"/><circle cx="9.5" cy="-25" r="2" style="fill:var(--door);${OL};stroke-width:.8"/></g>`;
 }
-const flower = (x, y, c) => `<g transform="translate(${x} ${y})"><path d="M0 0 V-4" style="stroke:var(--grass-lo);stroke-width:1.2;stroke-linecap:round"/>${
-  [0, 72, 144, 216, 288].map(a => `<circle cx="${(Math.sin(a * Math.PI / 180) * 2.3).toFixed(2)}" cy="${(-5.5 - Math.cos(a * Math.PI / 180) * 2.3).toFixed(2)}" r="1.8" style="fill:${c};stroke:var(--ol);stroke-width:.4"/>`).join('')
-  }<circle cy="-5.5" r="1.2" style="fill:#FFD86B"/></g>`;
-const sparkle = (x, y, r, d) => `<path class="blink" style="animation-delay:${d}s" d="M${x} ${y - r} L${x + r * .28} ${y - r * .28} L${x + r} ${y} L${x + r * .28} ${y + r * .28} L${x} ${y + r} L${x - r * .28} ${y + r * .28} L${x - r} ${y} L${x - r * .28} ${y - r * .28}Z" fill="#fff"/>`;
 
 function pond(cash, x, y) {   // the 蓄水池: the water shrinks toward the middle as cash runs low
   const lvl = waterLevel(cash), f = clamp(lvl, 0, 1), s = Math.max(.08, Math.sqrt(f)).toFixed(3), full = lvl >= 1;
@@ -756,14 +832,15 @@ function pond(cash, x, y) {   // the 蓄水池: the water shrinks toward the mid
     <g class="tag" transform="translate(0 -27)"><rect x="-17" y="-6" width="34" height="12" rx="6"/><text y="2.6">${full ? '滿水位' : pct(f)}</text></g>
   </g></g>`;
 }
-function house(p, loan, x, y, s) {   // the loan is the stone foundation: the more is owed, the higher the house sits on it
+function house(p, loan, x, y, s, d = {}) {   // the loan is the stone foundation; d: roof [color, dark], snow, cny
   const ratio = loan ? clamp(loan.value / Math.max(1, p.value), 0, 1) : 0;
   const fh = loan && loan.value > 0 ? 3 + 17 * ratio : 0;
   const free = !loan || loan.value <= 0;
+  const roof = d.roof || ROOFS[0];
   const win = wx => `<rect x="${wx}" y="-20" width="9" height="9" rx="2" style="fill:var(--window);${OL}"/><path d="M${wx + 4.5} -20 V-11 M${wx} -15.5 H${wx + 9}" style="stroke:var(--ol);stroke-width:.8"/>
     <rect x="${wx - 1}" y="-11" width="11" height="3" rx="1" style="fill:var(--door);${OL};stroke-width:.8"/>
     <circle cx="${wx + 2}" cy="-11.5" r="1.4" style="fill:#F07A8A"/><circle cx="${wx + 5}" cy="-12" r="1.4" style="fill:#FFD86B"/><circle cx="${wx + 8}" cy="-11.5" r="1.4" style="fill:#fff"/>`;
-  return `<g transform="translate(${x} ${y}) scale(${s})" class="obj" data-tap="acc:${p.id}"><g ${growAttr('h' + p.id)}>
+  return `<g transform="translate(${x} ${y}) scale(${s})" class="obj" data-tap="acc:${p.id}" style="--roof:${roof[0]};--roof-dk:${roof[1]}"><g ${growAttr('h' + p.id)}>
     ${shadow(33, 6.5)}
     <g ${ak('fd' + p.id, `scaleY(${(fh / 20).toFixed(3)})`)} class="gw">
       <rect x="-25" y="-20" width="50" height="20" rx="3" style="fill:var(--found);${OL}"/>
@@ -774,9 +851,12 @@ function house(p, loan, x, y, s) {   // the loan is the stone foundation: the mo
       <g class="smoke" style="fill:var(--cloud)"><circle cx="14.5" cy="-52" r="2.4"/><circle cx="14.5" cy="-52" r="2.4"/><circle cx="14.5" cy="-52" r="2.4"/></g>
       <rect x="-23" y="-27" width="46" height="27" rx="3" style="fill:var(--wall);${OL}"/>
       <path d="M-5.5 0 V-11 a5.5 5.5 0 0 1 11 0 V0Z" style="fill:var(--door);${OL}"/><circle cx="3" cy="-5.5" r=".9" style="fill:var(--ol)"/>
+      ${d.cny ? `<rect x="-9.6" y="-12" width="2.6" height="10" rx=".6" style="fill:#E3473C;${OL};stroke-width:.6"/><rect x="7" y="-12" width="2.6" height="10" rx=".6" style="fill:#E3473C;${OL};stroke-width:.6"/>
+        <rect x="-2.4" y="-9.6" width="4.8" height="4.8" transform="rotate(45 0 -7.2)" style="fill:#E3473C;stroke:#F2C14E;stroke-width:.6"/>` : ''}
       ${win(-19)}${win(10)}
       <path d="M-31 -24 Q-32 -29 -27 -31 L-3.5 -47.5 Q0 -50 3.5 -47.5 L27 -31 Q32 -29 31 -24 Q30 -21.5 27 -22.5 H-27 Q-30 -21.5 -31 -24Z" style="fill:var(--roof);${OL}"/>
       <path d="M-24 -29 L-5 -42.5" style="stroke:#fff;stroke-width:2.4;stroke-linecap:round;opacity:.45"/>
+      ${d.snow ? snowCap('M-27 -31 L-3.5 -47.5 Q0 -50 3.5 -47.5 L27 -31 Q22 -28.5 18 -31.5 Q12 -28 7 -33 Q2 -29 -3 -33.5 Q-9 -28.5 -14 -32 Q-20 -28 -27 -31Z') : ''}
       <circle cy="-33" r="3.6" style="fill:var(--window);${OL};stroke-width:1"/>
       ${free ? `<path d="M0 -49 V-62" style="stroke:var(--ol);stroke-width:1.2"/><path d="M0 -62 L10 -58.5 L0 -55Z" style="fill:var(--emerald);${OL};stroke-width:.8"/>` : ''}
     </g>
@@ -819,9 +899,110 @@ function boulder(id, value, tap, x, y) {   // debts: rocks sized by what is owed
     <path d="M${n(-.55)} ${n(-.7)} C${n(-.3)} ${n(-.95)} ${n(.05)} ${n(-.98)} ${n(.3)} ${n(-.9)}" style="fill:none;stroke:var(--rock-hi);stroke-width:2;stroke-linecap:round"/>
     <path d="M${n(.35)} ${n(-.38)} l${n(.15)} ${n(.15)} l${n(-.05)} ${n(.15)}" style="fill:none;stroke:var(--ol);stroke-width:.8;opacity:.6"/></g></g>`;
 }
+
+/* town buildings that open as net worth passes each milestone */
+const MILESTONES = [[1e6, 'cafe', '咖啡店'], [2e6, 'flower', '花店'], [3e6, 'bakery', '麵包店'], [5e6, 'museum', '博物館'],
+  [8e6, 'fountain', '噴水池'], [12e6, 'clock', '鐘塔'], [2e7, 'market', '市集'], [3e7, 'wheel', '摩天輪']];
+function townBuilding(kind) {
+  if (kind === 'museum') return `${shadow(19, 4)}<rect x="-18" y="-3" width="36" height="3" style="fill:var(--stone);${OL};stroke-width:1"/>
+    <rect x="-15" y="-18" width="30" height="15" style="fill:#F6EEDC;${OL}"/>
+    ${[-11, -4, 3, 10].map(cx => `<rect x="${cx}" y="-17" width="2.6" height="13.5" style="fill:#fff;stroke:var(--ol);stroke-width:.6"/>`).join('')}
+    <path d="M-18 -18 L0 -28 L18 -18Z" style="fill:#E9DCC0;${OL}"/><circle cy="-21.5" r="2.2" style="fill:#F2C14E;${OL};stroke-width:.7"/>`;
+  if (kind === 'fountain') return `${shadow(16, 4)}<ellipse cy="-3" rx="15" ry="5.5" style="fill:var(--stone);${OL}"/><ellipse cy="-4" rx="12" ry="3.8" style="fill:var(--water)"/>
+    <rect x="-2" y="-14" width="4" height="10" style="fill:var(--stone);${OL};stroke-width:.9"/><ellipse cy="-14" rx="6" ry="2" style="fill:var(--stone);${OL};stroke-width:.9"/>
+    <path class="jet" d="M0 -15 C-1 -22 -5 -24 -8 -18 M0 -15 C1 -22 5 -24 8 -18 M0 -15 V-25" style="fill:none;stroke:var(--water);stroke-width:1.6;stroke-linecap:round"/>${sparkle(-9, -8, 1.8, .3)}`;
+  if (kind === 'clock') return `${shadow(9, 3)}<rect x="-6" y="-38" width="12" height="38" rx="1.5" style="fill:#F6EEDC;${OL}"/>
+    <circle cy="-28" r="4.6" style="fill:#fff;${OL};stroke-width:1"/><path d="M0 -28 V-31 M0 -28 L2.2 -27" style="stroke:var(--ol);stroke-width:.8;stroke-linecap:round"/>
+    <path d="M-8 -38 L0 -50 L8 -38Z" style="fill:var(--lh-band);${OL}"/><path d="M-2.4 0 V-6 a2.4 2.4 0 0 1 4.8 0 V0Z" style="fill:var(--door);${OL};stroke-width:.8"/>`;
+  if (kind === 'market') return `${shadow(16, 3.6)}<rect x="-14" y="-9" width="28" height="9" rx="1.5" style="fill:var(--log);${OL}"/>
+    ${[-9, -1, 7].map((cx, k) => `<circle cx="${cx}" cy="-10.5" r="2.4" style="fill:${['#F48C4E', '#E3564A', '#C5DE6A'][k]};${OL};stroke-width:.6"/><circle cx="${cx + 3}" cy="-10.5" r="2.2" style="fill:${['#F2C14E', '#F48C4E', '#E3564A'][k]};${OL};stroke-width:.6"/>`).join('')}
+    <path d="M-13 -9 V-24 M13 -9 V-24" style="stroke:var(--trunk);stroke-width:1.6"/>
+    <path d="M-16 -24 H16 V-20 Q13 -17.5 10.6 -20 Q8 -17.5 5.3 -20 Q2.7 -17.5 0 -20 Q-2.7 -17.5 -5.3 -20 Q-8 -17.5 -10.6 -20 Q-13 -17.5 -16 -20Z" style="fill:#5EB8E0;${OL}"/>
+    <path d="M-10.6 -24 V-20 M0 -24 V-20 M10.6 -24 V-20" style="stroke:#fff;stroke-width:3.2;opacity:.85"/>`;
+  if (kind === 'wheel') {
+    const cabins = Array.from({ length:8 }, (_, k) => { const a = k * Math.PI / 4; return `<path d="M0 0 L${(Math.cos(a) * 17).toFixed(1)} ${(Math.sin(a) * 17).toFixed(1)}" style="stroke:var(--ol);stroke-width:.7"/><circle cx="${(Math.cos(a) * 17).toFixed(1)}" cy="${(Math.sin(a) * 17).toFixed(1)}" r="2.6" style="fill:${['#E3564A', '#F2C14E', '#5EB8E0', '#7CC48A'][k % 4]};${OL};stroke-width:.7"/>`; }).join('');
+    return `${shadow(14, 3.6)}<path d="M-10 0 L0 -24 L10 0" style="fill:none;stroke:var(--ol);stroke-width:2.4;stroke-linejoin:round"/><path d="M-10 0 L0 -24 L10 0" style="fill:none;stroke:#fff;stroke-width:1.2"/>
+      <g transform="translate(0 -24)"><g class="spin" style="animation-duration:40s"><circle r="17" style="fill:none;stroke:var(--ol);stroke-width:2.4"/><circle r="17" style="fill:none;stroke:#FFF4DF;stroke-width:1.2"/>${cabins}</g><circle r="2" style="fill:var(--hub)"/></g>`;
+  }
+  const awn = { cafe:'#9A6B45', flower:'#F07A8A', bakery:'#F2B24C' }[kind] || '#5EB8E0';
+  const icon = { cafe:'<path d="M-2.6 -27.5 h5 v3 a2.5 2.5 0 0 1 -5 0Z M2.4 -26.8 a1.5 1.5 0 0 1 0 2.8" style="fill:#fff;stroke:var(--ol);stroke-width:.6"/>',
+    flower:'<circle cx="0" cy="-26" r="2.2" fill="#F07A8A"/><circle cx="0" cy="-26" r=".9" fill="#FFD86B"/>',
+    bakery:'<path d="M-3.4 -24.5 Q0 -29.5 3.4 -24.5Z" style="fill:#E8A75A;stroke:var(--ol);stroke-width:.6"/>' }[kind] || '';
+  return `${shadow(15, 3.6)}<rect x="-13" y="-18" width="26" height="18" rx="2" style="fill:var(--wall);${OL}"/>
+    <rect x="-9.5" y="-11" width="8" height="7" rx="1.2" style="fill:var(--window);${OL};stroke-width:.9"/>
+    <path d="M2.6 0 V-8.6 a3.2 3.2 0 0 1 6.4 0 V0Z" style="fill:var(--door);${OL};stroke-width:.9"/>
+    <path d="M-15 -18 L-11 -23 H11 L15 -18Z" style="fill:#C9A27A;${OL}"/>
+    <path d="M-15 -18 H15 V-14 Q12.5 -11.6 10 -14 Q7.5 -11.6 5 -14 Q2.5 -11.6 0 -14 Q-2.5 -11.6 -5 -14 Q-7.5 -11.6 -10 -14 Q-12.5 -11.6 -15 -14Z" style="fill:${awn};${OL}"/>
+    <path d="M-10 -18 V-14 M0 -18 V-14 M10 -18 V-14" style="stroke:#fff;stroke-width:3;opacity:.8"/>
+    <rect x="-5.5" y="-31" width="11" height="8.5" rx="2" style="fill:#fff;${OL};stroke-width:.8"/>${icon}`;
+}
+function keepsake(k) {   // dream statues and record-streak trophies
+  const ped = `${shadow(8, 2.4)}<rect x="-6" y="-5" width="12" height="5" rx="1" style="fill:var(--stone);${OL};stroke-width:.9"/>`;
+  if (k.kind === 'dream') return `${ped}<path d="M0 -21 L2.2 -15.8 L7.8 -15.4 L3.6 -11.8 L5 -6.4 L0 -9.3 L-5 -6.4 L-3.6 -11.8 L-7.8 -15.4 L-2.2 -15.8Z" style="fill:${k.color || '#F2C14E'};${OL};stroke-width:1"/>
+    <path d="M-1.6 -16 L-.6 -18" style="stroke:#fff;stroke-width:1;stroke-linecap:round;opacity:.8"/>`;
+  return `${ped}<path d="M-5 -16 H5 V-13 Q5 -8.6 0 -8 Q-5 -8.6 -5 -13Z" style="fill:#F2C14E;${OL};stroke-width:1"/>
+    <path d="M-5 -14.6 Q-8 -14.6 -7.2 -11.6 Q-6.4 -10.4 -4.4 -10.8 M5 -14.6 Q8 -14.6 7.2 -11.6 Q6.4 -10.4 4.4 -10.8" style="fill:none;stroke:var(--ol);stroke-width:.9"/>
+    <rect x="-1.2" y="-8.2" width="2.4" height="3.2" style="fill:#E0A92E;stroke:var(--ol);stroke-width:.7"/><text y="-11.4" style="font:800 4.4px var(--font-num);text-anchor:middle;fill:#8A5A12">${k.n}</text>`;
+}
+const beehive = n => `${shadow(7, 2)}<path d="M0 0 V-9" style="stroke:var(--trunk);stroke-width:2"/>
+  <path d="M-6 -10 Q-7 -16 0 -19 Q7 -16 6 -10Z" style="fill:#F2C14E;${OL}"/><path d="M-6 -12.6 H6 M-5.2 -15.6 H5.2" style="stroke:#C9922A;stroke-width:.9"/>
+  <ellipse cy="-11.4" rx="1.4" ry="1" fill="#6B4632"/>
+  ${Array.from({ length:n }, (_, k) => `<g transform="translate(${[-8, 8, 2][k]} ${[-20, -18, -25][k]})"><g class="buzz" style="animation-delay:-${k * .8}s">
+    <ellipse rx="1.8" ry="1.3" fill="#FFD23F" stroke="var(--ol)" stroke-width=".5"/><path d="M-.4 -1.2 V1.2" stroke="var(--ol)" stroke-width=".6"/><ellipse cx=".3" cy="-1.6" rx="1" ry=".7" fill="#fff" opacity=".85"/></g></g>`).join('')}`;
+const fish = (x, y, d, c) => `<g transform="translate(${x} ${y})"><g class="leap" style="animation-delay:${d}s"><path d="M-4 0 Q0 -3.2 4 0 Q0 3.2 -4 0Z M4 0 L7 -2.4 V2.4Z" style="fill:${c};stroke:var(--ol);stroke-width:.6"/><circle cx="-2" cy="-.4" r=".5" fill="var(--ol)"/></g>
+  <ellipse class="leap-splash" style="animation-delay:${d}s" cx="10" cy="4" rx="3" ry="1" fill="none" stroke="#fff" stroke-width=".8"/></g>`;
+function fireworks(loop) {
+  return [[64, 24, '#F59AB0'], [150, 16, '#FFD86B'], [236, 28, '#7FD3F7']].map(([x, y, c], k) => `<g transform="translate(${x} ${y})"><g class="burst" style="animation-delay:${k * .55}s;${loop ? 'animation-iteration-count:infinite' : ''}">
+    ${Array.from({ length:10 }, (_, j) => { const a = j * Math.PI / 5; return `<path d="M${(Math.cos(a) * 4).toFixed(1)} ${(Math.sin(a) * 4).toFixed(1)} L${(Math.cos(a) * 11).toFixed(1)} ${(Math.sin(a) * 11).toFixed(1)}" style="stroke:${c};stroke-width:1.6;stroke-linecap:round"/><circle cx="${(Math.cos(a) * 13).toFixed(1)}" cy="${(Math.sin(a) * 13).toFixed(1)}" r="1" fill="${c}"/>`; }).join('')}</g></g>`).join('');
+}
+function fallers(kind) {   // petals, leaves or snow drifting down over the island
+  const shape = { spring:'<ellipse rx="1.8" ry="1.1" fill="#F7B7C8"/>', autumn:'<path d="M0 -2 Q2.4 0 0 2.4 Q-2.4 0 0 -2Z" fill="#EE8B3A" stroke="#C8622A" stroke-width=".4"/>', winter:'<circle r="1.5" fill="#fff" stroke="#DCE8F0" stroke-width=".4"/>' }[kind];
+  if (!shape) return '';
+  return Array.from({ length:14 }, (_, k) => `<g transform="translate(${(k * 26 + (k % 3) * 7) % 360} 0)"><g class="fall" style="animation-duration:${(7 + (k % 4) * 1.6).toFixed(1)}s;animation-delay:-${(k * 1.3).toFixed(1)}s">${shape}</g></g>`).join('');
+}
+
+/* what the island is feeling today: season, holiday, time of day, budget weather, habits */
+const LUNAR_NEW_YEAR = ['2026-02-17', '2027-02-06', '2028-01-26', '2029-02-13', '2030-02-03', '2031-01-23', '2032-02-11'];
+const MOON_FESTIVAL = ['2026-09-25', '2027-09-15', '2028-10-03', '2029-09-22', '2030-09-12', '2031-10-01', '2032-09-19'];
+function recordStreak() {   // days in a row with at least one record, ending today (or yesterday, if today has none yet)
+  const days = new Set(S.txs.map(x => x.date)), d = new Date();
+  if (!days.has(ymd(d))) d.setDate(d.getDate() - 1);
+  let n = 0; while (days.has(ymd(d))) { n++; d.setDate(d.getDate() - 1); }
+  d.setDate(d.getDate() + 1);
+  return { n, start:ymd(d) };
+}
+function islandMood() {
+  const now = new Date(), streak = recordStreak(), mo = now.getMonth() + 1, day = now.getDate(), h = now.getHours(), td = new Date(today());
+  const near = (list, before, after) => list.some(s => { const diff = Math.round((td - new Date(s)) / 864e5); return diff >= -before && diff <= after; });
+  const season = mo >= 3 && mo <= 5 ? 'spring' : mo >= 6 && mo <= 8 ? 'summer' : mo >= 9 && mo <= 11 ? 'autumn' : 'winter';
+  const holiday = near(LUNAR_NEW_YEAR, 7, 15) ? 'cny' : near(MOON_FESTIVAL, 5, 2) ? 'moon' : (mo === 12 && day === 31) || (mo === 1 && day === 1) ? 'newyear'
+    : mo === 12 && day <= 26 ? 'xmas' : mo === 10 && day >= 20 ? 'halloween' : '';
+  const m = monthStats(), left = m.budget ? m.left / m.budget : 1;
+  const weather = left < 0 ? 'rain' : left < .15 ? 'cloudy' : left < .4 ? 'fair' : 'sunny';
+  let inc = 0, exp = 0;
+  for (let k = 0; k < 3; k++) { const s = monthStats(shiftYm(thisYm(), -k)); inc += s.inc; exp += s.exp; }
+  const year = String(now.getFullYear());
+  const passive = S.txs.filter(x => x.kind === 'income' && /利息|股息|被動/.test(x.item) && x.date.startsWith(year)).reduce((s, x) => s + x.amount, 0);
+  return { season, holiday, dusk:h >= 17 && h < 20, weather, streak:streak.n, streakStart:streak.start, saveRate:inc > 0 ? (inc - exp) / inc : 0, passive };
+}
+function syncKeepsakes(mood) {   // finished dreams and every 30 days of record streak leave something on the island for good
+  S.keepsakes = S.keepsakes || [];
+  const add = k => { if (!S.keepsakes.some(x => x.id === k.id)) { S.keepsakes.push({ ...k, date:today() }); return 1; } return 0; };
+  let n = 0;
+  S.goals.forEach(g => { if (g.target && g.saved >= g.target) n += add({ id:'dream:' + g.id, kind:'dream', name:g.name, color:g.color }); });
+  for (let d = 30; d <= mood.streak; d += 30) n += add({ id:`streak:${mood.streakStart}:${d}`, kind:'streak', n:d });
+  return n > 0;
+}
+let fwAt = 0;   // fireworks play once a day per device (and keep playing for a few seconds of re-renders)
+const fireworksSeen = () => { if (fwAt) return Date.now() - fwAt > 15000;
+  try { if (localStorage.getItem('wealth-island-fw') === today()) return true; localStorage.setItem('wealth-island-fw', today()); } catch (e) {}
+  fwAt = Date.now(); return false; };
+const folkList = () => (S.settings.folk && S.settings.folk.length === 5 ? S.settings.folk : FOLK_DEFAULT);
+const roofPair = () => ROOFS.find(r => r[0] === S.settings.roof) || ROOFS[0];
+
 function islandSVG() {
   newSeen = new Set();
-  const t = totals();
+  const t = totals(), mood = islandMood();
   const hasCash = byType('cash').length > 0;
   const inv = byType('invest').filter(a => a.value > 0).sort((a, b) => b.value - a.value).slice(0, 4);
   const props = byType('property').sort((a, b) => b.value - a.value).slice(0, 2);
@@ -830,23 +1011,49 @@ function islandSVG() {
   const goals = S.goals.slice(0, 3);
   const empty = !S.accounts.length && !S.goals.length;
   const stage = t.net < 1e5 ? 0 : t.net < 1e6 ? 1 : t.net < 5e6 ? 2 : 3;   // same steps as stageName
+  const wet = mood.weather === 'rain', grey = wet || mood.weather === 'cloudy', snow = mood.season === 'winter';
+
+  // sky colours: dusk and grey weather tint the scene, the season recolours the round trees
+  const tint = [`--roof:${roofPair()[0]}`, `--roof-dk:${roofPair()[1]}`];   // the chosen roof colour also caps the windmills
+  if (grey) tint.push('--sky-top:#AFC3D1', '--sky-bot:#DCE6EC', '--sea-top:#7DB9CC', '--sea-bot:#5B98B5', '--cloud:#F1F4F7', '--cloud-sh:#D3DCE3');
+  if (mood.dusk) tint.push(grey ? '--sky-top:#C9AFB8' : '--sky-top:#FFB892', grey ? '--sky-bot:#EAD9D6' : '--sky-bot:#FFE4CC', '--sun:#FF9E6B', '--sun-glow:rgba(255,158,107,.3)', '--window:#FFD86B', '--sea-top:#7FC0D4');
+  if (mood.season === 'spring') tint.push('--tree:#F7B7C8', '--tree-dk:#E58FA8', '--tree-hi:#FFDCE6');
+  if (mood.season === 'autumn') tint.push('--tree:#F2A14A', '--tree-dk:#D9732E', '--tree-hi:#FFCB72');
+  if (snow) tint.push('--grass:#A9DB92', '--grass-hi:#C8EBB5', '--tree:#6BB86A', '--tree-pal:#5DA86B');
 
   const GRASS = 'M30 150 C26 118 70 96 120 94 C150 86 200 84 240 92 C300 96 338 116 334 150 C340 182 300 204 240 206 C200 214 150 212 112 206 C62 204 32 184 30 150Z';
   const around = (sx, sy, dy) => `transform="translate(180 ${150 + dy}) scale(${sx} ${sy}) translate(-180 -150)"`;
   const cloud = (y, s, dur, delay) => `<g class="cloud" style="animation-duration:${dur}s;animation-delay:${delay}s"><g transform="translate(0 ${y}) scale(${s})">
     <path d="M-24 5 C-31 5 -31 -4 -23 -4 C-24 -12 -13 -16 -7 -10 C-5 -19 10 -19 12 -9 C16 -13 25 -10 23 -3 C30 -3 30 5 23 5Z" style="fill:var(--cloud)"/>
     <path d="M-22 4 C-10 6 10 6 22 4" style="fill:none;stroke:var(--cloud-sh);stroke-width:2.4;stroke-linecap:round"/></g></g>`;
+  const still = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-24 5 C-31 5 -31 -4 -23 -4 C-24 -12 -13 -16 -7 -10 C-5 -19 10 -19 12 -9 C16 -13 25 -10 23 -3 C30 -3 30 5 23 5Z" style="fill:var(--cloud);stroke:var(--cloud-sh);stroke-width:1.2"/></g>`;
+  const rainbow = mood.weather === 'sunny' && !mood.dusk ? `<g style="fill:none;opacity:.5;stroke-width:3">${['#F59AA8', '#FFC87A', '#FFE48A', '#A9E08A', '#8FD0F2', '#B9A4EC']
+    .map((c, k) => `<path d="M${16 + k * 3} 60 A${62 - k * 3} ${48 - k * 3} 0 0 1 ${140 - k * 3} 60" stroke="${c}"/>`).join('')}</g>` : '';
+  const sky = `${rainbow}
+    ${mood.holiday === 'moon' ? `<circle cx="318" cy="28" r="22" fill="#FFF3C4" opacity=".45"/><circle cx="318" cy="28" r="13" style="fill:#FFF3C4;${OL}"/>
+      <circle cx="313" cy="24" r="2.4" fill="#F2E3A6"/><circle cx="322" cy="32" r="1.8" fill="#F2E3A6"/><circle cx="321" cy="23" r="1.2" fill="#F2E3A6"/>`
+      : `<circle cx="318" cy="${mood.dusk ? 38 : 28}" r="22" style="fill:var(--sun-glow)"/><circle cx="318" cy="${mood.dusk ? 38 : 28}" r="13" style="fill:var(--sun);${OL}"/>`}
+    ${grey ? (mood.holiday === 'moon' ? still(246, 22, 1) + still(170, 30, .9) : still(312, 30, 1.25) + still(276, 18, .9) + still(170, 28, 1.1)) : ''}
+    ${cloud(22, .9, 90, -20)}${cloud(42, .7, 120, -85)}${cloud(14, .55, 140, -40)}
+    ${wet ? '' : [[0, 16, 70, -10], [0, 26, 85, -50]].map(([x, y, dur, d]) => `<g class="cloud" style="animation-duration:${dur}s;animation-delay:${d}s">
+      <path d="M${x} ${y} q2.5 -2.6 5 0 q2.5 -2.6 5 0" style="fill:none;stroke:var(--ol);stroke-width:1.1;stroke-linecap:round"/></g>`).join('')}`;
   const ripples = [[40, 72], [118, 66], [292, 68], [346, 94], [14, 110], [350, 146], [80, 244], [334, 238], [196, 246]]
     .map(([x, y], i) => `<path class="sway" style="animation-delay:-${(i * .7).toFixed(1)}s" d="M${x - 5} ${y} q2.5 -2.4 5 0 t5 0" fill="none" stroke="var(--foam)" stroke-width="1.3" stroke-linecap="round"/>`).join('');
-  const birds = [[0, 16, 70, -10], [0, 26, 85, -50]].map(([x, y, dur, d]) => `<g class="cloud" style="animation-duration:${dur}s;animation-delay:${d}s">
-    <path d="M${x} ${y} q2.5 -2.6 5 0 q2.5 -2.6 5 0" style="fill:none;stroke:var(--ol);stroke-width:1.1;stroke-linecap:round"/></g>`).join('');
   const far = `<path d="M-10 60 C6 40 34 34 62 44 C80 50 94 55 104 60Z" style="fill:var(--hill-far)"/>
     <g style="fill:var(--hill-tree)"><path d="M26 46 l4 -9 l4 9Z M38 44 l3.5 -8 l3.5 8Z M48 47 l3 -7 l3 7Z M16 50 l3 -7 l3 7Z"/></g>
+    ${snow ? '<path d="M18 44 C24 37 34 35 44 38 C36 39 28 41 18 44Z" fill="#fff" opacity=".9"/>' : ''}
     <path d="M292 60 C304 49 322 47 340 60Z" style="fill:var(--hill-far)"/><path d="M312 52 l3 -7 l3 7Z" style="fill:var(--hill-tree)"/>`;
   const boat = `<g transform="translate(34 236)"><g class="sway" style="animation-duration:3.2s">
     <path d="M-12 0 H12 L8 5.5 H-8Z" style="fill:var(--wall);${OL}"/><path d="M-12 0 H12" style="stroke:var(--coral);stroke-width:1.6"/>
     <path d="M0 0 V-22" style="stroke:var(--ol);stroke-width:1.2"/><path d="M1.2 -2.5 V-21 L12 -3.5Z" style="fill:#fff;${OL};stroke-width:1"/>
     <path d="M-1.2 -2.5 V-17 L-9 -3.5Z" style="fill:var(--sky);${OL};stroke-width:1"/><path d="M0 -22 L5 -20.5 L0 -19Z" fill="var(--coral)"/></g></g>`;
+  const parasol = mood.season === 'summer' && !wet ? `<g transform="translate(66 224)"><path d="M-7 1 H9 L7 4 H-9Z" style="fill:#7FC8F0;${OL};stroke-width:.8"/><path d="M2 2 L-1 -16" style="stroke:var(--ol);stroke-width:1"/>
+    <path d="M-12 -14 Q-1 -24 10 -16 Q7 -17 5 -15.6 Q2 -18 -1 -16 Q-4 -17.6 -6.6 -15.4 Q-9 -16.4 -12 -14Z" style="fill:#F07A8A;${OL};stroke-width:.9"/><path d="M-1 -20.6 L-3 -15.4 M5 -18.6 L3.6 -15.8" style="stroke:#fff;stroke-width:1.6"/></g>` : '';
+
+  // savings rate → fish in the sea, and an islander fishing off the pier once it's 10% or more
+  const nFish = clamp(Math.round(mood.saveRate * 10), 0, 6);
+  const fishes = [[40, 92], [330, 98], [16, 140], [352, 176], [118, 240], [246, 246]].slice(0, empty ? 0 : nFish)
+    .map(([x, y], k) => fish(x, y, (k * 1.3).toFixed(1), ['#F48C4E', '#7FD3F7', '#F2C14E'][k % 3])).join('');
 
   // dirt paths from the campfire plaza to everything on the island
   const hX = props.length === 2 ? [[150, 122], [216, 128]] : [[184, 128]];
@@ -866,36 +1073,65 @@ function islandSVG() {
   // everything that stands on the island, drawn back to front
   const items = [];
   const put = (y, svg) => items.push([y, svg]);
-  const nTrees = t.net >= 1e5 ? clamp(Math.floor(Math.log10(t.net / 1e5) * 2) + 1, 1, 7) : 0;
-  [[120, 100, .95, 'r'], [244, 98, .9, 'p'], [56, 126, .82, 'p'], [306, 118, .82, 'r'], [86, 194, .72, 'r'], [292, 194, .72, 'p'], [214, 96, .7, 'p']]
-    .slice(0, nTrees).forEach(([x, y, s, k], i) => put(y, k === 'p' ? pine(x, y, s, i) : tree(x, y, s, i, t.net >= 2e6)));
-  [[40, 148, '#F07A8A'], [326, 150, ''], [72, 112, ''], [152, 104, '#FFD25E'], [276, 122, '#F07A8A'], [258, 188, '']]
-    .slice(0, empty ? 0 : 2 + stage).forEach(([x, y, b]) => put(y, bush(x, y, b)));
+  const tapG = (tap, x, y, inner, cls = '') => `<g transform="translate(${x} ${y})" class="obj ${cls}" data-tap="${tap}">${inner}</g>`;
+  // town buildings take the back slots first; trees grow wherever is left
+  const SLOTS = { A:[98, 106], B:[136, 97], C:[232, 95], D:[270, 103], E:[58, 124], F:[304, 118], G:[86, 194], H:[292, 194] };
+  const town = empty ? [] : MILESTONES.filter(([v]) => t.net >= v);
+  const used = new Set();
+  town.forEach(([v, kind, name], i) => { const key = 'ACBDEFHG'[i], [x, y] = SLOTS[key]; used.add(key);
+    put(y, tapG('ms:' + i, x, y, `<g transform="scale(${kind === 'wheel' ? .8 : .78})"><g ${growAttr('ms' + kind)}>${townBuilding(kind)}</g></g>`)); });
+  const nTrees = t.net >= 1e5 ? clamp(Math.floor(Math.log10(t.net / 1e5) * 2) + 1, 1, 8) : 0;
+  const passive = mood.passive > 0;
+  const EDGE = [[118, 99, .62], [252, 97, .6], [40, 138, .62], [324, 134, .62], [176, 92, .58], [212, 94, .56], [70, 116, .58], [292, 108, .58]];
+  [['B', .95, 'r'], ['C', .9, 'p'], ['E', .82, 'p'], ['F', .82, 'r'], ['G', .72, 'r'], ['H', .72, 'p'], ['A', .75, 'p'], ['D', .75, 'r']]
+    .slice(0, nTrees).map(([k, s, kind]) => used.has(k) ? null : [...SLOTS[k], s, kind]).map((p, i, all) => p || [...EDGE[all.slice(0, i).filter(q => !q).length], i % 2 ? 'p' : 'r'])
+    .forEach(([x, y, s, kind], i) => {
+      put(y, kind === 'p' ? pine(x, y, s, i, { xmas:mood.holiday === 'xmas', snow }) : tree(x, y, s, i, { fruit:t.net >= 2e6 || passive, drop:passive && !snow, snow })); });
+  [[40, 148, '#F07A8A'], [326, 150, ''], [72, 112, ''], [152, 106, '#FFD25E'], [276, 122, '#F07A8A'], [258, 188, '']]
+    .slice(0, empty ? 0 : 2 + stage).forEach(([x, y, b]) => put(y, bush(x, y, snow ? '' : b)));
+  // record streak: a flower blooms for every day in a row (plus a few that are always there)
   const petals = ['#F07A8A', '#FFFFFF', '#FFD25E', '#F59AB0', '#B48CF2'];
-  [[108, 180], [228, 186], [62, 170], [292, 176], [168, 110], [140, 142], [234, 150], [100, 122], [320, 166], [206, 112]]
-    .slice(0, clamp(3 + nTrees, 3, 10)).forEach(([x, y], i) => put(y, flowerPatch(x, y, petals[i % petals.length])));
+  const FLOWER_SPOTS = [[108, 180], [228, 186], [62, 170], [292, 176], [168, 110], [140, 142], [234, 150], [100, 122], [320, 166], [206, 112],
+    [150, 186], [248, 140], [76, 140], [312, 140], [196, 192], [130, 132]];
+  if (!snow) FLOWER_SPOTS.slice(0, empty ? 2 : clamp(5 + mood.streak, 5, FLOWER_SPOTS.length))
+    .forEach(([x, y], i) => put(y, flowerPatch(x, y, petals[i % petals.length], mood.season === 'summer' && i % 3 === 0)));
   put(180, palm(18, 180, false)); put(176, palm(344, 176, true));
   if (hasCash) put(148, pond(t.cash, 88, 148));
   props.forEach((p, i) => { const s = clamp(.8 + .2 * Math.log10(p.value / 5e6), .68, 1.1) * (props.length === 2 ? .84 : 1);
-    put(hX[i][1], house(p, loanOf(p), hX[i][0], hX[i][1], s.toFixed(3))); });
+    put(hX[i][1], house(p, loanOf(p), hX[i][0], hX[i][1], s.toFixed(3), { roof:roofPair(), snow, cny:mood.holiday === 'cny' })); });
   inv.forEach((a, i) => { const y = [138, 152, 130, 156][i]; put(y, a.kind === 'stock' ? windmill(a, iX[i], y) : lighthouse(a, iX[i], y)); });
   rockList.slice(0, 3).forEach(([id, v, tap], i) => { const [x, y] = [[46, 176], [318, 184], [262, 204]][i]; put(y, boulder(id, v, tap, x, y)); });
+  (S.keepsakes || []).slice(-4).forEach((k, i) => { const [x, y] = [[152, 152], [226, 156], [238, 176], [160, 194]][i];
+    put(y, tapG('keep:' + S.keepsakes.indexOf(k), x, y, `<g ${growAttr('k' + k.id)}>${keepsake(k)}</g>`)); });
+  if (passive && !empty) put(124, tapG('hive', 124, 124, beehive(clamp(Math.ceil(Math.log10(mood.passive / 1e3 + 1)), 1, 3))));
+  const folk = folkList();
   if (!empty) {
     put(204, fence([[100, 199], [108, 201], [116, 202.5], [124, 203.5], [132, 204], [140, 204.2]]));
-    put(172, campfire(180, 172));
+    put(172, mood.holiday === 'moon' ? grill(180, 172) : campfire(180, 172));
     put(178, logSeat(161, 178)); put(179, logSeat(199, 179));
-    // islanders move in as the island grows
-    const folk = [['cat', 120, 168, 0, 'stroll'], ['bear', 161, 174.5, 1, 'hop'], ['bunny', 199, 175.5, 1, 'hop'], ['pup', 236, 188, 0, 'hop']].slice(0, stage + 1);
-    folk.forEach(([k, x, y, sit, anim], i) => put(y + (sit ? 4.2 : 0),
-      `<g transform="translate(${x} ${y})"><g class="${anim}" style="animation-delay:-${i * .6}s"><g class="${anim === 'stroll' ? 'face' : ''}">${critter(k, sit)}</g></g></g>`));
+    const hat = mood.holiday === 'xmas' ? 'santa' : mood.holiday === 'halloween' ? 'witch' : '';
+    // islanders move in as the island grows; tap one to hear what it has to say
+    [[120, 168, 0, 'stroll'], [161, 174.5, 1, 'hop'], [199, 175.5, 1, 'hop'], [252, 190, 0, 'hop']].slice(0, stage + 1).forEach(([x, y, sit, anim], i) => put(y + (sit ? 4.2 : 0),
+      tapG('talk:' + i, x, y, `<g class="folk"><g class="${anim}" style="animation-delay:-${i * .6}s"><g class="${anim === 'stroll' ? 'face' : ''}">${critter(folk[i].kind, sit, { hat, umbrella:wet })}</g></g></g>`)));
+    if (mood.saveRate >= .1) put(232, `<g>${tapG('talk:4', 299, 231, `<g class="folk">${critter(folk[4].kind, 1, { hat, umbrella:wet })}</g>`)}
+      <path d="M305 222 L326 208" style="stroke:var(--trunk);stroke-width:1.2;stroke-linecap:round"/><path d="M326 208 Q328 224 327 238" style="fill:none;stroke:var(--ol);stroke-width:.5"/>
+      <g class="sway" style="animation-duration:2s"><circle cx="327" cy="239" r="1.8" style="fill:#E3564A;stroke:var(--ol);stroke-width:.6"/></g></g>`);
     if (stage >= 1) put(160, `<g transform="translate(208 160)">${shadow(4, 1.2)}<path d="M0 0 V-17" style="stroke:var(--ol);stroke-width:1.8"/>
+      ${mood.dusk ? '<circle cy="-19.8" r="9" fill="#FFE07A" opacity=".35"/>' : ''}
       <rect x="-3.2" y="-23" width="6.4" height="6.5" rx="1.5" style="fill:var(--fire-in);${OL};stroke-width:.9"/><path d="M-4 -23 L0 -26 L4 -23Z" style="fill:var(--hub);${OL};stroke-width:.9"/></g>`);
+    // seasons and holidays
+    if (snow) put(202, snowman(222, 202));
+    if (mood.holiday === 'halloween') [[146, 184, 1], [214, 186, .85], [232, 166, .75]].forEach(([x, y, s]) => put(y, pumpkin(x, y, s)));
+    if (mood.holiday === 'cny') put(146, lanterns(150, 214, 140));
+    if (mood.holiday === 'moon') put(186, pomelos(144, 186));
   }
   if (empty) put(150, `<g transform="translate(180 150)"><g ${growAttr('sprout')}>
     <path d="M0 0 V-12" style="stroke:var(--grass-lo);stroke-width:2;stroke-linecap:round"/>
     <path d="M0 -8 C-8 -10 -10 -16 -9 -18 C-3 -18 0 -14 0 -8Z M0 -11 C7 -13 10 -19 9 -21 C3 -21 0 -17 0 -11Z" style="fill:var(--grass-hi);${OL};stroke-width:1"/></g></g>`);
   items.sort((a, b) => a[0] - b[0]);
-  const flutter = empty ? '' : butterfly(132, 128, '#F59AB0', 0) + (stage >= 2 ? butterfly(252, 112, '#FFD25E', -2) : '');
+  const flutter = empty || wet || snow ? '' : butterfly(132, 128, '#F59AB0', 0) + (stage >= 2 ? butterfly(252, 112, '#FFD25E', -2) : '');
+  const rain = wet ? Array.from({ length:44 }, (_, k) => `<path class="rain" style="animation-delay:-${((k * .37) % 1).toFixed(2)}s;animation-duration:${(.6 + (k % 3) * .12).toFixed(2)}s;stroke:#6E9DBC;stroke-width:1.3;stroke-linecap:round;opacity:.7" d="M${(k * 8.6 + (k % 5) * 3) % 372} 0 l-3 9"/>`).join('') : '';
+  const fw = mood.holiday === 'newyear' || (mood.streak >= 7 && !fireworksSeen()) ? fireworks(mood.holiday === 'newyear') : '';
 
   const blnX = [[204], [110, 210], [106, 206, 282]][Math.max(0, goals.length - 1)] || [];
   let tethers = '';   // strings go behind the houses and trees; the balloons float in front
@@ -911,8 +1147,8 @@ function islandSVG() {
       </g></g></g>`;
   }).join('');
 
-  const desc = `財富島：蓄水池水位 ${pct(waterLevel(t.cash))}，${props.length} 棟房屋，${inv.length} 座投資建物，${goals.length} 顆夢想氣球`;
-  const svg = `<svg viewBox="0 0 360 250" role="img" aria-label="${esc(desc)}">
+  const desc = `財富島：蓄水池水位 ${pct(waterLevel(t.cash))}，${props.length} 棟房屋，${inv.length} 座投資建物，${town.length} 棟小鎮建築，${goals.length} 顆夢想氣球`;
+  const svg = `<svg viewBox="0 0 360 250" role="img" aria-label="${esc(desc)}" style="${tint.join(';')}">
   <defs>
     <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sky-top)"/><stop offset="1" style="stop-color:var(--sky-bot)"/></linearGradient>
     <linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sea-top)"/><stop offset="1" style="stop-color:var(--sea-bot)"/></linearGradient>
@@ -920,16 +1156,15 @@ function islandSVG() {
     <pattern id="gPat" width="18" height="16" patternUnits="userSpaceOnUse"><path d="M3 4 l2 3 h-4Z" style="fill:var(--grass-lo);opacity:.4"/><path d="M12 12 l2 3 h-4Z" style="fill:var(--grass-lo);opacity:.3"/><path d="M13 3 l1.5 2.2 h-3Z" style="fill:#fff;opacity:.25"/></pattern>
   </defs>
   <rect width="360" height="60" fill="url(#gSky)"/>
-  <circle cx="318" cy="28" r="22" style="fill:var(--sun-glow)"/><circle cx="318" cy="28" r="13" style="fill:var(--sun);${OL}"/>
-  ${cloud(22, .9, 90, -20)}${cloud(42, .7, 120, -85)}${cloud(14, .55, 140, -40)}${birds}
+  ${sky}${fw}
   ${far}
   <rect y="57" width="360" height="193" fill="url(#gSea)"/>
   <path d="M0 57.5 H360" style="stroke:#fff;stroke-width:1.2;opacity:.6"/>
-  ${ripples}
+  ${ripples}${fishes}
   <path d="${GRASS}" ${around(1.15, 1.34, 20)} style="fill:var(--shallow);stroke:var(--foam);stroke-width:1.6"/>
   <path d="${GRASS}" ${around(1.07, 1.17, 16)} style="fill:var(--sand);stroke:var(--sand-dk);stroke-width:1.2"/>
   <g style="fill:#fff;opacity:.8"><circle cx="70" cy="222" r="1.2"/><circle cx="252" cy="224" r="1"/><path d="M118 226 l2 -2.4 l2 2.4Z" fill="#F7B6A8"/></g>
-  ${boat}
+  ${boat}${parasol}
   <g transform="translate(272 220) rotate(26)" style="${OL}">
     <rect x="0" y="-5" width="40" height="10" rx="1.5" style="fill:var(--door)"/>
     <path d="M8 -5 V5 M16 -5 V5 M24 -5 V5 M32 -5 V5" style="stroke:var(--ol);stroke-width:.8"/>
@@ -943,10 +1178,67 @@ function islandSVG() {
   ${items.map(i => i[1]).join('')}
   ${flutter}
   ${balloons}
+  ${fallers(mood.season)}${rain}
   </svg>`;
   seen = newSeen; firstPaint = false;
   return svg;
 }
+/* ───────── islanders talk: tips from your own records ───────── */
+function islandTips() {
+  const t = totals(), m = monthStats(), mood = islandMood(), tips = [];
+  const day = new Date().getDate(), ym = thisYm();
+  const eatOut = y => S.txs.filter(x => statExp(x) && x.item === '外食' && x.date.slice(0, 7) === y && Number(x.date.slice(8)) <= day).reduce((s, x) => s + x.amount, 0);
+  const e1 = eatOut(ym), e0 = eatOut(shiftYm(ym, -1));
+  if (e1 || e0) tips.push(`這個月外食花了 ${money(e1)}${e0 ? `，比上個月同期${e1 > e0 ? `多 ${money(e1 - e0)}，下一餐要不要自己煮？` : `少 ${money(e0 - e1)}，好棒！`}` : ''}`);
+  const byItem = {};
+  S.txs.forEach(x => { if (statExp(x) && x.date.slice(0, 7) === ym) byItem[x.item || x.cat] = (byItem[x.item || x.cat] || 0) + x.amount; });
+  const top = Object.entries(byItem).sort((a, b) => b[1] - a[1])[0];
+  if (top) tips.push(`這個月花最多的是「${esc(top[0])}」，共 ${money(top[1])}`);
+  if (m.budget) tips.push(m.left < 0 ? `本月預算已經超支 ${money(-m.left)}，島上下起雨了，接下來省一點吧` : `本月還能花 ${money(m.left)}，平均每天 ${money(m.perDay)}${mood.weather === 'sunny' ? '，天氣真好！' : ''}`);
+  const g = S.goals.filter(x => x.target && x.saved < x.target).sort((a, b) => b.saved / b.target - a.saved / a.target)[0];
+  if (g) { const need = g.target - g.saved; tips.push(`「${esc(g.name)}」還差 ${money(need)}，每天存 ${money(Math.ceil(need / 180))}，半年就能完成`); }
+  if (t.creditOwed > 0) tips.push(`信用卡還有 ${money(t.creditOwed)} 要繳，記得在截止日前繳清喔`);
+  tips.push(!mood.streak ? '今天還沒記帳，記一筆島上就會開一朵花' : `已經連續記帳 ${mood.streak} 天，${mood.streak < 7 ? `再 ${7 - mood.streak} 天就放煙火！` : `再 ${30 - mood.streak % 30} 天可以拿到紀念獎盃`}`);
+  if (mood.saveRate > 0) tips.push(`最近三個月的儲蓄率是 ${pct(mood.saveRate)}，${mood.saveRate >= .1 ? '海裡的魚越來越多了' : '到 10% 就有島民去碼頭釣魚'}`);
+  if (mood.passive > 0) tips.push(`今年的股息和利息有 ${money(mood.passive)}，蜜蜂們很忙喔`);
+  const next = MILESTONES.find(([v]) => t.net < v);
+  if (next && t.net > 0) tips.push(`淨資產再 ${money(next[0] - t.net)}，島上就會開一間${next[2]}`);
+  return tips;
+}
+function islandSay(tapEl, html) {   // a speech bubble above (or below) whatever was tapped
+  const box = $('#island'); if (!box) return;
+  $$('.bubble', box).forEach(b => b.remove());
+  const r = tapEl.getBoundingClientRect(), b = box.getBoundingClientRect();
+  const el = document.createElement('div'); el.className = 'bubble'; el.innerHTML = html; box.appendChild(el);
+  const w = el.offsetWidth, hh = el.offsetHeight, cx = r.left + r.width / 2 - b.left, left = clamp(cx - w / 2, 8, b.width - w - 8);
+  const below = r.top - b.top - hh - 10 < 4;
+  el.classList.toggle('below', below);
+  el.style.left = left + 'px'; el.style.top = (below ? r.bottom - b.top + 8 : r.top - b.top - hh - 10) + 'px';
+  el.style.setProperty('--ax', clamp(cx - left, 16, w - 16) + 'px');
+  clearTimeout(islandSay.t); islandSay.t = setTimeout(() => el.remove(), 6500);
+}
+function islandTap(k, tapEl) {
+  const mood = islandMood();
+  if (k.startsWith('talk:')) {
+    const f = folkList()[+k.slice(5)], tips = islandTips();
+    ui.tip = ((ui.tip ?? -1) + 1) % tips.length;
+    return islandSay(tapEl, `<b>${esc(f.name)}</b>${tips[ui.tip]}`);
+  }
+  if (k.startsWith('keep:')) { const x = (S.keepsakes || [])[+k.slice(5)]; if (!x) return;
+    return islandSay(tapEl, x.kind === 'dream' ? `<b>夢想紀念碑</b>「${esc(x.name)}」在 ${x.date} 達成` : `<b>記帳獎盃</b>連續記帳 ${x.n} 天，${x.date} 得到`); }
+  if (k.startsWith('ms:')) { const [v, , name] = MILESTONES[+k.slice(3)]; return islandSay(tapEl, `<b>${name}</b>淨資產突破 ${v / 1e4} 萬時開幕`); }
+  if (k === 'hive') return islandSay(tapEl, `<b>蜂窩</b>今年的股息・利息共 ${money(mood.passive)}，果實會從樹上掉下來`);
+}
+function cheer() {   // pay day: islanders jump and confetti falls
+  const box = $('#island'); if (!box) return;
+  box.classList.remove('cheer'); void box.offsetWidth; box.classList.add('cheer');
+  const cols = ['#F07A8A', '#FFD25E', '#7FD3F7', '#8ED16E', '#B48CF2'];
+  for (let i = 0; i < 36; i++) { const c = document.createElement('i'); c.className = 'confetti';
+    c.style.cssText = `left:${(Math.random() * 100).toFixed(1)}%;background:${cols[i % 5]};animation-delay:${(Math.random() * .9).toFixed(2)}s;--dx:${Math.round(Math.random() * 60 - 30)}px;--r:${Math.round(Math.random() * 720 - 360)}deg`;
+    box.appendChild(c); }
+  clearTimeout(cheer.t); cheer.t = setTimeout(() => { box.classList.remove('cheer'); $$('.confetti', box).forEach(c => c.remove()); }, 3800);
+}
+
 function stageName(net) {
   if (net < 0) return '迷霧中的島';
   if (net < 1e5) return '新生草地';
@@ -974,7 +1266,11 @@ function viewHome() {
   const recent = [...S.txs].sort(sortTx).slice(0, 5);
   const usedPct = m.budget ? clamp(m.exp / m.budget, 0, 1) : 0;
   const inv = byType('invest').filter(a => a.value > 0), props = byType('property');
+  const mood = islandMood(), town = MILESTONES.filter(([v]) => t.net >= v).length;
   const legend = [
+    m.budget && `<span class="chip">${{ sunny:'☀️ 預算充足', fair:'🌤️ 預算正常', cloudy:'☁️ 預算快用完', rain:'🌧️ 本月超支' }[mood.weather]}</span>`,
+    mood.streak && `<span class="chip">🌼 連續記帳 ${mood.streak} 天</span>`,
+    town && `<span class="chip">🏘️ 小鎮 ${town} 棟</span>`,
     byType('cash').length && `<button data-tap="cash"><span class="sw" style="background:var(--sky)"></span>蓄水池 ${waterLevel(t.cash) >= 1 ? '滿水位' : pct(waterLevel(t.cash))}</button>`,
     inv.length && `<button data-action="tab:assets"><span class="sw" style="background:var(--emerald)"></span>投資建物 ${inv.length} 座</button>`,
     props.length && `<button data-action="tab:assets"><span class="sw" style="background:var(--wood)"></span>小屋 ${props.length} 棟</button>`,
@@ -1278,9 +1574,11 @@ function render() {
   $('#subtitle').textContent = ui.tab === 'home' ? `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 週${WD[d.getDay()]}` :
     ui.tab === 'ledger' ? `共 ${S.txs.length.toLocaleString()} 筆紀錄${S.source ? ' · 來源 ' + S.source : ''}` : ui.tab === 'reports' ? '收支、類型、固定支出與帳戶走勢' : `淨資產 ${money(totals().net)}`;
   $('#top-add').hidden = ui.tab !== 'ledger';
+  if (ui.tab === 'home' && syncKeepsakes(islandMood())) save();
   $('#view').innerHTML = ({ home:viewHome, ledger:viewLedger, reports:viewReports, assets:viewAssets })[ui.tab]();
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   runAnims();
+  if (ui.cheer && $('#island')) { ui.cheer = false; setTimeout(cheer, 250); }
   if (highlight.length) {
     const hl = highlight; highlight = [];
     hl.forEach(k => $$(`#island [data-tap="${k}"]`).forEach(el => el.classList.add('pulse')));
@@ -1474,6 +1772,7 @@ function saveRecord(f, sh, old) {
     if (tx.to.startsWith('goal:')) { const g = goal(tx.to.slice(5)); hl.push('goal:' + g.id); const p = g.saved / g.target; sub = p >= 1 ? '禮物氣球升空了！' : `禮物氣球進度 ${pct(p)}`; }
     else { hl.push('acc:' + tx.to); if (b?.propertyId) hl.push('acc:' + b.propertyId); if (b?.type === 'credit') hl.push('credit'); } }
   if (tx.date !== today() && ui.tab === 'ledger' && ui.ledgerMode === 'cal') ui.day = tx.date;
+  if (!old && tx.kind === 'income' && (tx.item === '薪資' || tx.item === '獎金紅利')) ui.cheer = true;
   closeSheet(); commit(hl); toast(msg, sub);
 }
 
@@ -1837,6 +2136,10 @@ function settingsSheet() {
     ${tField('name', '島嶼名稱', f.name, '我的財富島')}
     <div class="two">${mField('budget', '每月可支配預算', f.budget, '30000')}${mField('fullWater', '蓄水池滿水位', f.fullWater, '360000')}</div>
     <p class="note">本月可支配餘額 ＝ 每月預算 − 本月支出（不含「不計收支」的紀錄）。滿水位是緊急預備金目標，建議 6 個月生活費。</p>
+    <div class="flabel" style="margin-top:6px">島嶼與島民</div>
+    <div class="fgroup"><div class="note">屋頂顏色</div><div class="swatches" id="set-roof">${ROOFS.map(([c]) => `<button type="button" class="swatch ${c === roofPair()[0] ? 'on' : ''}" style="--c:${c}" data-roof="${c}" aria-label="屋頂顏色 ${c}"></button>`).join('')}</div></div>
+    ${folkList().map((p, i) => `<div class="fgroup"><div class="note">${['第 1 位（一開始就住）', '第 2 位（淨資產 10 萬）', '第 3 位（100 萬）', '第 4 位（500 萬）', '釣魚的島民（儲蓄率 10% 以上）'][i]}</div>
+      <div class="two">${selectBox('fk' + i, Object.entries(CRITTERS).map(([k, c]) => [k, c.label]), p.kind, 'aria-label="島民種類"')}<div class="sel noarrow"><input id="fn${i}" value="${esc(p.name)}" maxlength="8" placeholder="名字" aria-label="島民名字" autocomplete="off"></div></div></div>`).join('')}
     <p class="err" hidden></p>
     <button class="btn primary block" id="set-save">儲存設定</button>
     <div class="flabel" style="margin-top:6px">資料來源</div>
@@ -1847,6 +2150,11 @@ function settingsSheet() {
     <p class="note">所有資料只存在這台裝置的瀏覽器（localStorage），重新整理不會遺失；但刪除主畫面 App、清除 Safari 資料或換手機就會不見。建議定期匯出備份，存到「檔案」或 iCloud 雲碟。</p>
     <div class="btn-row"><button class="btn" id="bk-export">匯出備份</button><label class="btn file-btn" id="bk-label">還原備份<input type="file" id="bk-file" accept=".json,application/json"></label></div>
     <button class="btn danger block" id="set-clear">清空全部資料</button>`, sh => {
+    let roof = roofPair()[0];
+    $('#set-roof', sh).addEventListener('click', e => {
+      const b = e.target.closest('[data-roof]'); if (!b) return;
+      roof = b.dataset.roof; $$('#set-roof .swatch', sh).forEach(x => x.classList.toggle('on', x === b));
+    });
     $('#set-fs', sh).addEventListener('click', e => {
       const b = e.target.closest('[data-fs]'); if (!b) return;
       applyFS(b.dataset.fs); try { localStorage.setItem(FS_KEY, b.dataset.fs); } catch (err) {}
@@ -1856,7 +2164,8 @@ function settingsSheet() {
     $('#set-save', sh).addEventListener('click', () => {
       const budget = parseInt(f.budget, 10) || 0, fw = parseInt(f.fullWater, 10) || 0;
       if (fw <= 0) return showErr(sh, '滿水位要大於 0');
-      Object.assign(S.settings, { name:f.name.trim() || '我的財富島', budget, fullWater:fw });
+      const folk = folkList().map((p, i) => ({ kind:$('#fk' + i, sh).value, name:$('#fn' + i, sh).value.trim() || FOLK_DEFAULT[i].name }));
+      Object.assign(S.settings, { name:f.name.trim() || '我的財富島', budget, fullWater:fw, roof, folk });
       closeSheet(); commit(['cash']); toast('設定已儲存');
     });
     $('#imp-file', sh).addEventListener('change', async e => {
@@ -1890,6 +2199,7 @@ document.addEventListener('click', e => {
     if (k === 'credit') return creditSheet();
     if (k.startsWith('acc:')) return accountSheet(k.slice(4));
     if (k.startsWith('goal:')) return goalSheet(k.slice(5));
+    return islandTap(k, tapEl);
   }
   if (!el) return;
   const parts = el.dataset.action.split(':'), a = parts[0], arg = parts.slice(1).join(':');
