@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-ZVuVGDinUPDTCfi1RFN0wqEZTc9ssXzLOd4lHZ7onpA=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Iz2IAnHA88boVLYjZMDxEY3OScLTge0mcA4F4KlmVXE=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -103,6 +103,12 @@ main{max-width:520px;margin:0 auto;padding-block:6px calc(110px + env(safe-area-
 /* island */
 .island{position:relative;border-radius:24px;overflow:hidden;border:1px solid var(--line);background:var(--sky-bot);box-shadow:0 10px 30px -18px rgba(20,60,40,.45)}
 .island svg{display:block;width:100%;height:auto;max-width:100%}
+.island canvas.island3d{display:block;width:100%;aspect-ratio:360/250;touch-action:pan-y;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+.island.is3d>svg{display:none}   /* the SVG island stays in the page as the fallback */
+.i3-ctl{position:absolute;right:8px;top:8px;z-index:2;display:flex;gap:6px}
+.i3-ctl button{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font:700 17px/1 var(--font);color:var(--ink);background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 2px 8px -4px rgba(0,0,0,.3)}
+.i3-hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:2;width:max-content;max-width:calc(100% - 24px);padding:7px 12px;border-radius:14px;font-size:calc(12.5px*var(--fs));font-weight:700;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);pointer-events:none;animation:fadeout 5.2s ease-in both}
+@keyframes fadeout{0%,80%{opacity:1}100%{opacity:0}}
 .island .chip-tl{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:6px;font-size:calc(12px*var(--fs));font-weight:700;padding:6px 10px;border-radius:999px;background:var(--glass);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);color:var(--ink)}
 .island .chip-tl i{width:8px;height:8px;border-radius:50%;background:var(--emerald)}
 .island .empty-tip{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);font-size:calc(12.5px*var(--fs));font-weight:600;text-align:center;padding:8px 12px;border-radius:14px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
@@ -179,6 +185,15 @@ main{max-width:520px;margin:0 auto;padding-block:6px calc(110px + env(safe-area-
 @keyframes drop{0%,70%{opacity:0;transform:translateY(0)}72%{opacity:1}88%{opacity:1;transform:translateY(14px)}100%{opacity:0;transform:translateY(14px)}}
 .jet{transform-box:fill-box;transform-origin:50% 100%;animation:jet 1.1s ease-in-out infinite alternate}
 @keyframes jet{to{transform:scaleY(.8)}}
+.twinkle{animation:twinkle 2.6s ease-in-out infinite}
+.build{animation:grow .7s cubic-bezier(.2,1.3,.4,1) 1.5s both}
+.scaffold{pointer-events:none;animation:scaffold 1.9s ease both}
+@keyframes scaffold{0%{opacity:0}8%,82%{opacity:1}100%{opacity:0}}
+.hammer{transform-box:fill-box;transform-origin:0% 100%;animation:hammer .3s ease-in-out infinite alternate}
+@keyframes hammer{from{transform:rotate(-35deg)}to{transform:rotate(15deg)}}
+.ding{pointer-events:none;transform-box:fill-box;transform-origin:50% 50%;animation:ding .9s ease-out 1.9s both}
+@keyframes ding{0%{opacity:0;transform:scale(.3)}30%{opacity:1}100%{opacity:0;transform:scale(1.5) rotate(90deg)}}
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:.3}}
 .island.cheer .folk{animation:jump .45s ease-in-out 6}
 @keyframes jump{50%{transform:translateY(-8px)}}
 .confetti{position:absolute;top:-6%;width:7px;height:10px;border-radius:2px;pointer-events:none;animation:confetti 2.8s ease-in forwards}
@@ -189,7 +204,7 @@ main{max-width:520px;margin:0 auto;padding-block:6px calc(110px + env(safe-area-
 .bubble::after{content:"";position:absolute;left:calc(var(--ax) - 6px);bottom:-7px;width:11px;height:11px;background:#FFFDF6;border:1.5px solid var(--ol);border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
 .bubble.below::after{bottom:auto;top:-7px;border-width:1.5px 0 0 1.5px}
 @keyframes pop{from{transform:scale(.5);opacity:0}}
-@media (prefers-reduced-motion:reduce){.island *{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.island *{animation:none!important}.island .scaffold,.island .ding{display:none}}
 @media (prefers-reduced-motion:reduce){.confetti,.bubble{animation:none!important}.confetti{display:none}}
 .beam{opacity:.35;animation:blink 2.4s steps(1) infinite}
 .tag rect{fill:var(--tag-bg);stroke:var(--ol);stroke-width:.8} .tag text{fill:var(--tag-fg);font:800 7.5px var(--font-num);text-anchor:middle}
@@ -842,7 +857,7 @@ const CRITTERS = {
 };
 const FOLK_DEFAULT = [{ kind:'cat', name:'小橘' }, { kind:'bear', name:'阿熊' }, { kind:'bunny', name:'白白' }, { kind:'pup', name:'豆豆' }, { kind:'penguin', name:'企企' }];
 const ROOFS = [['#E3795E', '#C45F46'], ['#6FA8DC', '#4F86BA'], ['#7CC48A', '#5AA36A'], ['#B49AE0', '#9178C2'], ['#F2C14E', '#D19E2C']];
-function critter(kind, sit, extra = {}) {   // extra: hat ('santa' | 'witch'), umbrella
+function critter(kind, sit, extra = {}) {   // extra: hat ('santa' | 'witch' | 'helmet'), umbrella
   const c = CRITTERS[kind] || CRITTERS.cat, o = `${OL};stroke-width:1`, ec = c.earC || c.fur;
   const ears = {
     tri:`<path d="M-6.6 -19 L-5.6 -26 L-1.6 -21.2Z" style="fill:${c.fur};${o}"/><path d="M6.6 -19 L5.6 -26 L1.6 -21.2Z" style="fill:${c.fur};${o}"/><path d="M-5.4 -21 L-5 -24 L-3.3 -22Z M5.4 -21 L5 -24 L3.3 -22Z" fill="${c.inner}"/>`,
@@ -857,7 +872,8 @@ function critter(kind, sit, extra = {}) {   // extra: hat ('santa' | 'witch'), u
   const belly = c.belly ? `<ellipse cy="${sit ? -4.4 : -5.2}" rx="3" ry="${sit ? 2.6 : 3.2}" fill="${c.belly}"/>` : '';
   const eyeC = c.patch ? '#fff' : '#3B2A1E';
   const hat = extra.hat === 'santa' ? `<path d="M-6.4 -19.6 Q0 -23.6 6.4 -19.6 L2.4 -30 Z" style="fill:#E3564A;${o}"/><ellipse cy="-20" rx="7" ry="1.9" style="fill:#fff;${o}"/><circle cx="2.6" cy="-30" r="1.7" style="fill:#fff;${o}"/>`
-    : extra.hat === 'witch' ? `<ellipse cy="-20.6" rx="8.6" ry="2" style="fill:#7E5BB5;${o}"/><path d="M-4.6 -21 L1.4 -32.5 L4.6 -21Z" style="fill:#7E5BB5;${o}"/><path d="M-4.2 -22.4 H4.2" style="stroke:#F2C14E;stroke-width:1.2"/>` : '';
+    : extra.hat === 'witch' ? `<ellipse cy="-20.6" rx="8.6" ry="2" style="fill:#7E5BB5;${o}"/><path d="M-4.6 -21 L1.4 -32.5 L4.6 -21Z" style="fill:#7E5BB5;${o}"/><path d="M-4.2 -22.4 H4.2" style="stroke:#F2C14E;stroke-width:1.2"/>`
+    : extra.hat === 'helmet' ? `<path d="M-6.8 -19.8 Q-6.8 -27.4 0 -27.4 Q6.8 -27.4 6.8 -19.8Z" style="fill:#F2C14E;${o}"/><rect x="-8.4" y="-20.8" width="16.8" height="2" rx="1" style="fill:#F2C14E;${o}"/><path d="M0 -26.6 V-21.4" style="stroke:#E0A030;stroke-width:1.2"/>` : '';
   const umbrella = extra.umbrella ? `<path d="M2 -28 L5.6 -6 q.4 2 -1.4 2.2" style="fill:none;stroke:var(--ol);stroke-width:.9;stroke-linecap:round"/>
     <path d="M-10 -27 Q2 -41 14 -27 Q11 -29.4 8 -27 Q5 -29.4 2 -27 Q-1 -29.4 -4 -27 Q-7 -29.4 -10 -27Z" style="fill:${c.shirt === '#4F5B6E' ? '#F3A6C2' : c.shirt};${o}"/>` : '';
   return `${ears}${body}${belly}
@@ -1027,7 +1043,46 @@ function fallers(kind) {   // petals, leaves or snow drifting down over the isla
   return Array.from({ length:14 }, (_, k) => `<g transform="translate(${(k * 26 + (k % 3) * 7) % 360} 0)"><g class="fall" style="animation-duration:${(7 + (k % 4) * 1.6).toFixed(1)}s;animation-delay:-${(k * 1.3).toFixed(1)}s">${shape}</g></g>`).join('');
 }
 
+function stall(k, n, lit) {   // a beach-market stall: a counter under a striped awning, the goods of its kind, a sign with today's count
+  const [, c, emo] = STALLS[k], o = `${OL};stroke-width:.8`, s = n >= 3 ? 1 : n === 2 ? .92 : .84;
+  const goods = {
+    '食':`<rect x="-7.5" y="-11" width="6.5" height="4" rx="1.2" style="fill:#C8D2DA;${o}"/><g class="smoke" style="fill:#fff"><circle cx="-4.2" cy="-12.6" r="1.3"/><circle cx="-4.2" cy="-12.6" r="1.3"/><circle cx="-4.2" cy="-12.6" r="1.3"/></g>
+      <circle cx="2.4" cy="-8.6" r="1.8" style="fill:#FFF6E6;${o}"/><circle cx="5.8" cy="-8.6" r="1.8" style="fill:#FFF6E6;${o}"/>`,
+    '衣':`<path d="M-8 -15.6 H8" style="stroke:var(--ol);stroke-width:.7"/>${['#7FD3F7', '#F59AB0', '#FFD25E'].map((f, i) => `<path d="M${-7.6 + i * 5.6} -15 h4.4 l1.3 1.6 l-1.3 .8 v3.4 h-4.4 v-3.4 l-1.3 -.8Z" style="fill:${f};${o}"/>`).join('')}`,
+    '住':`<rect x="-7.4" y="-10.6" width="4.6" height="3.4" rx=".8" style="fill:#C9784A;${o}"/><circle cx="-5.1" cy="-12.4" r="2.4" style="fill:#7CC48A;${o}"/>
+      <path d="M4 -7.5 V-11.4" style="stroke:var(--ol);stroke-width:.8"/><path d="M1.8 -11 H6.2 L5 -14 H3Z" style="fill:#FFE07A;${o}"/>`,
+    '行':`<circle cx="-4.4" cy="-10.6" r="3" style="fill:none;stroke:var(--ol);stroke-width:1.3"/><circle cx="-4.4" cy="-10.6" r=".8" fill="var(--ol)"/>
+      <path d="M2.6 -7.5 L4.6 -13.4 L6.6 -7.5Z" style="fill:#F48C4E;${o}"/><path d="M3.5 -10 H5.7" style="stroke:#fff;stroke-width:1.1"/>`,
+    '育':`${[['#E3564A', -7.4], ['#5EB8E0', -5], ['#F2C14E', -2.6]].map(([f, x]) => `<rect x="${x}" y="-12.6" width="2.3" height="5.1" rx=".4" style="fill:${f};${o}"/>`).join('')}
+      <rect x="1.6" y="-9.6" width="6.4" height="2.1" rx=".4" style="fill:#7CC48A;${o}"/><rect x="2.2" y="-11.7" width="5.2" height="2.1" rx=".4" style="fill:#F59AB0;${o}"/>`,
+    '樂':`<path d="M-5.6 -7.5 V-11 M-2.4 -7.5 V-12.4" style="stroke:var(--ol);stroke-width:.6"/><circle cx="-5.6" cy="-12.6" r="2" style="fill:#F59AB0;${o}"/><circle cx="-2.4" cy="-14" r="2" style="fill:#7FD3F7;${o}"/>
+      <circle cx="4.6" cy="-9.8" r="2.3" style="fill:#FFD25E;${o}"/><path d="M3.6 -10.6 l2 1.6" style="stroke:#fff;stroke-width:.8"/>`,
+    '其他':`<rect x="-7.6" y="-11.2" width="5.2" height="3.7" style="fill:#D9B98A;${o}"/><rect x="-1.4" y="-10.4" width="4.4" height="2.9" style="fill:#D9B98A;${o}"/>
+      <rect x="-6.4" y="-14.4" width="3.8" height="3.2" style="fill:#E7CFA6;${o}"/><path d="M-5 -11.2 V-7.5 M.8 -10.4 V-7.5" style="stroke:#B8935E;stroke-width:.6"/>`,
+    '收入':`${[-7, -4].map((x, i) => `<rect x="${x}" y="${-11.4 + i * 1.4}" width="2.6" height="${(3.9 - i * 1.4).toFixed(1)}" rx=".8" style="fill:#F2C14E;${o}"/>`).join('')}
+      <ellipse cx="3.8" cy="-10" rx="3.4" ry="2.5" style="fill:#F59AB0;${o}"/><circle cx="1.6" cy="-12" r=".9" style="fill:#F59AB0;${o}"/><ellipse cx="7" cy="-10.2" rx=".9" ry="1.1" style="fill:#F07A8A;${o}"/><circle cx="4.4" cy="-11" r=".4" fill="var(--ol)"/>`,
+  }[k] || '';
+  return `<g transform="scale(${s})">${shadow(11, 2.4)}<rect x="-12" y="-32" width="24" height="34" fill="transparent"/>
+    <path d="M-8.5 -7 V-20 M8.5 -7 V-20" style="stroke:var(--trunk);stroke-width:1.4"/>
+    ${goods}
+    <rect x="-10" y="-7.5" width="20" height="7.5" rx="1.2" style="fill:var(--log);${OL};stroke-width:1"/><path d="M-10 -5.6 H10" style="stroke:#fff;stroke-width:.8;opacity:.5"/>
+    <path d="M-11 -20 L-9 -23.4 H9 L11 -20Z" style="fill:${c};${OL};stroke-width:1"/>
+    <path d="M-11 -20 H11 V-17 Q9.17 -15 7.33 -17 Q5.5 -15 3.67 -17 Q1.83 -15 0 -17 Q-1.83 -15 -3.67 -17 Q-5.5 -15 -7.33 -17 Q-9.17 -15 -11 -17Z" style="fill:${c};${OL};stroke-width:1"/>
+    <path d="M-7.33 -20 V-17.4 M0 -20 V-17.4 M7.33 -20 V-17.4" style="stroke:#fff;stroke-width:2.4;opacity:.85"/>
+    ${lit ? [-7, 0, 7].map(x => `<circle cx="${x}" cy="-15.4" r="3.2" fill="#FFE07A" opacity=".3"/><circle cx="${x}" cy="-15.6" r="1" fill="#FFE07A"/>`).join('') : ''}
+    <rect x="-5.2" y="-31.6" width="10.4" height="8.6" rx="2.4" style="fill:#fff;${OL};stroke-width:.9"/><text y="-24.8" style="font-size:6.4px;text-anchor:middle">${emo}</text>
+    ${n > 1 ? `<g transform="translate(7.2 -30)"><circle r="3.6" style="fill:var(--coral);stroke:#fff;stroke-width:.9"/><text y="1.7" style="font:800 4.8px var(--font-num);fill:#fff;text-anchor:middle">${n > 99 ? '99+' : n}</text></g>` : ''}</g>`;
+}
+function scaffold(kind) {   // a new stall is built first: a wooden frame, dust, an islander in a hard hat with a hammer, then a sparkle
+  return `<g class="scaffold"><path d="M-9.5 0 V-22 M9.5 0 V-22 M-9.5 -11 H9.5 M-9.5 -21 H9.5 M-9.5 -11 L9.5 -21" style="fill:none;stroke:#C9A27A;stroke-width:1.5;stroke-linecap:round"/>
+    <g class="smoke" style="fill:#fff"><circle cx="-4" cy="-2" r="2"/><circle cx="3" cy="-2" r="2"/><circle cx="0" cy="-3" r="2"/></g>
+    <g transform="translate(-10 4) scale(.62)">${critter(kind, 0, { hat:'helmet' })}<g transform="translate(5 -7)"><g class="hammer">
+      <path d="M0 0 L5.4 -5.4" style="stroke:var(--trunk);stroke-width:1.6;stroke-linecap:round"/><path d="M3.2 -8.6 L8.6 -3.2 L10 -4.6 L4.6 -10Z" style="fill:#8E99A3;stroke:var(--ol);stroke-width:.7"/></g></g></g></g>
+    <g transform="translate(0 -26)"><path class="ding" d="M0 -6 L1.6 -1.6 L6 0 L1.6 1.6 L0 6 L-1.6 1.6 L-6 0 L-1.6 -1.6Z" style="fill:#FFE07A;stroke:#E0A030;stroke-width:.6"/></g>`;
+}
+
 /* what the island is feeling today: season, holiday, time of day, budget weather, habits */
+const STARS = [[20, 10, 1], [46, 22, .8], [74, 8, 1.1], [102, 30, .7], [130, 14, .9], [158, 6, .8], [186, 24, 1], [214, 12, .7], [242, 30, .9], [262, 8, 1], [290, 46, .7], [348, 52, .8], [12, 40, .7], [226, 44, .6]];
 const LUNAR_NEW_YEAR = ['2026-02-17', '2027-02-06', '2028-01-26', '2029-02-13', '2030-02-03', '2031-01-23', '2032-02-11'];
 const MOON_FESTIVAL = ['2026-09-25', '2027-09-15', '2028-10-03', '2029-09-22', '2030-09-12', '2031-10-01', '2032-09-19'];
 function recordStreak() {   // days in a row with at least one record, ending today (or yesterday, if today has none yet)
@@ -1049,7 +1104,7 @@ function islandMood() {
   for (let k = 0; k < 3; k++) { const s = monthStats(shiftYm(thisYm(), -k)); inc += s.inc; exp += s.exp; }
   const year = String(now.getFullYear());
   const passive = S.txs.filter(x => x.kind === 'income' && /利息|股息|被動/.test(x.item) && x.date.startsWith(year)).reduce((s, x) => s + x.amount, 0);
-  return { season, holiday, dusk:h >= 17 && h < 20, weather, streak:streak.n, streakStart:streak.start, saveRate:inc > 0 ? (inc - exp) / inc : 0, passive };
+  return { season, holiday, dusk:h >= 17 && h < 20, night:h >= 20 || h < 5, weather, streak:streak.n, streakStart:streak.start, saveRate:inc > 0 ? (inc - exp) / inc : 0, passive };
 }
 function syncKeepsakes(mood) {   // finished dreams and every 30 days of record streak leave something on the island for good
   S.keepsakes = S.keepsakes || [];
@@ -1066,8 +1121,26 @@ const fireworksSeen = () => { if (fwAt) return Date.now() - fwAt > 15000;
 const folkList = () => (S.settings.folk && S.settings.folk.length === 5 ? S.settings.folk : FOLK_DEFAULT);
 const roofPair = () => ROOFS.find(r => r[0] === S.settings.roof) || ROOFS[0];
 
-function islandSVG() {
-  newSeen = new Set();
+/* where everything stands, in the SVG's 360×250 coordinates; the 3D island maps the same spots onto its ground */
+const SLOTS = { A:[98, 106], B:[136, 97], C:[232, 95], D:[270, 103], E:[58, 124], F:[304, 118], G:[86, 194], H:[292, 194] };
+const TREE_ORDER = [['B', .95, 'r'], ['C', .9, 'p'], ['E', .82, 'p'], ['F', .82, 'r'], ['G', .72, 'r'], ['H', .72, 'p'], ['A', .75, 'p'], ['D', .75, 'r']];
+const EDGE = [[118, 99, .62], [252, 97, .6], [40, 138, .62], [324, 134, .62], [176, 92, .58], [212, 94, .56], [70, 116, .58], [292, 108, .58]];
+const BUSH_SPOTS = [[40, 148, '#F07A8A'], [326, 150, ''], [72, 112, ''], [152, 106, '#FFD25E'], [276, 122, '#F07A8A'], [258, 188, '']];
+const PETALS = ['#F07A8A', '#FFFFFF', '#FFD25E', '#F59AB0', '#B48CF2'];
+const FLOWER_SPOTS = [[108, 180], [228, 186], [62, 170], [292, 176], [168, 110], [140, 142], [234, 150], [100, 122], [320, 166], [206, 112],
+  [150, 186], [248, 140], [76, 140], [312, 140], [196, 192], [130, 132]];
+// beach market: every kind of spending (and income) recorded today opens a stall on the front beach; more records, a bigger stall
+const STALLS = { '食':['小吃攤', '#E1604F', '🍱'], '衣':['衣服攤', '#D9923B', '👕'], '住':['居家雜貨', '#8E5A8B', '🏠'], '行':['交通亭', '#3D6FA8', '🚗'],
+  '育':['書報攤', '#3F7D4E', '📚'], '樂':['遊戲攤', '#B85B7A', '🎮'], '其他':['雜貨推車', '#7A6F62', '📦'], '收入':['小金庫', '#E0A030', '💰'] };
+const STALL_X = [192, 170, 214, 148, 236, 126, 104, 82];   // the first stall opens where the trail meets the beach, the rest spread out from there
+const stallKey = x => x.kind === 'income' ? '收入' : x.kind === 'expense' && x.amount > 0 ? (STALLS[x.cat] ? x.cat : '其他') : '';
+function marketToday() {   // [{ k, n, sum }] in the order they opened today
+  const d = today(), by = new Map();
+  S.txs.filter(x => x.date === d && !x.noStat && stallKey(x)).sort((a, b) => (a.ts || 0) - (b.ts || 0))
+    .forEach(x => { const k = stallKey(x), s = by.get(k) || { k, n:0, sum:0 }; s.n++; s.sum += x.amount; by.set(k, s); });
+  return [...by.values()];
+}
+function islandModel() {
   const t = totals(), mood = islandMood();
   const hasCash = byType('cash').length > 0;
   const inv = byType('invest').filter(a => a.value > 0).sort((a, b) => b.value - a.value).slice(0, 4);
@@ -1078,11 +1151,48 @@ function islandSVG() {
   const empty = !S.accounts.length && !S.goals.length;
   const stage = t.net < 1e5 ? 0 : t.net < 1e6 ? 1 : t.net < 5e6 ? 2 : 3;   // same steps as stageName
   const wet = mood.weather === 'rain', grey = wet || mood.weather === 'cloudy', snow = mood.season === 'winter';
+  // town buildings take the back slots first; trees grow wherever is left
+  const town = (empty ? [] : MILESTONES.filter(([v]) => t.net >= v)).map(([v, kind, name], i) => ({ i, kind, name, slot:'ACBDEFHG'[i] }));
+  town.forEach(b => [b.x, b.y] = SLOTS[b.slot]);
+  const used = new Set(town.map(b => b.slot));
+  const nTrees = t.net >= 1e5 ? clamp(Math.floor(Math.log10(t.net / 1e5) * 2) + 1, 1, 8) : 0;
+  const trees = TREE_ORDER.slice(0, nTrees).map(([k, s, kind]) => used.has(k) ? null : [...SLOTS[k], s, kind])
+    .map((p, i, all) => p || [...EDGE[all.slice(0, i).filter(q => !q).length], i % 2 ? 'p' : 'r']);
+  const bushes = BUSH_SPOTS.slice(0, empty ? 0 : 2 + stage);
+  // record streak: a flower blooms for every day in a row (plus a few that are always there)
+  const flowers = snow ? [] : FLOWER_SPOTS.slice(0, empty ? 2 : clamp(5 + mood.streak, 5, FLOWER_SPOTS.length))
+    .map(([x, y], i) => [x, y, PETALS[i % PETALS.length], mood.season === 'summer' && i % 3 === 0]);
+  const hX = props.length === 2 ? [[150, 122], [216, 128]] : [[184, 128]];
+  const houses = props.map((p, i) => ({ p, loan:loanOf(p), x:hX[i][0], y:hX[i][1], s:clamp(.8 + .2 * Math.log10(p.value / 5e6), .68, 1.1) * (props.length === 2 ? .84 : 1) }));
+  const iX = lin(inv.length <= 2 ? 262 : 252, inv.length <= 2 ? 306 : 318, inv.length);
+  const towers = inv.map((a, i) => ({ a, x:iX[i], y:[138, 152, 130, 156][i] }));
+  const rocks = rockList.slice(0, 3).map(([id, v, tap], i) => ({ id, v, tap, x:[46, 318, 262][i], y:[176, 184, 204][i] }));
+  const keeps = (S.keepsakes || []).slice(-4).map((k, i) => ({ k, n:S.keepsakes.indexOf(k), x:[152, 226, 238, 160][i], y:[152, 156, 176, 194][i] }));
+  const passive = mood.passive > 0, hive = passive && !empty ? clamp(Math.ceil(Math.log10(mood.passive / 1e3 + 1)), 1, 3) : 0;
+  // islanders move in as the island grows; the fifth goes fishing once the savings rate reaches 10%
+  const folkAt = empty ? [] : [[120, 168, 0, 'stroll'], [161, 174.5, 1, 'hop'], [199, 175.5, 1, 'hop'], [252, 190, 0, 'hop']].slice(0, stage + 1);
+  const fisher = !empty && mood.saveRate >= .1;
+  const hat = mood.holiday === 'xmas' ? 'santa' : mood.holiday === 'halloween' ? 'witch' : '';
+  const nFish = empty ? 0 : clamp(Math.round(mood.saveRate * 10), 0, 6);   // savings rate → fish in the sea
+  const blnX = [[204], [110, 210], [106, 206, 282]][Math.max(0, goals.length - 1)] || [];
+  const blns = goals.map((g, i) => { const p = g.target ? g.saved / g.target : 0; return { g, p, up:p >= 1, x:blnX[i] }; });
+  const fw = mood.holiday === 'newyear' || (mood.streak >= 7 && !fireworksSeen());
+  const stalls = empty ? [] : marketToday().slice(0, 8).map((s, i) => { const x = STALL_X[i]; return { ...s, x, y:228 + 5 * (1 - ((x - 180) / 84) ** 2) }; });   // y follows the beach's curve
+  return { t, mood, hasCash, inv, props, goals, empty, stage, wet, grey, snow, town, trees, bushes, flowers, houses, iX, towers, rocks, keeps,
+    passive, hive, folkAt, fisher, hat, nFish, blns, fw, stalls };
+}
 
-  // sky colours: dusk and grey weather tint the scene, the season recolours the round trees
+function islandSVG() {
+  newSeen = new Set();
+  const { t, mood, hasCash, inv, props, goals, empty, stage, wet, grey, snow, town, trees, bushes, flowers, houses, iX, towers, rocks, keeps,
+    passive, hive, folkAt, fisher, hat, nFish, blns, fw, stalls } = islandModel();
+
+  // sky colours: dusk, night and grey weather tint the scene, the season recolours the round trees
   const tint = [`--roof:${roofPair()[0]}`, `--roof-dk:${roofPair()[1]}`];   // the chosen roof colour also caps the windmills
   if (grey) tint.push('--sky-top:#AFC3D1', '--sky-bot:#DCE6EC', '--sea-top:#7DB9CC', '--sea-bot:#5B98B5', '--cloud:#F1F4F7', '--cloud-sh:#D3DCE3');
   if (mood.dusk) tint.push(grey ? '--sky-top:#C9AFB8' : '--sky-top:#FFB892', grey ? '--sky-bot:#EAD9D6' : '--sky-bot:#FFE4CC', '--sun:#FF9E6B', '--sun-glow:rgba(255,158,107,.3)', '--window:#FFD86B', '--sea-top:#7FC0D4');
+  if (mood.night) tint.push(grey ? '--sky-top:#1F2638' : '--sky-top:#141D3B', grey ? '--sky-bot:#3A4257' : '--sky-bot:#32406E', '--sea-top:#2E5577', '--sea-bot:#1D3C5C', '--shallow:#3E7D86',
+    '--sun:#FFF3C4', '--sun-glow:rgba(255,243,196,.22)', '--window:#FFD86B', '--cloud:#8590B3', '--cloud-sh:#6A7598', '--hill-far:#3D5866', '--hill-tree:#2E4853', '--foam:rgba(255,255,255,.45)');
   if (mood.season === 'spring') tint.push('--tree:#F7B7C8', '--tree-dk:#E58FA8', '--tree-hi:#FFDCE6');
   if (mood.season === 'autumn') tint.push('--tree:#F2A14A', '--tree-dk:#D9732E', '--tree-hi:#FFCB72');
   if (snow) tint.push('--grass:#A9DB92', '--grass-hi:#C8EBB5', '--tree:#6BB86A', '--tree-pal:#5DA86B');
@@ -1093,10 +1203,11 @@ function islandSVG() {
     <path d="M-24 5 C-31 5 -31 -4 -23 -4 C-24 -12 -13 -16 -7 -10 C-5 -19 10 -19 12 -9 C16 -13 25 -10 23 -3 C30 -3 30 5 23 5Z" style="fill:var(--cloud)"/>
     <path d="M-22 4 C-10 6 10 6 22 4" style="fill:none;stroke:var(--cloud-sh);stroke-width:2.4;stroke-linecap:round"/></g></g>`;
   const still = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-24 5 C-31 5 -31 -4 -23 -4 C-24 -12 -13 -16 -7 -10 C-5 -19 10 -19 12 -9 C16 -13 25 -10 23 -3 C30 -3 30 5 23 5Z" style="fill:var(--cloud);stroke:var(--cloud-sh);stroke-width:1.2"/></g>`;
-  const rainbow = mood.weather === 'sunny' && !mood.dusk ? `<g style="fill:none;opacity:.5;stroke-width:3">${['#F59AA8', '#FFC87A', '#FFE48A', '#A9E08A', '#8FD0F2', '#B9A4EC']
+  const rainbow = mood.weather === 'sunny' && !mood.dusk && !mood.night ? `<g style="fill:none;opacity:.5;stroke-width:3">${['#F59AA8', '#FFC87A', '#FFE48A', '#A9E08A', '#8FD0F2', '#B9A4EC']
     .map((c, k) => `<path d="M${16 + k * 3} 60 A${62 - k * 3} ${48 - k * 3} 0 0 1 ${140 - k * 3} 60" stroke="${c}"/>`).join('')}</g>` : '';
   const sky = `${rainbow}
-    ${mood.holiday === 'moon' ? `<circle cx="318" cy="28" r="22" fill="#FFF3C4" opacity=".45"/><circle cx="318" cy="28" r="13" style="fill:#FFF3C4;${OL}"/>
+    ${mood.night && !grey ? STARS.map(([x, y, r], k) => `<circle class="twinkle" style="animation-delay:-${(k * .7).toFixed(1)}s" cx="${x}" cy="${y}" r="${r}" fill="#FFF6D8"/>`).join('') : ''}
+    ${mood.holiday === 'moon' || mood.night ? `<circle cx="318" cy="28" r="22" fill="#FFF3C4" opacity=".45"/><circle cx="318" cy="28" r="13" style="fill:#FFF3C4;${OL}"/>
       <circle cx="313" cy="24" r="2.4" fill="#F2E3A6"/><circle cx="322" cy="32" r="1.8" fill="#F2E3A6"/><circle cx="321" cy="23" r="1.2" fill="#F2E3A6"/>`
       : `<circle cx="318" cy="${mood.dusk ? 38 : 28}" r="22" style="fill:var(--sun-glow)"/><circle cx="318" cy="${mood.dusk ? 38 : 28}" r="13" style="fill:var(--sun);${OL}"/>`}
     ${grey ? (mood.holiday === 'moon' ? still(246, 22, 1) + still(170, 30, .9) : still(312, 30, 1.25) + still(276, 18, .9) + still(170, 28, 1.1)) : ''}
@@ -1116,14 +1227,11 @@ function islandSVG() {
   const parasol = mood.season === 'summer' && !wet ? `<g transform="translate(66 224)"><path d="M-7 1 H9 L7 4 H-9Z" style="fill:#7FC8F0;${OL};stroke-width:.8"/><path d="M2 2 L-1 -16" style="stroke:var(--ol);stroke-width:1"/>
     <path d="M-12 -14 Q-1 -24 10 -16 Q7 -17 5 -15.6 Q2 -18 -1 -16 Q-4 -17.6 -6.6 -15.4 Q-9 -16.4 -12 -14Z" style="fill:#F07A8A;${OL};stroke-width:.9"/><path d="M-1 -20.6 L-3 -15.4 M5 -18.6 L3.6 -15.8" style="stroke:#fff;stroke-width:1.6"/></g>` : '';
 
-  // savings rate → fish in the sea, and an islander fishing off the pier once it's 10% or more
-  const nFish = clamp(Math.round(mood.saveRate * 10), 0, 6);
-  const fishes = [[40, 92], [330, 98], [16, 140], [352, 176], [118, 240], [246, 246]].slice(0, empty ? 0 : nFish)
+  const fishes = [[40, 92], [330, 98], [16, 140], [352, 176], [118, 240], [246, 246]].slice(0, nFish)
     .map(([x, y], k) => fish(x, y, (k * 1.3).toFixed(1), ['#F48C4E', '#7FD3F7', '#F2C14E'][k % 3])).join('');
 
   // dirt paths from the campfire plaza to everything on the island
-  const hX = props.length === 2 ? [[150, 122], [216, 128]] : [[184, 128]];
-  const iX = lin(inv.length <= 2 ? 262 : 252, inv.length <= 2 ? 306 : 318, inv.length);
+  const hX = houses.map(o => [o.x, o.y]);
   const trails = [];
   if (!empty) {
     props.forEach((p, i) => trails.push(`M${hX[i][0]} ${hX[i][1] + 2} C${hX[i][0]} ${hX[i][1] + 22} 180 158 180 168`));
@@ -1140,50 +1248,33 @@ function islandSVG() {
   const items = [];
   const put = (y, svg) => items.push([y, svg]);
   const tapG = (tap, x, y, inner, cls = '') => `<g transform="translate(${x} ${y})" class="obj ${cls}" data-tap="${tap}">${inner}</g>`;
-  // town buildings take the back slots first; trees grow wherever is left
-  const SLOTS = { A:[98, 106], B:[136, 97], C:[232, 95], D:[270, 103], E:[58, 124], F:[304, 118], G:[86, 194], H:[292, 194] };
-  const town = empty ? [] : MILESTONES.filter(([v]) => t.net >= v);
-  const used = new Set();
-  town.forEach(([v, kind, name], i) => { const key = 'ACBDEFHG'[i], [x, y] = SLOTS[key]; used.add(key);
-    put(y, tapG('ms:' + i, x, y, `<g transform="scale(${kind === 'wheel' ? .8 : .78})"><g ${growAttr('ms' + kind)}>${townBuilding(kind)}</g></g>`)); });
-  const nTrees = t.net >= 1e5 ? clamp(Math.floor(Math.log10(t.net / 1e5) * 2) + 1, 1, 8) : 0;
-  const passive = mood.passive > 0;
-  const EDGE = [[118, 99, .62], [252, 97, .6], [40, 138, .62], [324, 134, .62], [176, 92, .58], [212, 94, .56], [70, 116, .58], [292, 108, .58]];
-  [['B', .95, 'r'], ['C', .9, 'p'], ['E', .82, 'p'], ['F', .82, 'r'], ['G', .72, 'r'], ['H', .72, 'p'], ['A', .75, 'p'], ['D', .75, 'r']]
-    .slice(0, nTrees).map(([k, s, kind]) => used.has(k) ? null : [...SLOTS[k], s, kind]).map((p, i, all) => p || [...EDGE[all.slice(0, i).filter(q => !q).length], i % 2 ? 'p' : 'r'])
-    .forEach(([x, y, s, kind], i) => {
-      put(y, kind === 'p' ? pine(x, y, s, i, { xmas:mood.holiday === 'xmas', snow }) : tree(x, y, s, i, { fruit:t.net >= 2e6 || passive, drop:passive && !snow, snow })); });
-  [[40, 148, '#F07A8A'], [326, 150, ''], [72, 112, ''], [152, 106, '#FFD25E'], [276, 122, '#F07A8A'], [258, 188, '']]
-    .slice(0, empty ? 0 : 2 + stage).forEach(([x, y, b]) => put(y, bush(x, y, snow ? '' : b)));
-  // record streak: a flower blooms for every day in a row (plus a few that are always there)
-  const petals = ['#F07A8A', '#FFFFFF', '#FFD25E', '#F59AB0', '#B48CF2'];
-  const FLOWER_SPOTS = [[108, 180], [228, 186], [62, 170], [292, 176], [168, 110], [140, 142], [234, 150], [100, 122], [320, 166], [206, 112],
-    [150, 186], [248, 140], [76, 140], [312, 140], [196, 192], [130, 132]];
-  if (!snow) FLOWER_SPOTS.slice(0, empty ? 2 : clamp(5 + mood.streak, 5, FLOWER_SPOTS.length))
-    .forEach(([x, y], i) => put(y, flowerPatch(x, y, petals[i % petals.length], mood.season === 'summer' && i % 3 === 0)));
+  town.forEach(({ i, kind, x, y }) => put(y, tapG('ms:' + i, x, y, `<g transform="scale(${kind === 'wheel' ? .8 : .78})"><g ${growAttr('ms' + kind)}>${townBuilding(kind)}</g></g>`)));
+  trees.forEach(([x, y, s, kind], i) => put(y, kind === 'p' ? pine(x, y, s, i, { xmas:mood.holiday === 'xmas', snow }) : tree(x, y, s, i, { fruit:t.net >= 2e6 || passive, drop:passive && !snow, snow })));
+  bushes.forEach(([x, y, b]) => put(y, bush(x, y, snow ? '' : b)));
+  flowers.forEach(([x, y, c, sun]) => put(y, flowerPatch(x, y, c, sun)));
   put(180, palm(18, 180, false)); put(176, palm(344, 176, true));
   if (hasCash) put(148, pond(t.cash, 88, 148));
-  props.forEach((p, i) => { const s = clamp(.8 + .2 * Math.log10(p.value / 5e6), .68, 1.1) * (props.length === 2 ? .84 : 1);
-    put(hX[i][1], house(p, loanOf(p), hX[i][0], hX[i][1], s.toFixed(3), { roof:roofPair(), snow, cny:mood.holiday === 'cny' })); });
-  inv.forEach((a, i) => { const y = [138, 152, 130, 156][i]; put(y, a.kind === 'stock' ? windmill(a, iX[i], y) : lighthouse(a, iX[i], y)); });
-  rockList.slice(0, 3).forEach(([id, v, tap], i) => { const [x, y] = [[46, 176], [318, 184], [262, 204]][i]; put(y, boulder(id, v, tap, x, y)); });
-  (S.keepsakes || []).slice(-4).forEach((k, i) => { const [x, y] = [[152, 152], [226, 156], [238, 176], [160, 194]][i];
-    put(y, tapG('keep:' + S.keepsakes.indexOf(k), x, y, `<g ${growAttr('k' + k.id)}>${keepsake(k)}</g>`)); });
-  if (passive && !empty) put(124, tapG('hive', 124, 124, beehive(clamp(Math.ceil(Math.log10(mood.passive / 1e3 + 1)), 1, 3))));
+  houses.forEach(o => put(o.y, house(o.p, o.loan, o.x, o.y, o.s.toFixed(3), { roof:roofPair(), snow, cny:mood.holiday === 'cny' })));
+  towers.forEach(({ a, x, y }) => put(y, a.kind === 'stock' ? windmill(a, x, y) : lighthouse(a, x, y)));
+  rocks.forEach(r => put(r.y, boulder(r.id, r.v, r.tap, r.x, r.y)));
+  keeps.forEach(({ k, n, x, y }) => put(y, tapG('keep:' + n, x, y, `<g ${growAttr('k' + k.id)}>${keepsake(k)}</g>`)));
+  if (hive) put(124, tapG('hive', 124, 124, beehive(hive)));
+  stalls.forEach(({ k, n, x, y }) => { const ga = growAttr('st' + k, 'build');
+    put(y, `<g transform="translate(${x} ${y.toFixed(1)})"><g class="obj" data-tap="stall:${k}"><g ${ga}>${stall(k, n, mood.dusk || mood.night)}</g></g></g>`);
+    if (ga.includes('build')) put(y + 8, `<g transform="translate(${x} ${y.toFixed(1)})">${scaffold(folkList()[0].kind)}</g>`); });   // the builder stands in front of the neighbours
   const folk = folkList();
   if (!empty) {
     put(204, fence([[100, 199], [108, 201], [116, 202.5], [124, 203.5], [132, 204], [140, 204.2]]));
     put(172, mood.holiday === 'moon' ? grill(180, 172) : campfire(180, 172));
     put(178, logSeat(161, 178)); put(179, logSeat(199, 179));
-    const hat = mood.holiday === 'xmas' ? 'santa' : mood.holiday === 'halloween' ? 'witch' : '';
-    // islanders move in as the island grows; tap one to hear what it has to say
-    [[120, 168, 0, 'stroll'], [161, 174.5, 1, 'hop'], [199, 175.5, 1, 'hop'], [252, 190, 0, 'hop']].slice(0, stage + 1).forEach(([x, y, sit, anim], i) => put(y + (sit ? 4.2 : 0),
+    // tap an islander to hear what it has to say
+    folkAt.forEach(([x, y, sit, anim], i) => put(y + (sit ? 4.2 : 0),
       tapG('talk:' + i, x, y, `<g class="folk"><g class="${anim}" style="animation-delay:-${i * .6}s"><g class="${anim === 'stroll' ? 'face' : ''}">${critter(folk[i].kind, sit, { hat, umbrella:wet })}</g></g></g>`)));
-    if (mood.saveRate >= .1) put(232, `<g>${tapG('talk:4', 299, 231, `<g class="folk">${critter(folk[4].kind, 1, { hat, umbrella:wet })}</g>`)}
+    if (fisher) put(232, `<g>${tapG('talk:4', 299, 231, `<g class="folk">${critter(folk[4].kind, 1, { hat, umbrella:wet })}</g>`)}
       <path d="M305 222 L326 208" style="stroke:var(--trunk);stroke-width:1.2;stroke-linecap:round"/><path d="M326 208 Q328 224 327 238" style="fill:none;stroke:var(--ol);stroke-width:.5"/>
       <g class="sway" style="animation-duration:2s"><circle cx="327" cy="239" r="1.8" style="fill:#E3564A;stroke:var(--ol);stroke-width:.6"/></g></g>`);
     if (stage >= 1) put(160, `<g transform="translate(208 160)">${shadow(4, 1.2)}<path d="M0 0 V-17" style="stroke:var(--ol);stroke-width:1.8"/>
-      ${mood.dusk ? '<circle cy="-19.8" r="9" fill="#FFE07A" opacity=".35"/>' : ''}
+      ${mood.dusk || mood.night ? '<circle cy="-19.8" r="9" fill="#FFE07A" opacity=".35"/>' : ''}
       <rect x="-3.2" y="-23" width="6.4" height="6.5" rx="1.5" style="fill:var(--fire-in);${OL};stroke-width:.9"/><path d="M-4 -23 L0 -26 L4 -23Z" style="fill:var(--hub);${OL};stroke-width:.9"/></g>`);
     // seasons and holidays
     if (snow) put(202, snowman(222, 202));
@@ -1197,23 +1288,21 @@ function islandSVG() {
   items.sort((a, b) => a[0] - b[0]);
   const flutter = empty || wet || snow ? '' : butterfly(132, 128, '#F59AB0', 0) + (stage >= 2 ? butterfly(252, 112, '#FFD25E', -2) : '');
   const rain = wet ? Array.from({ length:44 }, (_, k) => `<path class="rain" style="animation-delay:-${((k * .37) % 1).toFixed(2)}s;animation-duration:${(.6 + (k % 3) * .12).toFixed(2)}s;stroke:#6E9DBC;stroke-width:1.3;stroke-linecap:round;opacity:.7" d="M${(k * 8.6 + (k % 5) * 3) % 372} 0 l-3 9"/>`).join('') : '';
-  const fw = mood.holiday === 'newyear' || (mood.streak >= 7 && !fireworksSeen()) ? fireworks(mood.holiday === 'newyear') : '';
+  const fwSVG = fw ? fireworks(mood.holiday === 'newyear') : '';
 
-  const blnX = [[204], [110, 210], [106, 206, 282]][Math.max(0, goals.length - 1)] || [];
   let tethers = '';   // strings go behind the houses and trees; the balloons float in front
-  const balloons = goals.map((g, i) => {
-    const p = g.target ? g.saved / g.target : 0, up = p >= 1;
+  const balloons = blns.map(({ g, p, up, x }, i) => {
     const by = up ? 50 : 102 - 42 * clamp(p, 0, 1);
-    if (!up) tethers += `<g ${ak('bt' + g.id, `translate(${blnX[i]}px,${by.toFixed(1)}px)`)}><g class="sway" style="animation-delay:-${i * 1.4}s">
+    if (!up) tethers += `<g ${ak('bt' + g.id, `translate(${x}px,${by.toFixed(1)}px)`)}><g class="sway" style="animation-delay:-${i * 1.4}s">
       <path class="tether" d="M0 4 V${(114 - by).toFixed(1)}"/></g></g>`;
-    return `<g ${ak('bl' + g.id, `translate(${blnX[i]}px,${by.toFixed(1)}px)`)} class="obj" data-tap="goal:${g.id}">
+    return `<g ${ak('bl' + g.id, `translate(${x}px,${by.toFixed(1)}px)`)} class="obj" data-tap="goal:${g.id}">
       <g ${growAttr('g' + g.id, 'fadein')}><g class="${up ? 'float' : 'sway'}" style="animation-delay:-${i * 1.4}s">
         <g transform="scale(${up ? .85 : 1})">${balloonShape(g.color, p)}</g>
         <g class="tag" transform="translate(0 ${up ? 13 : 14})"><rect x="-15" y="-6" width="30" height="12" rx="6"/><text y="2.6">${up ? '升空!' : pct(p)}</text></g>
       </g></g></g>`;
   }).join('');
 
-  const desc = `財富島：蓄水池水位 ${pct(waterLevel(t.cash))}，${props.length} 棟房屋，${inv.length} 座投資建物，${town.length} 棟小鎮建築，${goals.length} 顆夢想氣球`;
+  const desc = `財富島：蓄水池水位 ${pct(waterLevel(t.cash))}，${props.length} 棟房屋，${inv.length} 座投資建物，${town.length} 棟小鎮建築，${goals.length} 顆夢想氣球${stalls.length ? `，今日海灘市集 ${stalls.length} 攤` : ''}`;
   const svg = `<svg viewBox="0 0 360 250" role="img" aria-label="${esc(desc)}" style="${tint.join(';')}">
   <defs>
     <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sky-top)"/><stop offset="1" style="stop-color:var(--sky-bot)"/></linearGradient>
@@ -1222,7 +1311,7 @@ function islandSVG() {
     <pattern id="gPat" width="18" height="16" patternUnits="userSpaceOnUse"><path d="M3 4 l2 3 h-4Z" style="fill:var(--grass-lo);opacity:.4"/><path d="M12 12 l2 3 h-4Z" style="fill:var(--grass-lo);opacity:.3"/><path d="M13 3 l1.5 2.2 h-3Z" style="fill:#fff;opacity:.25"/></pattern>
   </defs>
   <rect width="360" height="60" fill="url(#gSky)"/>
-  ${sky}${fw}
+  ${sky}${fwSVG}
   ${far}
   <rect y="57" width="360" height="193" fill="url(#gSea)"/>
   <path d="M0 57.5 H360" style="stroke:#fff;stroke-width:1.2;opacity:.6"/>
@@ -1249,6 +1338,543 @@ function islandSVG() {
   seen = newSeen; firstPaint = false;
   return svg;
 }
+/* ───────── 3D island: three.js from vendor/, loaded the first time home shows; the SVG island stays underneath as the fallback ───────── */
+const I3_KEY = 'wealth-island-3d';
+const want3D = () => { try { return localStorage.getItem(I3_KEY) !== 'off'; } catch (e) { return true; } };
+let I3 = null, i3State = '';   // 'loading' while three.js downloads, 'failed' when this device can't draw it
+function island3D() {   // after every render: lay the 3D island over the SVG one, unless 3D is off or unavailable
+  const box = ui.tab === 'home' && $('#island');
+  if (!box || !want3D() || i3State === 'failed') { if (I3) I3.stop(); return; }
+  if (I3) return I3.show(box);
+  if (i3State) return;
+  try { const c = document.createElement('canvas'), gl = c.getContext('webgl2') || c.getContext('webgl'); if (!gl) throw new Error('no WebGL'); gl.getExtension('WEBGL_lose_context')?.loseContext(); }
+  catch (e) { i3State = 'failed'; return; }
+  i3State = 'loading';
+  import('./vendor/three.module.min.js').then(T => { I3 = makeIsland3D(T); i3State = ''; island3D(); })
+    .catch(() => { i3State = 'failed'; });
+}
+function makeIsland3D(T) {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = document.createElement('canvas');
+  canvas.className = 'island3d'; canvas.setAttribute('role', 'img');
+  const renderer = new T.WebGLRenderer({ canvas, antialias:true, powerPreference:'low-power' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+  const scene = new T.Scene(), camera = new T.PerspectiveCamera(34, 360 / 250, .5, 300);
+  const hemi = new T.HemisphereLight('#FFFFFF', '#B8C99A', 1.6), sun = new T.DirectionalLight('#FFFFFF', 2.1);
+  sun.position.set(12, 22, 11); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.normalBias = .04;
+  Object.assign(sun.shadow.camera, { left:-16, right:16, top:16, bottom:-16, near:2, far:60 }); sun.shadow.camera.updateProjectionMatrix();
+  const fireLight = new T.PointLight('#FF9A3C', 0, 9, 1.5);
+  scene.add(hemi, sun, fireLight);
+
+  // shared shapes and colours: a rebuild only makes new meshes, never new geometry
+  const base = g => g.translate(0, .5, 0);   // stands on the ground and grows upward when scaled
+  const tri = (w, h) => { const s = new T.Shape(); s.moveTo(-w, 0); s.lineTo(w, 0); s.lineTo(0, h); s.closePath(); return s; };
+  const starShape = () => { const s = new T.Shape();
+    for (let i = 0; i <= 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? .42 : 1; i ? s.lineTo(Math.cos(a) * r, Math.sin(a) * r) : s.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+    return s; };
+  const G = {
+    box:base(new T.BoxGeometry(1, 1, 1)), cbox:new T.BoxGeometry(1, 1, 1),
+    cyl:base(new T.CylinderGeometry(1, 1, 1, 14)), ccyl:new T.CylinderGeometry(1, 1, 1, 10),
+    tower:base(new T.CylinderGeometry(.7, 1, 1, 12)), cup:base(new T.CylinderGeometry(1, .5, 1, 12)),
+    cone:base(new T.ConeGeometry(1, 1, 12)), pyr:base(new T.ConeGeometry(1, 1, 4)),
+    ball:new T.SphereGeometry(1, 16, 12), blob:new T.IcosahedronGeometry(1, 1), rock:new T.DodecahedronGeometry(1, 0),
+    disc:new T.CircleGeometry(1, 20).rotateX(-Math.PI / 2), ring:new T.TorusGeometry(1, .05, 6, 28).rotateX(Math.PI / 2), wheel:new T.TorusGeometry(1, .045, 6, 32),
+    roof:new T.ExtrudeGeometry(tri(1, .75), { depth:1, bevelEnabled:false }).translate(0, 0, -.5),
+    star:new T.ExtrudeGeometry(starShape(), { depth:.3, bevelEnabled:true, bevelThickness:.08, bevelSize:.06, bevelSegments:1 }).translate(0, 0, -.15),
+    sail:new T.ExtrudeGeometry(tri(.5, 1), { depth:.04, bevelEnabled:false }),
+  };
+  const mats = new Map();
+  const M = (c, o = {}) => { const k = `${c}|${o.smooth ? 1 : 0}|${o.glow || ''}`;
+    if (!mats.has(k)) mats.set(k, new T.MeshLambertMaterial({ color:c, flatShading:!o.smooth, emissive:o.glow || '#000000' }));
+    return mats.get(k); };
+  const hitMat = new T.MeshBasicMaterial();
+  let C = n => n;   // a CSS colour token, read from the island's SVG so dusk, rain and the seasons tint 3D the same way
+  const part = (g, c, s, p = [0, 0, 0], o = {}) => { const m = new T.Mesh(G[g], M(C(c), o));
+    typeof s === 'number' ? m.scale.setScalar(s) : m.scale.set(...s); m.position.set(...p);
+    if (o.r) m.rotation.set(...o.r);
+    m.castShadow = !!o.cast; m.receiveShadow = !!o.recv; return m; };
+  const grp = (...kids) => { const g = new T.Group(); kids.flat(Infinity).forEach(k => k && g.add(k)); return g; };
+  const hit = (r, y = r * .8) => { const m = new T.Mesh(G.ball, hitMat); m.scale.setScalar(r); m.position.y = y; m.visible = false; return m; };   // a bigger, invisible target for small things
+  const P = (x, y) => [(x - 180) / 15, (y - 150) / 8];   // SVG spot → ground (x, z)
+  const tags = new Map();
+  const tag = (text, y, w = 1.5) => {   // a little white label, like the SVG's pills
+    if (!tags.has(text)) {
+      const c = document.createElement('canvas'); c.width = 192; c.height = 72;
+      const x = c.getContext('2d'); x.fillStyle = 'rgba(255,255,255,.93)'; x.strokeStyle = '#6E5136'; x.lineWidth = 4; x.beginPath();
+      x.roundRect ? x.roundRect(4, 4, 184, 64, 32) : x.rect(4, 4, 184, 64); x.fill(); x.stroke();
+      x.fillStyle = '#2A2721'; x.font = '800 38px ui-rounded, "SF Pro Rounded", -apple-system, "PingFang TC", "Noto Sans TC", sans-serif';
+      x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, 96, 39);
+      const tx = new T.CanvasTexture(c); tx.colorSpace = T.SRGBColorSpace;
+      tags.set(text, new T.SpriteMaterial({ map:tx, depthTest:false, transparent:true }));
+    }
+    const s = new T.Sprite(tags.get(text)); s.scale.set(w, w * .375, 1); s.position.y = y; s.renderOrder = 5; return s; };
+  const dotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d');
+    x.fillStyle = '#fff'; x.beginPath(); x.arc(16, 16, 14, 0, 7); x.fill(); return new T.CanvasTexture(c); })();
+  const ease = k => 1 - (1 - k) ** 3, backOut = k => 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2;
+
+  // the ground: grass on soil on a sandy beach, in a shallow lagoon on the open sea
+  const blobShape = (rx, rz) => { const s = new T.Shape();
+    for (let i = 0; i <= 64; i++) { const a = i / 64 * Math.PI * 2, w = 1 + .04 * Math.sin(a * 3 + .8) + .025 * Math.sin(a * 5 + 2), x = Math.cos(a) * rx * w, y = Math.sin(a) * rz * w;
+      i ? s.lineTo(x, y) : s.moveTo(x, y); }
+    return s; };
+  const slab = (rx, rz, depth, bevel, top) => {
+    const m = new T.Mesh(new T.ExtrudeGeometry(blobShape(rx, rz), { depth, bevelEnabled:bevel > 0, bevelThickness:bevel, bevelSize:bevel, bevelSegments:3, curveSegments:4 }).rotateX(-Math.PI / 2),
+      new T.MeshLambertMaterial());
+    m.position.y = top - depth - bevel; m.receiveShadow = true; scene.add(m); return m; };
+  const land = { grass:slab(10.4, 8.6, .3, .28, 0), soil:slab(10.2, 8.4, 1.1, 0, -.5), soil2:slab(9.7, 8, 1.2, 0, -1.6), sand:slab(11.6, 9.7, .25, .3, -.95) };
+  const flat = (geo, y, op) => { const m = new T.Mesh(geo.rotateX(-Math.PI / 2), new T.MeshLambertMaterial({ transparent:!!op, opacity:op || 1 })); m.position.y = y; m.receiveShadow = true; scene.add(m); return m; };
+  const sea = flat(new T.CircleGeometry(95, 48), -1.35), lagoon = flat(new T.ShapeGeometry(blobShape(13.6, 11.6)), -1.32, .8);
+  const hills = grp(part('blob', '#BCE5C8', [10, 3.4, 5], [-30, -1.6, -40]), part('blob', '#BCE5C8', [7, 2.6, 4], [28, -1.6, -46]),
+    part('cone', '#8DCDA0', [.8, 2, .8], [-31, 1.2, -38]), part('cone', '#8DCDA0', [.7, 1.7, .7], [-27, .9, -37]), part('cone', '#8DCDA0', [.6, 1.5, .6], [27, .5, -44]));
+  const sunBall = new T.Mesh(G.ball, new T.MeshBasicMaterial({ color:'#FFD86B', fog:false })); sunBall.scale.setScalar(1.5);
+  const halo = new T.Sprite(new T.SpriteMaterial({ map:dotTex, color:'#FFE9A8', transparent:true, opacity:.45, depthWrite:false, fog:false })); halo.scale.setScalar(6);
+  const sky = grp(sunBall, halo); sky.position.set(13, 4.5, -23);   // low over the far sea, where the first view can see it
+  const rainbow = grp(['#F59AA8', '#FFC87A', '#FFE48A', '#A9E08A', '#8FD0F2', '#B9A4EC'].map((c, k) =>
+    new T.Mesh(new T.TorusGeometry(15 - k * .75, .38, 6, 40, Math.PI), new T.MeshBasicMaterial({ color:c, transparent:true, opacity:.4, depthWrite:false, fog:false }))));
+  rainbow.position.set(-7, -1.4, -21); rainbow.scale.setScalar(.55);
+  scene.add(hills, sky, rainbow);
+  let skyKey = '';
+  const setSky = (top, bot) => { if (skyKey === top + bot) return; skyKey = top + bot;
+    const c = document.createElement('canvas'); c.width = 2; c.height = 256;
+    const x = c.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, top); g.addColorStop(.6, bot); g.addColorStop(1, bot);
+    x.fillStyle = g; x.fillRect(0, 0, 2, 256);
+    const tx = new T.CanvasTexture(c); tx.colorSpace = T.SRGBColorSpace;
+    if (scene.background) scene.background.dispose();
+    scene.background = tx; scene.fog = new T.Fog(bot, 40, 88); };   // the far sea melts into the sky colour
+  const beam = new T.Mesh(new T.ConeGeometry(.55, 6, 16, 1, true).rotateZ(Math.PI / 2).translate(3, 0, 0),
+    new T.MeshBasicMaterial({ color:'#FFF1B0', transparent:true, opacity:.3, depthWrite:false, side:T.DoubleSide }));
+  const rippleMat = new T.MeshBasicMaterial({ color:'#FFFFFF', transparent:true, opacity:.55, depthWrite:false });
+  const stars = (() => {   // a band of stars low over the far sea, where the first view can see the night sky
+    const n = 70, pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) pos.set([(Math.random() - .5) * 64, 2.5 + Math.random() * 9, -22 - Math.random() * 20], i * 3);
+    const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+    const s = new T.Points(geo, new T.PointsMaterial({ color:'#FFF6D8', size:.22, map:dotTex, transparent:true, depthWrite:false, fog:false })); s.raycast = () => {}; scene.add(s); return s; })();
+
+  /* ── one rebuild per render: everything on the island, keyed so new things grow in and changed values glide ── */
+  let root = null, anims = [], seen = null, now = 0, cheerTo = 0, isEmpty = false;
+  const last = {};
+  function build(svg) {
+    const cs = getComputedStyle(svg || document.documentElement);
+    C = n => n[0] === '-' ? cs.getPropertyValue(n).trim() || '#999999' : n;
+    const m = islandModel(), { t, mood, wet, grey, snow, empty } = m, dusk = mood.dusk, night = mood.night, lit = dusk || night, moon = mood.holiday === 'moon';
+    isEmpty = empty;
+    const palmLeaf = cs.getPropertyValue('--tree-pal').trim() || C('--pine');
+    setSky(C('--sky-top'), C('--sky-bot'));
+    sea.material.color.set(C('--sea-bot')); lagoon.material.color.set(C('--shallow'));
+    land.grass.material.color.set(C('--grass')); land.soil.material.color.set(C('--soil-top')); land.soil2.material.color.set(C('--soil-bot')); land.sand.material.color.set(C('--sand'));
+    hemi.color.set(night ? '#8FA3D9' : dusk ? '#FFD9C2' : '#FFFFFF'); hemi.groundColor.set(night ? '#2B3346' : '#B8C99A'); hemi.intensity = night ? (grey ? .8 : .95) : grey ? 2 : 1.6;
+    sun.color.set(night ? '#AFC4FF' : dusk ? '#FFB07A' : '#FFFFFF'); sun.intensity = night ? .6 : grey ? .8 : dusk ? 1.6 : 2.1;   // at night the moon lights the island
+    sunBall.material.color.set(moon || night ? '#FFF3C4' : C('--sun')); halo.material.color.set(night ? '#C9D3FF' : '#FFE9A8'); halo.material.opacity = night ? .25 : .45;
+    sky.visible = moon || night || !grey; sky.position.y = dusk ? 2.6 : 4.5;
+    stars.visible = night && !grey; rainbow.visible = mood.weather === 'sunny' && !lit;
+    beam.material.opacity = night ? .5 : .3;
+
+    const next = new T.Group(), keys = new Set();
+    anims = [];
+    const put = (obj, key, tap, x = 0, z = 0, y = 0, ry = 0, wait = 0) => {   // a holder per thing: it grows in (after wait seconds), the thing inside pulses
+      const h = grp(grp(obj)); h.position.set(x, y, z); h.rotation.y = ry; h.userData.key = key; if (tap) h.userData.tap = tap;
+      keys.add(key); next.add(h);
+      if (seen && !seen.has(key) && !still) { const s0 = now + wait; h.scale.setScalar(.001); anims.push(() => h.scale.setScalar(Math.max(.001, backOut(clamp((now - s0) / .75, 0, 1))))); }
+      return obj; };
+    const tween = (key, to, apply) => { const from = key in last ? last[key] : to; last[key] = to;
+      if (from === to || still) return apply(to);
+      const s0 = now; apply(from); anims.push(() => apply(from + (to - from) * ease(clamp((now - s0) / 1.1, 0, 1)))); };
+
+    // little builders, each standing at its own origin facing +z (toward the camera's first view)
+    const tree = (s, i, o) => { const g = grp(part('cyl', '--trunk', [.17, 1.15, .17], [0, 0, 0], { cast:1 }),
+        part('blob', '--tree', [.95, .85, .95], [0, 1.7, 0], { cast:1 }), part('blob', '--tree-dk', [.62, .55, .62], [-.55, 1.35, .25], { cast:1 }),
+        part('blob', '--tree-hi', [.58, .5, .58], [.35, 2.15, -.1]));
+      if (o.snow) g.add(part('blob', '#FFFFFF', [.78, .32, .78], [0, 2.32, 0]));
+      if (o.fruit) [[.62, 1.7, .55], [-.5, 1.85, .62], [.15, 1.35, .9], [-.15, 2.25, .55]].forEach(p => g.add(part('ball', '--fruit', .14, p, { smooth:1 })));
+      if (o.drop) { const f = part('ball', '--fruit', .14, [.7, 1.5, .5], { smooth:1 }); g.add(f);
+        anims.push(tt => { const k = ((tt + i * 1.7) % 5) / 5; f.position.y = k < .3 ? 1.5 - (k / .3) ** 2 * 1.4 : .1; f.visible = k < .9; }); }
+      g.scale.setScalar(s * 1.2); return g; };
+    const pine = (s, o) => { const g = grp(part('cyl', '--trunk', [.16, .7, .16], [0, 0, 0], { cast:1 }),
+        part('cone', '--pine-dk', [1, 1.1, 1], [0, .55, 0], { cast:1 }), part('cone', '--pine', [.78, .95, .78], [0, 1.2, 0], { cast:1 }), part('cone', '--pine-hi', [.54, .85, .54], [0, 1.8, 0], { cast:1 }));
+      if (o.snow) g.add(part('cone', '#FFFFFF', [.34, .45, .34], [0, 2.22, 0]));
+      if (o.xmas) { [[.62, .8, .45, '#E3564A'], [-.5, .9, .5, '#F2C14E'], [.1, 1.45, .6, '#5EB8E0'], [-.35, 1.55, -.4, '#E3564A'], [.3, 2.05, .3, '#F2C14E']]
+          .forEach(([x, y, z, c]) => g.add(part('ball', c, .1, [x, y, z], { smooth:1 })));
+        g.add(part('star', '#F2C14E', .2, [0, 2.8, 0], { glow:'#6B4C00' })); }
+      g.scale.setScalar(s * 1.2); return g; };
+    const bush = berry => { const g = grp(part('blob', '--bush', [.55, .42, .5], [0, .3, 0], { cast:1 }), part('blob', '--tree-dk', [.4, .32, .38], [.42, .22, .1]));
+      if (berry) [[.15, .62, .35], [-.25, .52, .4], [.45, .45, .35]].forEach(p => g.add(part('ball', berry, .08, p, { smooth:1 }))); return g; };
+    const flowers = (c, tall) => grp([[-.16, .08], [.16, -.06]].map(([x, z]) => [part('cyl', '--grass-lo', [.025, tall ? .65 : .3, .025], [x, 0, z]),
+      part('ball', tall ? '#FFD25E' : c, tall ? .15 : .11, [x, tall ? .7 : .34, z], { smooth:1 }), part('ball', tall ? '#8A5A12' : '#FFD86B', tall ? .07 : .045, [x, tall ? .7 : .34, z + (tall ? .11 : .08)], { smooth:1 })]));
+    const palm = flip => { const g = new T.Group(), top = [.72 * flip, 2.75, 0];
+      for (let i = 0; i < 5; i++) g.add(part('ccyl', '--trunk', [.16 - i * .015, .56, .16 - i * .015], [i * i * .045 * flip, .3 + i * .5, 0], { r:[0, 0, -flip * i * .09], cast:1 }));
+      for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2;
+        g.add(part('blob', palmLeaf, [1.1, .1, .3], [top[0] + Math.cos(a) * .85, top[1] - .25, Math.sin(a) * .85], { r:[0, -a, -.35], cast:1 })); }
+      g.add(part('ball', '--door', .15, [top[0] + .1, top[1] - .2, .15], { smooth:1 }), part('ball', '--door', .15, [top[0] - .12, top[1] - .25, -.1], { smooth:1 }));
+      return g; };
+    const pond = lvl => { const f = clamp(lvl, 0, 1), w = part('cyl', '--water', [2.35, .16, 1.92]);
+      const g = grp(part('cyl', '--mud', [2.5, .14, 2.05], [0, -.02, 0], { recv:1 }), w, tag(lvl >= 1 ? '滿水位' : pct(f), 1.5), hit(1.6, .5));
+      tween('pond', Math.max(.08, Math.sqrt(f)), s => w.scale.set(2.35 * s, .16, 1.92 * s));
+      for (let k = 0; k < 11; k++) { const a = k / 11 * Math.PI * 2; g.add(part('rock', '--stone', [.32, .2, .28], [Math.cos(a) * 2.5, .05, Math.sin(a) * 2.05], { r:[0, a, 0] })); }
+      if (lvl >= 1) g.add(part('cyl', '--grass-lo', [.35, .03, .35], [-.8, .17, .3]), part('cyl', '--grass-lo', [.3, .03, .3], [.9, .17, -.3]), part('ball', '#F59AB0', .1, [.9, .24, -.3], { smooth:1 }));
+      return g; };
+    const house = (p, loan, s, roof) => {   // the loan is the stone foundation lifting the house; paid off flies a flag
+      const ratio = loan ? clamp(loan.value / Math.max(1, p.value), 0, 1) : 0, fh = loan && loan.value > 0 ? .2 + 1.1 * ratio : 0, glow = night ? '#B8901E' : dusk ? '#7A5A10' : '';
+      const found = part('box', '--found', [3.3, 1, 2.7], [0, 0, 0], { cast:1 });
+      const body = grp(part('box', '--wall', [3, 1.8, 2.4], [0, 0, 0], { cast:1 }), part('roof', roof[0], [1.95, 1.75, 2.9], [0, 1.8, 0], { cast:1 }),
+        part('box', roof[1], [.4, .9, .4], [.85, 2.1, -.4], { cast:1 }), part('box', '--door', [.65, 1.05, .08], [0, 0, 1.2]),
+        part('ccyl', '--window', [.25, .06, .25], [0, 2.25, 1.46], { r:[Math.PI / 2, 0, 0], glow }),
+        [-.95, .95].map(x => [part('box', '--window', [.55, .55, .06], [x, .75, 1.21], { glow }), part('box', '--door', [.72, .16, .22], [x, .55, 1.26]),
+          part('ball', '#F07A8A', .07, [x - .2, .74, 1.3], { smooth:1 }), part('ball', '#FFD86B', .07, [x + .05, .76, 1.3], { smooth:1 }), part('ball', '#FFFFFF', .07, [x + .25, .74, 1.3], { smooth:1 })]));
+      if (snow) body.add(part('roof', '#FFFFFF', [1.06, .96, 2.96], [0, 2.42, 0]));
+      if (mood.holiday === 'cny') body.add(part('box', '#E3473C', [.16, .8, .04], [-.5, .1, 1.22]), part('box', '#E3473C', [.16, .8, .04], [.5, .1, 1.22]));
+      if (!loan || loan.value <= 0) body.add(part('ccyl', '--ol', [.03, .9, .03], [0, 3.55, 0]), part('cbox', '--emerald', [.5, .3, .03], [.27, 3.82, 0]));
+      const smoke = [0, 1, 2].map(() => part('ball', '--cloud', .18, [.85, 3.1, -.4], { smooth:1 })); body.add(...smoke);
+      anims.push(tt => smoke.forEach((b, i) => { const k = (tt * .45 + i / 3) % 1; b.position.set(.85 + k * .45, 3.1 + k * 1.4, -.4); b.scale.setScalar(.12 + k * .26); b.visible = k < .94; }));
+      tween('fd' + p.id, fh, hh => { found.scale.y = Math.max(.001, hh); found.visible = hh > .01; body.position.y = hh; });
+      const g = grp(found, body, part('cyl', '--door', [.04, .6, .04], [2.15, 0, 1]), part('box', '--sky', [.3, .24, .4], [2.15, .6, 1]), hit(2.2, 1.6));
+      g.scale.setScalar(s); return g; };
+    const windmill = a => {   // taller with more money; the sails spin faster the more it has gained
+      const h = invHeight(a.value) * .8 / 14, gain = a.cost ? (a.value - a.cost) / a.cost : 0, dur = clamp(3.4 - gain * 5, .9, 9), L = clamp(invHeight(a.value) * .8 * .45, 13, 27) / 14 * 1.1;
+      const tower = part('tower', '--mill', [.7, 1, .7], [0, 0, 0], { cast:1 }), win = part('ccyl', '--window', [.17, .05, .17], [0, 0, .62], { r:[Math.PI / 2, 0, 0] });
+      const sails = new T.Group(); sails.position.set(0, .12, .82);
+      for (let k = 0; k < 4; k++) { const arm = grp(part('cbox', '--ol', [.06, L, .04], [0, L / 2, 0]), part('cbox', gain < 0 ? '--turbine-dim' : '--turbine', [.36, L * .78, .03], [.22, L * .56, 0], { cast:1 }));
+        arm.rotation.z = k * Math.PI / 2; sails.add(arm); }
+      const top = grp(part('cone', '--roof', [.62, .8, .62], [0, 0, 0], { cast:1 }), part('ccyl', '--hub', [.15, .32, .15], [0, .12, .62], { r:[Math.PI / 2, 0, 0] }), sails);
+      anims.push(tt => { sails.rotation.z = -tt * Math.PI * 2 / dur; });
+      tween('i' + a.id, h, hh => { tower.scale.y = hh; top.position.y = hh; win.position.y = hh * .55; });
+      return grp(tower, top, win, part('box', '--door', [.38, .55, .06], [0, 0, .68]), hit(1.2, 1.4)); };
+    const lighthouse = a => { const h = invHeight(a.value) * .82 / 14, body = new T.Group();
+      for (let k = 0; k < 4; k++) body.add(part('cyl', k % 2 ? '--lh-band' : '--wall', [.64 - k * .06, .25, .64 - k * .06], [0, k * .25, 0], { cast:1 }));
+      const b = beam.clone(); b.position.y = .3;
+      const lamp = grp(part('cyl', '--hub', [.56, .08, .56]), part('cyl', '--sun', [.32, .45, .32], [0, .08, 0], { glow:'#8A6A00' }), part('cone', '--lh-band', [.44, .42, .44], [0, .53, 0], { cast:1 }), b);
+      anims.push(tt => { b.rotation.y = tt * 1.2; });
+      tween('i' + a.id, h, hh => { body.scale.y = hh; lamp.position.y = hh; });
+      return grp(body, lamp, part('box', '--door', [.32, .5, .06], [0, 0, .62]), hit(1.1, 1.4)); };
+    const boulder = v => { const r = clamp(6 + 3.4 * Math.log10(Math.max(v, 1e4) / 1e4), 6, 16) / 11;   // debts: rocks sized by what is owed
+      return grp(part('rock', '--rock', [r * 1.1, r * .75, r], [0, r * .35, 0], { cast:1 }), part('rock', '--rock-hi', [r * .45, r * .35, r * .4], [r * .85, r * .1, r * .5], { cast:1 }), hit(r * 1.1)); };
+    const shop = kind => { const awn = { cafe:'#9A6B45', flower:'#F07A8A', bakery:'#F2B24C' }[kind];
+      return grp(part('box', '--wall', [1.7, 1.2, 1.3], [0, 0, 0], { cast:1 }), part('roof', '#C9A27A', [1.05, .7, 1.45], [0, 1.2, 0], { cast:1 }),
+        part('box', awn, [1.85, .08, .55], [0, .98, .82], { r:[.35, 0, 0] }), [-.6, 0, .6].map(x => part('box', '#FFFFFF', [.2, .09, .56], [x, .985, .83], { r:[.35, 0, 0] })),
+        part('box', '--window', [.5, .42, .05], [-.4, .3, .66]), part('box', '--door', [.38, .7, .05], [.42, 0, .66]),
+        part('box', '#FFFFFF', [.5, .3, .05], [0, 1.28, .73]), part('ball', { cafe:'#9A6B45', flower:'#F07A8A', bakery:'#E8A75A' }[kind], .1, [0, 1.43, .78], { smooth:1 })); };
+    const townBuilding = kind => {
+      if (kind === 'museum') return grp(part('box', '--stone', [2.2, .2, 1.6], [0, 0, 0], { cast:1 }), part('box', '#F6EEDC', [1.9, 1.1, 1.1], [0, .2, -.2], { cast:1 }),
+        [-.72, -.24, .24, .72].map(x => part('cyl', '#FFFFFF', [.09, 1.1, .09], [x, .2, .52], { cast:1 })),
+        part('box', '#E9DCC0', [2.1, .14, 1.5], [0, 1.3, 0]), part('roof', '#E9DCC0', [1.05, .7, 1.5], [0, 1.44, 0], { cast:1 }), part('ccyl', '#F2C14E', [.14, .05, .14], [0, 1.66, .76], { r:[Math.PI / 2, 0, 0] }));
+      if (kind === 'fountain') { const jets = [0, 1, 2, 3].map(() => part('ball', '--water', .08, [0, 1.2, 0], { smooth:1 }));
+        anims.push(tt => jets.forEach((j, k) => { const s = (tt * 1.1 + k / 4) % 1, a = k * Math.PI / 2 + .4; j.position.set(Math.cos(a) * s * .75, 1.15 + Math.sin(Math.PI * s) * .45 - s * .75, Math.sin(a) * s * .75); }));
+        return grp(part('cyl', '--stone', [1, .32, 1], [0, 0, 0], { cast:1 }), part('cyl', '--water', [.86, .05, .86], [0, .3, 0]), part('cyl', '--stone', [.13, .8, .13], [0, .3, 0]), part('cyl', '--stone', [.4, .1, .4], [0, 1.05, 0]), jets); }
+      if (kind === 'clock') { const d = new Date(), hand = (len, a) => { const g = grp(part('cbox', '--ol', [.04, len, .02], [0, len / 2, 0])); g.position.set(0, 1.95, .43); g.rotation.z = -a; return g; };
+        return grp(part('box', '#F6EEDC', [.8, 2.6, .8], [0, 0, 0], { cast:1 }), part('pyr', '--lh-band', [.68, .9, .68], [0, 2.6, 0], { r:[0, Math.PI / 4, 0], cast:1 }),
+          part('ccyl', '#FFFFFF', [.3, .04, .3], [0, 1.95, .41], { r:[Math.PI / 2, 0, 0] }), hand(.22, (d.getHours() % 12 + d.getMinutes() / 60) / 12 * Math.PI * 2), hand(.27, d.getMinutes() / 60 * Math.PI * 2),
+          part('box', '--door', [.3, .5, .05], [0, 0, .41])); }
+      if (kind === 'market') return grp(part('box', '--log', [1.8, .6, .8], [0, 0, 0], { cast:1 }),
+        [[-.6, '#F48C4E'], [-.35, '#F2C14E'], [-.05, '#E3564A'], [.2, '#F48C4E'], [.5, '#C5DE6A'], [.72, '#E3564A']].map(([x, c]) => part('ball', c, .14, [x, .72, .1], { smooth:1 })),
+        [[-.85, -.35], [.85, -.35], [-.85, .35], [.85, .35]].map(([x, z]) => part('cyl', '--trunk', [.05, 1.6, .05], [x, 0, z])),
+        part('box', '#5EB8E0', [2, .12, 1.1], [0, 1.6, 0], { cast:1 }), [-.6, 0, .6].map(x => part('box', '#FFFFFF', [.24, .125, 1.11], [x, 1.6, 0])));
+      if (kind === 'wheel') { const wheel = new T.Group(); wheel.position.set(0, 2.3, 0);
+        wheel.add(new T.Mesh(G.wheel, M('#FFF4DF')), part('ccyl', '--hub', [.12, .4, .12], [0, 0, 0], { r:[Math.PI / 2, 0, 0] }));
+        wheel.children[0].scale.setScalar(1.6);
+        for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4;
+          wheel.add(part('cbox', '--ol', [.03, 1.6, .03], [Math.cos(a) * .8, Math.sin(a) * .8, 0], { r:[0, 0, a - Math.PI / 2] }), part('ball', ['#E3564A', '#F2C14E', '#5EB8E0', '#7CC48A'][k % 4], .2, [Math.cos(a) * 1.6, Math.sin(a) * 1.6, 0], { cast:1 })); }
+        anims.push(tt => { wheel.rotation.z = tt * .16; });
+        return grp(wheel, [-1, 1].map(s => part('cbox', '#FFFFFF', [.1, 2.6, .1], [s * .5, 1.15, .2], { r:[0, 0, s * .38], cast:1 }))); }
+      return shop(kind); };
+    const keepsake = k => { const g = grp(part('box', '--stone', [.7, .32, .7], [0, 0, 0], { cast:1 }), hit(.6));   // dream statues and record-streak trophies
+      if (k.kind === 'dream') { const s = part('star', k.color || '#F2C14E', .38, [0, .8, 0], { cast:1 }); g.add(s); anims.push(tt => { s.rotation.y = tt * .8; }); }
+      else g.add(part('cup', '#F2C14E', [.3, .45, .3], [0, .52, 0], { cast:1 }), part('cyl', '#E0A92E', [.07, .2, .07], [0, .32, 0]), tag(String(k.n), 1.3, 1));
+      return g; };
+    const beehive = n => { const g = grp(part('cyl', '--trunk', [.06, .6, .06]), [0, 1, 2].map(k => part('cyl', k % 2 ? '#E0A92E' : '#F2C14E', [.36 - k * .07, .17, .36 - k * .07], [0, .6 + k * .17, 0], { cast:1 })),
+        part('ball', '#6B4632', .06, [0, .72, .33], { smooth:1 }), hit(.7));
+      for (let k = 0; k < n; k++) { const b = part('ball', '#FFD23F', .07, [0, 0, 0], { smooth:1 }); g.add(b);
+        anims.push(tt => { const a = tt * 2.4 + k * 2.1; b.position.set(Math.cos(a) * .7, 1.05 + Math.sin(tt * 5 + k) * .15, Math.sin(a) * .7); }); }
+      return g; };
+    const campfire = () => { const g = new T.Group();
+      for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; g.add(part('rock', '--stone', [.17, .12, .15], [Math.cos(a) * .55, .05, Math.sin(a) * .55])); }
+      if (moon) { g.add(part('box', '#4A4A4A', [.8, .1, .5], [0, .45, 0]), [[-.35, -.2], [.35, -.2], [-.35, .2], [.35, .2]].map(([x, z]) => part('cyl', '#4A4A4A', [.03, .45, .03], [x, 0, z])),
+        [-.2, 0, .2].map(x => part('box', '#C9784A', [.14, .05, .3], [x, .55, 0]))); return g; }   // moon festival: a barbecue grill
+      [0, 2.1, 4.2].forEach(a => g.add(part('ccyl', '--log', [.07, .8, .07], [Math.cos(a) * .12, .28, Math.sin(a) * .12], { r:[0, -a, .5] })));
+      const f1 = part('cone', '--fire', [.28, .7, .28], [0, .1, 0], { glow:'#FF6A00' }), f2 = part('cone', '--fire-in', [.16, .45, .16], [0, .1, 0], { glow:'#FFB000' });
+      g.add(f1, f2);
+      anims.push(tt => { f1.scale.y = .62 + Math.sin(tt * 11) * .08 + Math.sin(tt * 7.3) * .06; f2.scale.y = .42 + Math.sin(tt * 13 + 1) * .07; fireLight.intensity = night ? 10 + Math.sin(tt * 9) * 1.5 : dusk ? 7 + Math.sin(tt * 9) : 0; });
+      return g; };
+    const critter = (kind, sit, o = {}) => {   // a round islander; the face looks along +z
+      const c = CRITTERS[kind] || CRITTERS.cat, sm = { smooth:1 }, by = sit ? .32 : .42;
+      const body = grp(part('ball', c.shirt, [.36, .34, .32], [0, by, 0], { smooth:1, cast:1 }),
+        [-1, 1].map(s => [part('ball', c.beak ? '#F6A13A' : c.fur, [.12, .08, .16], [s * .16, .05, sit ? .24 : .05], sm), part('ball', c.fur, [.09, .16, .09], [s * .36, by + .02, .05], sm)]));
+      if (c.belly) body.add(part('ball', c.belly, [.24, .24, .1], [0, by, .25], sm));
+      const head = grp(part('ball', c.fur, .42, [0, 0, 0], { smooth:1, cast:1 }));
+      head.position.y = sit ? .98 : 1.08;
+      if (c.face) head.add(part('ball', c.face, [.32, .28, .1], [0, -.05, .36], sm));
+      if (c.muzzle) head.add(part('ball', c.muzzle, [.17, .12, .1], [0, -.12, .37], sm));
+      if (c.patch) [-1, 1].forEach(s => head.add(part('ball', c.patch, [.1, .12, .05], [s * .15, .03, .38], sm)));
+      [-1, 1].forEach(s => head.add(part('ball', c.patch ? '#FFFFFF' : '#3B2A1E', [.05, .065, .03], [s * .15, .04, .41], sm), part('ball', '#F59AA8', [.07, .045, .02], [s * .26, -.1, .35], sm)));
+      head.add(c.beak ? part('cone', c.beak, [.07, .14, .07], [0, -.1, .38], { r:[Math.PI / 2, 0, 0] }) : part('ball', '#6B4632', [.045, .03, .02], [0, -.08, .42], sm));
+      const ec = c.earC || c.fur;
+      if (c.ear === 'tri') [-1, 1].forEach(s => head.add(part('cone', c.fur, [.13, .3, .1], [s * .24, .26, 0], { r:[0, 0, -s * .35] })));
+      if (c.ear === 'round') [-1, 1].forEach(s => head.add(part('ball', ec, .13, [s * .28, .3, 0], sm)));
+      if (c.ear === 'long') [-1, 1].forEach(s => head.add(part('ball', c.fur, [.08, .3, .06], [s * .12, .58, 0], { smooth:1, r:[0, 0, -s * .15] })));
+      if (c.ear === 'flop') [-1, 1].forEach(s => head.add(part('ball', c.inner, [.09, .2, .07], [s * .4, -.02, .02], { smooth:1, r:[0, 0, s * .2] })));
+      if (o.hat === 'santa') head.add(part('cone', '#E3564A', [.3, .5, .3], [0, .3, 0], { r:[0, 0, .25] }), part('ccyl', '#FFFFFF', [.34, .07, .34], [0, .33, 0]), part('ball', '#FFFFFF', .07, [-.13, .78, 0], sm));
+      if (o.hat === 'helmet') head.add(part('ball', '#F2C14E', [.45, .3, .45], [0, .2, 0], { smooth:1 }), part('ccyl', '#F2C14E', [.52, .04, .52], [0, .17, .04]));
+      if (o.hat === 'witch') head.add(part('ccyl', '#7E5BB5', [.55, .03, .55], [0, .33, 0]), part('cone', '#7E5BB5', [.28, .62, .28], [0, .33, 0]), part('ccyl', '#F2C14E', [.29, .05, .29], [0, .4, 0]));
+      const g = grp(body, head, hit(.7));
+      if (o.umbrella) g.add(part('ccyl', '--ol', [.02, 1.2, .02], [.3, 1.2, .1]), part('cone', c.shirt === '#4F5B6E' ? '#F3A6C2' : c.shirt, [.75, .35, .75], [.3, 1.75, .1]));
+      return g; };
+    const fence = pts => grp(pts.map(([x, z], i) => { const posts = [part('box', '--fence', [.1, .5, .1], [x, 0, z], { cast:1 })];
+      if (i) { const [px, pz] = pts[i - 1], len = Math.hypot(x - px, z - pz), a = Math.atan2(z - pz, x - px);
+        [.16, .36].forEach(y => posts.push(part('cbox', '--fence', [len, .06, .05], [(x + px) / 2, y, (z + pz) / 2], { r:[0, -a, 0] }))); }
+      return posts; }));
+    const trail = (a, b, bend = 0) => { const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / .4), nx = -(b[1] - a[1]), nz = b[0] - a[0], l = Math.hypot(nx, nz) || 1;
+      return grp(Array.from({ length:n + 1 }, (_, k) => { const s = k / n, o = Math.sin(Math.PI * s) * bend / l;
+        return part('disc', '--path', .42, [a[0] + (b[0] - a[0]) * s + nx * o, .03, a[1] + (b[1] - a[1]) * s + nz * o], { recv:1 }); })); };
+
+    const stall = (k, n) => {   // the beach market: a counter under a striped awning, the goods of its kind, a sign with today's count
+      const [, c, emo] = STALLS[k], sm = { smooth:1 }, top = .48;
+      const g = grp(part('box', '--log', [1.05, top, .5], [0, 0, 0], { cast:1 }), part('box', '#FFFFFF', [1.07, .04, .52], [0, .36, 0]),
+        [-.48, .48].map(x => part('cyl', '--trunk', [.035, 1.15, .035], [x, 0, -.18])),
+        part('box', c, [1.25, .07, .75], [0, 1.1, .05], { r:[.3, 0, 0], cast:1 }), [-.4, 0, .4].map(x => part('box', '#FFFFFF', [.16, .075, .76], [x, 1.101, .05], { r:[.3, 0, 0] })),
+        tag(emo + (n > 1 ? ' ' + n : ''), 1.7, .95), hit(.75, .6));
+      const goods = {
+        '食':() => { const steam = [0, 1, 2].map(() => part('ball', '#FFFFFF', .06, [0, 0, 0], sm));
+          anims.push(tt => steam.forEach((b, i) => { const s = (tt * .6 + i / 3) % 1; b.position.set(-.25 + s * .1, top + .3 + s * .5, 0); b.scale.setScalar(.04 + s * .08); b.visible = s < .9; }));
+          return [part('cyl', '#C8D2DA', [.16, .16, .16], [-.25, top, 0]), part('ball', '#FFF6E6', .09, [.12, top + .07, .08], sm), part('ball', '#FFF6E6', .09, [.32, top + .07, .02], sm), steam]; },
+        '衣':() => [part('cbox', '--trunk', [.9, .03, .03], [0, .92, .2]), ['#7FD3F7', '#F59AB0', '#FFD25E'].map((f, i) => part('cbox', f, [.22, .26, .04], [-.3 + i * .3, .76, .2]))],
+        '住':() => [part('cyl', '#C9784A', [.1, .13, .1], [-.25, top, 0]), part('ball', '#7CC48A', .14, [-.25, top + .25, 0], sm),
+          part('cyl', '--ol', [.015, .3, .015], [.25, top, 0]), part('cone', '#FFE07A', [.12, .14, .12], [.25, top + .26, 0], { glow:lit ? '#8A6A00' : '' })],
+        '行':() => [part('wheel', '#3E3A39', .2, [-.25, top + .2, .05]), part('cone', '#F48C4E', [.09, .28, .09], [.25, top, .05]), part('ccyl', '#FFFFFF', [.065, .04, .065], [.25, top + .12, .05])],
+        '育':() => [[['#E3564A', -.38], ['#5EB8E0', -.27], ['#F2C14E', -.16]].map(([f, x]) => part('box', f, [.09, .24, .18], [x, top, 0])),
+          part('box', '#7CC48A', [.28, .06, .2], [.25, top, 0]), part('box', '#F59AB0', [.24, .06, .18], [.25, top + .06, 0])],
+        '樂':() => [[['#F59AB0', -.32, .78], ['#7FD3F7', -.12, .9]].map(([f, x, y]) => [part('ccyl', '--ol', [.01, y - top, .01], [x, (y + top) / 2, .05]), part('ball', f, [.1, .12, .1], [x, y, .05], { smooth:1, cast:1 })]),
+          part('ball', '#FFD25E', .12, [.25, top + .12, 0], sm)],
+        '其他':() => [part('box', '#D9B98A', [.22, .18, .2], [-.25, top, 0]), part('box', '#D9B98A', [.18, .14, .18], [.05, top, .02]), part('box', '#E7CFA6', [.16, .13, .16], [-.22, top + .18, 0])],
+        '收入':() => [part('cyl', '#F2C14E', [.07, .2, .07], [-.34, top, .05]), part('cyl', '#F2C14E', [.07, .12, .07], [-.18, top, .05]),
+          part('ball', '#F59AB0', [.17, .13, .13], [.22, top + .13, 0], { smooth:1, cast:1 }), part('ccyl', '#F07A8A', [.05, .04, .05], [.39, top + .13, 0], { r:[0, 0, Math.PI / 2] })],
+      }[k];
+      if (goods) g.add(grp(goods()));
+      if (lit) [-.42, 0, .42].forEach(x => g.add(part('ball', '#FFE07A', .05, [x, .97, .42], { smooth:1, glow:'#FFB000' })));
+      g.scale.setScalar(n >= 3 ? 1.12 : n === 2 ? 1.02 : .92); return g; };
+    const building = (dur) => {   // a new stall is built first: a frame, dust, an islander in a hard hat swinging a hammer, then a sparkle
+      const s0 = now, wood = '#C9A27A';
+      const frame = grp([-.55, .55].flatMap(px => [-.28, .28].map(pz => part('cyl', wood, [.03, 1.3, .03], [px, 0, pz]))),
+        [.5, 1].map(py => part('cbox', wood, [1.16, .04, .04], [0, py, .28])), part('cbox', wood, [1.2, .04, .04], [0, .75, .29], { r:[0, 0, .42] }));
+      const bob = critter(folkList()[0].kind, 0, { hat:'helmet' }), hammer = grp(part('ccyl', '--trunk', [.025, .34, .025], [0, .17, 0]), part('cbox', '#8E99A3', [.18, .09, .09], [0, .34, 0]));
+      hammer.position.set(.36, .5, .12); bob.add(hammer); bob.scale.setScalar(.62); bob.position.set(-.5, 0, .72); bob.rotation.y = .5;
+      const dust = [0, 1, 2].map(() => part('ball', '#FFFFFF', .1, [0, 0, 0], { smooth:1 }));
+      const ding = part('star', '#F2C14E', .2, [0, 1.9, 0], { glow:'#6B4C00' });
+      anims.push(() => { const e = now - s0; frame.visible = bob.visible = e < dur + .15;
+        hammer.rotation.z = -.4 + Math.sin(e * 16) * .7; bob.position.y = Math.abs(Math.sin(e * 8)) * .05;
+        dust.forEach((d, i) => { const k = (e * 1.4 + i / 3) % 1; d.visible = e < dur; d.position.set(-.5 + i * .5 + k * .2, k * .6, .45); d.scale.setScalar(.06 + k * .14); });
+        const k = (e - dur - .3) / .8; ding.visible = k > 0 && k < 1; if (ding.visible) { ding.scale.setScalar(.15 + k * .25); ding.rotation.y = k * 6; ding.position.y = 1.9 + k * .5; } });
+      return grp(frame, bob, dust, ding); };
+
+    // ── the island, in the same spots as the SVG
+    const fire = P(180, 172); fireLight.position.set(fire[0], 1.2, fire[1]);
+    const face = (x, z) => Math.atan2(fire[0] - x, fire[1] - z);
+    if (!empty) {
+      next.add(part('disc', '--path', [1.75, 1, .85], [fire[0], .03, P(180, 174)[1]], { recv:1 }));
+      m.houses.forEach(o => next.add(trail(P(o.x, o.y + 6), P(180, 168), .8)));
+      if (m.hasCash) next.add(trail(P(168, 172), P(126, 158), -.6));
+      if (m.towers.length) next.add(trail(P(194, 172), P(m.iX[0] - 8, 152), .6));
+      next.add(trail(P(184, 180), P(208, 204), .3));
+    }
+    m.town.forEach(({ i, kind, x, y }) => put(townBuilding(kind), 'ms' + kind, 'ms:' + i, ...P(x, y)));
+    m.trees.forEach(([x, y, s, kind], i) => put(kind === 'p' ? pine(s, { xmas:mood.holiday === 'xmas', snow }) : tree(s, i, { fruit:t.net >= 2e6 || m.passive, drop:m.passive && !snow, snow }), 'tr' + i, '', ...P(x, y), 0, i * 1.3));
+    m.bushes.forEach(([x, y, b], i) => put(bush(snow ? '' : b), 'bu' + i, '', ...P(x, y)));
+    m.flowers.forEach(([x, y, c, tall], i) => put(flowers(c, tall), 'fl' + i, '', ...P(x, y)));
+    put(palm(1), 'palm0', '', -10.5, 3.4, -.95); put(palm(-1), 'palm1', '', 10.6, 3, -.95);
+    if (m.hasCash) put(pond(waterLevel(t.cash)), 'tank', 'cash', ...P(88, 148));
+    m.houses.forEach(o => put(house(o.p, o.loan, o.s, roofPair()), 'h' + o.p.id, 'acc:' + o.p.id, ...P(o.x, o.y)));
+    m.towers.forEach(({ a, x, y }) => put(a.kind === 'stock' ? windmill(a) : lighthouse(a), 'i' + a.id, 'acc:' + a.id, ...P(x, y)));
+    m.rocks.forEach(r => put(boulder(r.v), 'r' + r.id, r.tap, ...P(r.x, r.y)));
+    m.keeps.forEach(({ k, n, x, y }) => put(keepsake(k), 'k' + k.id, 'keep:' + n, ...P(x, y)));
+    if (m.hive) put(beehive(m.hive), 'hive', 'hive', ...P(124, 124));
+    const folk = folkList(), folkObjs = [];
+    if (!empty) {
+      put(fence([[100, 199], [108, 201], [116, 202.5], [124, 203.5], [132, 204], [140, 204.2]].map(([x, y]) => P(x, y))), 'fence');
+      put(campfire(), 'fire', '', ...fire);
+      [[161, 178], [199, 179]].forEach(([x, y], i) => { const [lx, lz] = P(x, y); put(part('ccyl', '--log', [.22, 1.1, .22], [0, .22, 0], { r:[0, 0, Math.PI / 2], cast:1 }), 'seat' + i, '', lx, lz, 0, face(lx, lz)); });
+      m.folkAt.forEach(([x, y, sit, anim], i) => { const [fx, fz] = P(x, y + (sit ? 3.5 : 0)), c = critter(folk[i].kind, sit, { hat:m.hat, umbrella:wet });
+        put(c, 'f' + i, 'talk:' + i, fx, fz, sit ? .2 : 0, sit ? face(fx, fz) : .3);
+        folkObjs.push(c);
+        anims.push(tt => { const jump = now < cheerTo ? Math.abs(Math.sin(now * 11 + i)) * .55 : 0;
+          if (anim === 'stroll') { const s = Math.sin(tt * .45 + i); c.position.x = s * .9; c.rotation.y = Math.cos(tt * .45 + i) > 0 ? Math.PI / 2 : -Math.PI / 2; c.position.y = Math.abs(Math.sin(tt * 5)) * .05 + jump; }
+          else c.position.y = (sit ? Math.abs(Math.sin(tt * 2 + i)) * .04 : Math.abs(Math.sin(tt * 3 + i)) * .14) + jump; }); });
+      if (m.stage >= 1) { const [lx, lz] = P(208, 160); put(grp(part('cyl', '--ol', [.05, 1.4, .05], [0, 0, 0], { cast:1 }), part('box', '--fire-in', [.28, .3, .28], [0, 1.4, 0], { glow:lit ? '#FFB000' : '#3A2A00' }),
+        part('pyr', '--hub', [.26, .2, .26], [0, 1.7, 0], { r:[0, Math.PI / 4, 0] })), 'lamp', '', lx, lz); }
+      if (snow) put(grp(part('ball', '#FFFFFF', .45, [0, .4, 0], { smooth:1, cast:1 }), part('ball', '#FFFFFF', .32, [0, 1.05, 0], { smooth:1, cast:1 }), part('cone', '#F48C4E', [.06, .3, .06], [0, 1.05, .3], { r:[Math.PI / 2, 0, 0] }),
+        part('cyl', '#3E3A39', [.22, .3, .22], [0, 1.3, 0]), part('ccyl', '#3E3A39', [.32, .03, .32], [0, 1.31, 0]), part('ball', '#3B2A1E', .04, [-.1, 1.12, .3], { smooth:1 }), part('ball', '#3B2A1E', .04, [.1, 1.12, .3], { smooth:1 })), 'snowman', '', ...P(222, 202));
+      if (mood.holiday === 'halloween') [[146, 184, 1], [214, 186, .85], [232, 166, .75]].forEach(([x, y, s], i) => put(grp(part('ball', '#F48C4E', [.36 * s, .28 * s, .36 * s], [0, .26 * s, 0], { cast:1 }), part('cyl', '#5A7A2E', [.04, .16, .04], [0, .5 * s, 0])), 'pk' + i, '', ...P(x, y)));
+      if (mood.holiday === 'cny') { const [ax] = P(150, 140), [bx, bz] = P(214, 140);
+        put(grp(part('cyl', '--trunk', [.05, 2.2, .05], [ax - bx, 0, 0]), part('cyl', '--trunk', [.05, 2.2, .05], [0, 0, 0]), part('cbox', '--ol', [bx - ax, .02, .02], [(ax - bx) / 2, 2.1, 0]),
+          [.25, .5, .75].map(s => part('ball', '#E3473C', [.2, .24, .2], [(ax - bx) * s, 1.8, 0], { smooth:1, glow:'#5A0A00', cast:1 }))), 'lanterns', '', bx, bz); }
+      if (moon) put(grp([[0, 0], [.35, .1], [.15, .3]].map(([x, z]) => part('ball', '#D8E06A', .2, [x, .2, z], { smooth:1, cast:1 }))), 'pomelo', '', ...P(144, 186));
+    }
+    if (empty) put(grp(part('cyl', '--grass-lo', [.04, .5, .04]), part('ball', '--grass-hi', [.22, .08, .14], [-.18, .4, 0], { smooth:1, r:[0, 0, .4] }), part('ball', '--grass-hi', [.22, .08, .14], [.18, .5, 0], { smooth:1, r:[0, 0, -.4] })), 'sprout');
+
+    // the beach market: today's stalls stand on the sand in front, facing out to sea and the camera
+    const wob = a => 1 + .04 * Math.sin(a * 3 + .8) + .025 * Math.sin(a * 5 + 2);   // the same wobble as the land's outline
+    m.stalls.forEach(({ k, n, x }) => { const want = (x - 180) / 15; let best = null;
+      for (let s = 0; s <= 180; s++) { const a = Math.PI + s / 180 * Math.PI, w = wob(a), px = Math.cos(a) * (11 * w + .14);
+        if (!best || Math.abs(px - want) < best[0]) best = [Math.abs(px - want), px, -Math.sin(a) * (9.15 * w + .14), a]; }
+      const [, sx, sz, a] = best, ry = Math.atan2(Math.cos(a) / 11, -Math.sin(a) / 9.15), fresh = seen && !seen.has('st' + k) && !still;
+      put(stall(k, n), 'st' + k, 'stall:' + k, sx, sz, -.95, ry, fresh ? 1.6 : 0);
+      if (fresh) { const b = building(1.6); b.position.set(sx, -.95, sz); b.rotation.y = ry; next.add(b); } });
+
+    // dream balloons: higher as the dream fills up, floating free once it's done
+    m.blns.forEach(({ g, p, up, x }, i) => { const [bx, bz] = P(x, 112), h = up ? 7.8 : 2.6 + 4.2 * clamp(p, 0, 1);
+      const bob = grp(part('ball', g.color, [.6, .7, .6], [0, 0, 0], { smooth:1, cast:1 }), part('cone', g.color, [.1, .14, .1], [0, -.78, 0]),
+        part('box', '--gift', [.38, .3, .38], [0, -1.45, 0], { cast:1 }), part('box', g.color, [.4, .07, .1], [0, -1.32, 0]), tag(up ? '升空!' : pct(p), 1.1), hit(.9, 0));
+      const ball = grp(bob), line = part('ccyl', '--ol', [.012, 1, .012]), stand = grp(ball, up ? null : line);
+      put(stand, 'g' + g.id, 'goal:' + g.id, bx, bz);
+      tween('bl' + g.id, h, hh => { ball.position.y = hh; line.scale.y = Math.max(.01, hh - 1.45); line.position.y = (hh - 1.45) / 2; });
+      anims.push(tt => { stand.rotation.z = Math.sin(tt * .9 + i * 1.4) * .04; stand.rotation.x = Math.sin(tt * .7 + i) * .03; if (up) bob.position.y = Math.sin(tt * .8 + i) * .35; }); });
+
+    // the sea: a boat, the pier with its fisher, a parasol in summer, fish that jump more as you save more
+    const boat = grp(part('box', '--wall', [1.7, .35, .7], [0, -.15, 0], { cast:1 }), part('box', '--coral', [1.72, .07, .72], [0, .14, 0]), part('ccyl', '--ol', [.03, 1.7, .03], [0, 1, 0]),
+      part('sail', '#FFFFFF', [1.1, 1.3, 1], [.42, .3, 0]), part('sail', '--sky', [.8, 1, 1], [-.33, .3, .04]));
+    put(boat, 'boat', '', -13, 9.6, -1.35, .5);
+    anims.push(tt => { boat.position.y = Math.sin(tt * 1.6) * .08; boat.rotation.z = Math.sin(tt * 1.3) * .06; });
+    const pier = grp(Array.from({ length:8 }, (_, k) => part('box', '--door', [.44, .1, 1.1], [k * .5, 0, 0], { cast:1, recv:1 })),
+      [0, 3.5].flatMap(x => [-.5, .5].map(z => part('cyl', '--trunk', [.08, .9, .08], [x, -.8, z]))));
+    put(pier, 'pier', '', 7, 6.9, -.7, -.75);
+    if (m.fisher) { const c = critter(folk[4].kind, 1, { hat:m.hat, umbrella:wet }), bobber = part('ball', '#E3564A', .08, [0, 0, 0], { smooth:1 });
+      const rod = grp(part('ccyl', '--trunk', [.02, 1.6, .02], [0, .6, 0], { r:[.9, 0, 0] }));
+      const fisherG = grp(c, rod); rod.position.set(.25, .5, .2); c.add(bobber);
+      put(fisherG, 'f4', 'talk:4', 7 + Math.cos(.75) * 3.4, 6.9 + Math.sin(.75) * 3.4, -.65, Math.PI / 2 - .75);   // at the end of the pier, facing the sea
+      anims.push(tt => { bobber.position.set(.25, -.68 + Math.sin(tt * 2) * .05, 1.6); }); }
+    if (mood.season === 'summer' && !wet) put(grp(part('box', '#7FC8F0', [.8, .03, 1.4], [.3, 0, 0], { recv:1 }), part('ccyl', '--ol', [.03, 1.5, .03], [-.3, .75, 0], { r:[0, 0, .15] }),
+      part('cone', '#F07A8A', [.85, .35, .85], [-.42, 1.4, 0], { cast:1 })), 'parasol', '', -7.6, 7.3, -.95);
+    for (let k = 0; k < m.nFish; k++) { const col = ['#F48C4E', '#7FD3F7', '#F2C14E'][k % 3], a = k * 1.05 + .4, r = 14 + (k % 3) * 1.6;
+      const fish = grp(part('ball', col, [.36, .2, .14], [0, 0, 0], { smooth:1 }), part('cone', col, [.14, .24, .06], [-.42, 0, 0], { r:[0, 0, Math.PI / 2] }));
+      put(fish, 'fish' + k, '', Math.cos(a) * r, Math.sin(a) * r, -1.35, -a);
+      anims.push(tt => { const s = ((tt + k * 1.3) % 4.5) / 1.2; fish.visible = s < 1;
+        if (s < 1) { fish.position.set((s - .5) * 1.6, Math.sin(Math.PI * s) * 1.3 - .1, 0); fish.rotation.z = (.5 - s) * 1.8; } }); }
+    for (let k = 0; k < 7; k++) { const a = k * .9 + .2, r = 13.5 + (k % 3) * 3, rp = new T.Mesh(G.ring, rippleMat);
+      rp.position.set(Math.cos(a) * r, -1.3, Math.sin(a) * r); next.add(rp);
+      anims.push(tt => rp.scale.setScalar(.4 + ((tt * .3 + k / 7) % 1) * .9)); }
+
+    // the sky: drifting clouds, and the weather
+    const cc = night ? '#8590B3' : grey ? '#E6ECF0' : '#FFFFFF';
+    // clouds over the far sea, drifting back and forth
+    [[-2.4, 16, 5, 1], [-1.55, 15, 5.8, .85], [-.75, 17, 4.6, .75]].forEach(([a0, r, y, s], k) => { const cl = grp(part('ball', cc, [1.4, .9, 1], [0, 0, 0], { smooth:1 }), part('ball', cc, [1, .7, .8], [1.25, -.1, .1], { smooth:1 }),
+        part('ball', cc, [1.1, .8, .9], [-1.15, -.15, 0], { smooth:1 }), part('ball', cc, [.8, .65, .7], [.3, .55, 0], { smooth:1 }));
+      cl.scale.setScalar(s * 1.4); next.add(cl);
+      anims.push(tt => { const a = a0 + Math.sin(tt * .03 + k * 2) * .25; cl.position.set(Math.cos(a) * r, y, Math.sin(a) * r - 9); }); });
+    const particles = (n, make, step) => { const pos = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) make(pos, i * 3);
+      const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); return [geo, pos]; };
+    if (wet) { const [geo, pos] = particles(240, (p, i) => { p[i] = (Math.random() - .5) * 36; p[i + 1] = Math.random() * 16; p[i + 2] = (Math.random() - .5) * 30; });
+      const seg = new Float32Array(240 * 6), lg = new T.BufferGeometry(); lg.setAttribute('position', new T.BufferAttribute(seg, 3));
+      const rain = new T.LineSegments(lg, new T.LineBasicMaterial({ color:'#6E9DBC', transparent:true, opacity:.6 })); rain.raycast = () => {}; next.add(rain);
+      anims.push((tt, dt) => { for (let i = 0; i < 240; i++) { const j = i * 3; pos[j + 1] -= dt * 16; if (pos[j + 1] < -1.3) pos[j + 1] += 17;
+        seg.set([pos[j], pos[j + 1], pos[j + 2], pos[j] + .12, pos[j + 1] + .55, pos[j + 2]], i * 6); } lg.attributes.position.needsUpdate = true; }); geo.dispose(); }
+    const fall = { spring:['#F7B7C8', .22], autumn:['#EE8B3A', .26], winter:['#FFFFFF', .2] }[mood.season];
+    if (fall && !wet) { const [geo, pos] = particles(90, (p, i) => { p[i] = (Math.random() - .5) * 30; p[i + 1] = Math.random() * 14; p[i + 2] = (Math.random() - .5) * 24; });
+      const pts = new T.Points(geo, new T.PointsMaterial({ color:fall[0], size:fall[1], map:dotTex, transparent:true, depthWrite:false, alphaTest:.3 })); pts.raycast = () => {}; next.add(pts);
+      anims.push((tt, dt) => { for (let i = 0; i < 90; i++) { const j = i * 3; pos[j + 1] -= dt * (.9 + (i % 4) * .2); pos[j] += Math.sin(tt + i) * dt * .5; if (pos[j + 1] < -.2) pos[j + 1] += 14; }
+        geo.attributes.position.needsUpdate = true; }); }
+    if (night && !wet && !snow && !empty) { const n = 16, [geo, pos] = particles(n, (p, i) => { const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * 7; p[i] = Math.cos(a) * r; p[i + 1] = .4 + Math.random() * 1.2; p[i + 2] = Math.sin(a) * r * .8; });
+      const home0 = pos.slice(), mat = new T.PointsMaterial({ color:'#F6F08A', size:.16, map:dotTex, transparent:true, depthWrite:false, fog:false });
+      const flies = new T.Points(geo, mat); flies.raycast = () => {}; next.add(flies);
+      anims.push(tt => { for (let i = 0; i < n; i++) { const j = i * 3; pos[j] = home0[j] + Math.sin(tt * .6 + i) * .5; pos[j + 1] = home0[j + 1] + Math.sin(tt * .9 + i * 2) * .25; pos[j + 2] = home0[j + 2] + Math.cos(tt * .5 + i) * .5; }
+        geo.attributes.position.needsUpdate = true; mat.opacity = .55 + Math.sin(tt * 2.2) * .4; stars.material.opacity = .75 + Math.sin(tt * 1.3) * .2; }); }
+    if (m.fw && !still) { const t0 = now, loop = mood.holiday === 'newyear';   // a 7-day record streak (once a day) or New Year's Eve
+      [[-6, 13, -6, '#F59AB0'], [1, 15, -8, '#FFD86B'], [7, 12.5, -5, '#7FD3F7']].forEach(([x, y, z, c], k) => {
+        const dirs = Array.from({ length:36 }, () => new T.Vector3().randomDirection());
+        const [geo, pos] = particles(36, () => {}), mat = new T.PointsMaterial({ color:c, size:.32, map:dotTex, transparent:true, depthWrite:false, fog:false });
+        const burst = new T.Points(geo, mat); burst.position.set(x, y, z); burst.raycast = () => {}; next.add(burst);
+        anims.push(() => { const e = now - t0 - k * .55, s = (loop ? ((e % 2.6) + 2.6) % 2.6 : e) / 1.6; burst.visible = e > 0 && s < 1;
+          if (!burst.visible) return; dirs.forEach((d, i) => { pos[i * 3] = d.x * s * 3; pos[i * 3 + 1] = d.y * s * 3 - s * s * .9; pos[i * 3 + 2] = d.z * s * 3; });
+          geo.attributes.position.needsUpdate = true; mat.opacity = 1 - s; }); }); }
+    if (!empty && !wet && !snow) [[-3.2, -2.5, '#F59AB0'], [4.8, -4.6, '#FFD25E']].slice(0, m.stage >= 2 ? 2 : 1).forEach(([x, z, c], k) => {
+      const wings = [-1, 1].map(s => { const w = grp(part('cbox', c, [.22, .02, .16], [s * .11, 0, 0])); return w; }), fly = grp(wings);
+      next.add(fly); anims.push(tt => { const a = tt * .5 + k * 2; fly.position.set(x + Math.cos(a) * 1.4, 1.2 + Math.sin(tt * 1.7 + k) * .3, z + Math.sin(a) * 1.1); fly.rotation.y = -a;
+        wings[0].rotation.z = -Math.abs(Math.sin(tt * 9)) * 1.1; wings[1].rotation.z = Math.abs(Math.sin(tt * 9)) * 1.1; }); });
+
+    if (root) scene.remove(root);
+    root = next; scene.add(root); seen = keys;
+  }
+
+  /* ── camera: drag sideways to turn, pinch (or ctrl + wheel) to zoom; a slow turn starts after a while untouched ── */
+  const HOME = { yaw:0, pitch:.5, dist:30 }, view = { ...HOME }, target = new T.Vector3(0, .5, 0);
+  let vel = 0, idleAt = 0, homing = false;
+  const pts = new Map(); let drag = null, pinch = 0;
+  const pinchDist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
+  canvas.addEventListener('pointerdown', e => { pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if (pts.size === 1) drag = { t:performance.now(), moved:0 }; else { drag = null; pinch = pinchDist(); }
+    idleAt = now; vel = 0; homing = false; wake(); });
+  canvas.addEventListener('pointermove', e => { const p = pts.get(e.pointerId); if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; idleAt = now;
+    if (pts.size >= 2) { const d = pinchDist(); view.dist = clamp(view.dist * pinch / d, 15, 46); pinch = d; return; }
+    if (!drag) return;
+    drag.moved += Math.abs(dx) + Math.abs(dy);
+    const w = canvas.clientWidth || 320; view.yaw -= dx / w * 3.2; vel = -dx / w * 3.2 * 30;
+    if (e.pointerType === 'mouse') view.pitch = clamp(view.pitch + dy / w * 2, .2, 1.3); });
+  const lift = e => { const tap = e.type === 'pointerup' && drag && drag.moved < 10 && performance.now() - drag.t < 600;
+    pts.delete(e.pointerId); if (!pts.size) { drag = null; pinch = 0; }
+    if (tap) pick(e.clientX, e.clientY); };
+  canvas.addEventListener('pointerup', lift); canvas.addEventListener('pointercancel', lift);
+  canvas.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); view.dist = clamp(view.dist * (1 + e.deltaY * .01), 15, 46); idleAt = now; wake(); }, { passive:false });
+  const ctl = document.createElement('div'); ctl.className = 'i3-ctl';
+  ctl.innerHTML = '<button type="button" data-z="in" aria-label="放大小島">＋</button><button type="button" data-z="out" aria-label="縮小小島">－</button><button type="button" data-z="home" aria-label="回到原本的角度">⟲</button>';
+  ctl.addEventListener('click', e => { const b = e.target.closest('[data-z]'); if (!b) return;
+    const z = b.dataset.z; if (z === 'home') homing = true; else view.dist = clamp(view.dist * (z === 'in' ? .8 : 1.25), 15, 46);
+    idleAt = now; vel = 0; wake(); });
+
+  const ray = new T.Raycaster(), ndc = new T.Vector2(), box3 = new T.Box3(), v3 = new T.Vector3();
+  function pick(x, y) {   // the same taps as the SVG island: sheets for money things, speech bubbles for the rest
+    const r = canvas.getBoundingClientRect();
+    ndc.set((x - r.left) / r.width * 2 - 1, -((y - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera);
+    for (const h of ray.intersectObject(root, true)) { let o = h.object; while (o && !o.userData.tap) o = o.parent; if (o) return tapIsland(o.userData.tap, anchor(o)); }
+  }
+  const anchor = o => {   // where the tapped thing sits on screen, for the speech bubble
+    box3.setFromObject(o); const r = canvas.getBoundingClientRect(), c = box3.getCenter(new T.Vector3());
+    const sc = yy => { v3.set(c.x, yy, c.z).project(camera); return [r.left + (v3.x + 1) / 2 * r.width, r.top + (1 - v3.y) / 2 * r.height]; };
+    const [x, top] = sc(box3.max.y), [, bottom] = sc(box3.min.y);
+    return { getBoundingClientRect:() => ({ left:x - 12, right:x + 12, width:24, top, bottom, height:bottom - top }) }; };
+
+  /* ── drawing: about 30 frames a second while visible, nothing while scrolled away or in the background ── */
+  let raf = 0, prev = 0, onScreen = true;
+  const fit = () => { const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return;
+    const pr = renderer.getPixelRatio(); if (canvas.width === Math.round(w * pr) && canvas.height === Math.round(h * pr)) return;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };
+  function frame(ms) {
+    raf = 0;
+    if (!canvas.isConnected || !onScreen || document.hidden) { prev = 0; return; }
+    raf = requestAnimationFrame(frame);
+    const dt = prev ? Math.min(.1, (ms - prev) / 1000) : 0;
+    if (prev && dt < 1 / 32 && !pts.size) return;
+    prev = ms; now += dt;
+    if (homing) { const k = 1 - Math.pow(.002, dt); let dy = (HOME.yaw - view.yaw) % (Math.PI * 2); if (dy > Math.PI) dy -= Math.PI * 2; if (dy < -Math.PI) dy += Math.PI * 2;
+      view.yaw += dy * k; view.pitch += (HOME.pitch - view.pitch) * k; view.dist += (HOME.dist - view.dist) * k; if (Math.abs(dy) + Math.abs(HOME.dist - view.dist) < .01) homing = false; }
+    else if (!pts.size) { view.yaw += vel * dt; vel *= Math.pow(.04, dt); if (!still && now - idleAt > 12) view.yaw += dt * .05; }
+    const tt = still ? 0 : now, dd = still ? 0 : dt;
+    anims.forEach(f => f(tt, dd));
+    const c = Math.cos(view.pitch);
+    camera.position.set(view.dist * c * Math.sin(view.yaw), target.y + view.dist * Math.sin(view.pitch), view.dist * c * Math.cos(view.yaw));
+    camera.lookAt(target);
+    fit(); renderer.render(scene, camera);
+  }
+  const wake = () => { if (!raf && canvas.isConnected) raf = requestAnimationFrame(frame); };
+  new IntersectionObserver(es => { onScreen = es[es.length - 1].isIntersecting; wake(); }).observe(canvas);
+  document.addEventListener('visibilitychange', wake);
+  canvas.addEventListener('webglcontextlost', e => {   // the phone took the GPU back: show the SVG island again
+    e.preventDefault(); i3State = 'failed'; I3 = null;
+    const box = canvas.parentNode; if (box) box.classList.remove('is3d'); canvas.remove(); ctl.remove(); });
+
+  return {
+    show(box) {
+      const svg = $('svg', box);
+      canvas.setAttribute('aria-label', svg ? svg.getAttribute('aria-label') : '財富島');
+      box.prepend(canvas); box.append(ctl); box.classList.add('is3d');
+      build(svg); wake();
+      try { if (!isEmpty && !localStorage.getItem(I3_KEY + '-hint')) { localStorage.setItem(I3_KEY + '-hint', '1');
+        const el = document.createElement('div'); el.className = 'i3-hint'; el.textContent = '左右滑動轉動小島・點一下建築或島民'; box.append(el); setTimeout(() => el.remove(), 5200); } } catch (e) {}
+    },
+    stop() { if (raf) cancelAnimationFrame(raf); raf = 0; prev = 0; },
+    pulse(keys) { if (!root) return; root.children.forEach(h => { if (!keys.includes(h.userData.tap)) return; const o = h.children[0], s0 = now;
+      anims.push(() => { const k = clamp((now - s0) / 1.2, 0, 1); o.scale.setScalar(1 + Math.sin(k * Math.PI * 3) * .18 * (1 - k)); }); }); wake(); },
+    cheer() { cheerTo = now + 2.8; wake(); },
+  };
+}
+
 /* ───────── stocks and crypto: live prices, holdings and buy lots ───────── */
 const QUOTE_TTL = 15 * 60e3;
 const autoInv = () => S.accounts.filter(a => a.type === 'invest' && a.market && a.symbol);
@@ -1480,11 +2106,13 @@ function islandTap(k, tapEl) {
   if (k.startsWith('keep:')) { const x = (S.keepsakes || [])[+k.slice(5)]; if (!x) return;
     return islandSay(tapEl, x.kind === 'dream' ? `<b>夢想紀念碑</b>「${esc(x.name)}」在 ${x.date} 達成` : `<b>記帳獎盃</b>連續記帳 ${x.n} 天，${x.date} 得到`); }
   if (k.startsWith('ms:')) { const [v, , name] = MILESTONES[+k.slice(3)]; return islandSay(tapEl, `<b>${name}</b>淨資產突破 ${v / 1e4} 萬時開幕`); }
+  if (k.startsWith('stall:')) { const s = marketToday().find(x => x.k === k.slice(6)); if (!s) return;
+    return islandSay(tapEl, `<b>海灘市集・${STALLS[s.k][0]}</b>${s.k === '收入' ? `今天入帳 ${s.n} 筆，共 +${money(s.sum)}` : `今天記了 ${s.n} 筆「${s.k}」，共 ${money(s.sum)}`}`); }
   if (k === 'hive') return islandSay(tapEl, `<b>蜂窩</b>今年的股息・利息共 ${money(mood.passive)}，果實會從樹上掉下來`);
 }
 function cheer() {   // pay day: islanders jump and confetti falls
   const box = $('#island'); if (!box) return;
-  box.classList.remove('cheer'); void box.offsetWidth; box.classList.add('cheer');
+  box.classList.remove('cheer'); void box.offsetWidth; box.classList.add('cheer'); if (I3) I3.cheer();
   const cols = ['#F07A8A', '#FFD25E', '#7FD3F7', '#8ED16E', '#B48CF2'];
   for (let i = 0; i < 36; i++) { const c = document.createElement('i'); c.className = 'confetti';
     c.style.cssText = `left:${(Math.random() * 100).toFixed(1)}%;background:${cols[i % 5]};animation-delay:${(Math.random() * .9).toFixed(2)}s;--dx:${Math.round(Math.random() * 60 - 30)}px;--r:${Math.round(Math.random() * 720 - 360)}deg`;
@@ -1519,11 +2147,12 @@ function viewHome() {
   const recent = [...S.txs].sort(sortTx).slice(0, 5);
   const usedPct = m.budget ? clamp(m.exp / m.budget, 0, 1) : 0;
   const inv = byType('invest').filter(a => a.value > 0), props = byType('property');
-  const mood = islandMood(), town = MILESTONES.filter(([v]) => t.net >= v).length;
+  const mood = islandMood(), town = MILESTONES.filter(([v]) => t.net >= v).length, market = S.accounts.length || S.goals.length ? Math.min(8, marketToday().length) : 0;
   const legend = [
     m.budget && `<span class="chip">${{ sunny:'☀️ 預算充足', fair:'🌤️ 預算正常', cloudy:'☁️ 預算快用完', rain:'🌧️ 本月超支' }[mood.weather]}</span>`,
     mood.streak && `<span class="chip">🌼 連續記帳 ${mood.streak} 天</span>`,
     town && `<span class="chip">🏘️ 小鎮 ${town} 棟</span>`,
+    market && `<span class="chip">🏪 今日市集 ${market} 攤</span>`,
     byType('cash').length && `<button data-tap="cash"><span class="sw" style="background:var(--sky)"></span>蓄水池 ${waterLevel(t.cash) >= 1 ? '滿水位' : pct(waterLevel(t.cash))}</button>`,
     inv.length && `<button data-action="tab:assets"><span class="sw" style="background:var(--emerald)"></span>投資建物 ${inv.length} 座</button>`,
     props.length && `<button data-action="tab:assets"><span class="sw" style="background:var(--wood)"></span>小屋 ${props.length} 棟</button>`,
@@ -1840,10 +2469,12 @@ function render() {
   $('#view').innerHTML = ({ home:viewHome, ledger:viewLedger, reports:viewReports, assets:viewAssets })[ui.tab]();
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   runAnims();
+  island3D();
   if (ui.cheer && $('#island')) { ui.cheer = false; setTimeout(cheer, 250); }
   if (highlight.length) {
     const hl = highlight; highlight = [];
     hl.forEach(k => $$(`#island [data-tap="${k}"]`).forEach(el => el.classList.add('pulse')));
+    if (I3 && ui.tab === 'home') I3.pulse(hl);
   }
 }
 function runAnims() {
@@ -2049,6 +2680,9 @@ function saveRecord(f, sh, old) {
     else { hl.push('acc:' + tx.to); if (b?.propertyId) hl.push('acc:' + b.propertyId); if (b?.type === 'credit') hl.push('credit'); } }
   if (tx.date !== today() && ui.tab === 'ledger' && ui.ledgerMode === 'cal') ui.day = tx.date;
   if (!old && tx.kind === 'income' && (tx.item === '薪資' || tx.item === '獎金紅利')) ui.cheer = true;
+  const st = !old && tx.date === today() && !tx.noStat && marketToday().find(s => s.k === stallKey(tx));   // today's record opens (or busies) a beach stall
+  if (st) { const said = st.n === 1 ? `海灘市集開了一間「${STALLS[st.k][0]}」` : `「${STALLS[st.k][0]}」今天第 ${st.n} 筆`;
+    sub = sub ? `${said}・${sub}` : said; if (st.n > 1) hl.push('stall:' + st.k); }
   closeSheet(); commit(hl); toast(msg, sub);
   if (tx.shares) refreshQuotes(true, false);   // re-price the holding with its new size
 }
@@ -2431,6 +3065,8 @@ function settingsSheet() {
     <div class="two">${mField('budget', '每月可支配預算', f.budget, '30000')}${mField('fullWater', '蓄水池滿水位', f.fullWater, '360000')}</div>
     <p class="note">本月可支配餘額 ＝ 每月預算 − 本月支出（不含「不計收支」的紀錄）。滿水位是緊急預備金目標，建議 6 個月生活費。</p>
     <div class="flabel" style="margin-top:6px">島嶼與島民</div>
+    <div class="fgroup"><div class="note">小島的樣子${i3State === 'failed' ? '（這台裝置無法顯示 3D，目前用平面）' : ''}</div>
+      <div class="seg" id="set-i3">${[['on', '立體 3D（可轉動）'], ['off', '平面']].map(([k, l]) => `<button type="button" data-i3="${k}" class="${(want3D() ? 'on' : 'off') === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
     <div class="fgroup"><div class="note">屋頂顏色</div><div class="swatches" id="set-roof">${ROOFS.map(([c]) => `<button type="button" class="swatch ${c === roofPair()[0] ? 'on' : ''}" style="--c:${c}" data-roof="${c}" aria-label="屋頂顏色 ${c}"></button>`).join('')}</div></div>
     ${folkList().map((p, i) => `<div class="fgroup"><div class="note">${['第 1 位（一開始就住）', '第 2 位（淨資產 10 萬）', '第 3 位（100 萬）', '第 4 位（500 萬）', '釣魚的島民（儲蓄率 10% 以上）'][i]}</div>
       <div class="two">${selectBox('fk' + i, Object.entries(CRITTERS).map(([k, c]) => [k, c.label]), p.kind, 'aria-label="島民種類"')}<div class="sel noarrow"><input id="fn${i}" value="${esc(p.name)}" maxlength="8" placeholder="名字" aria-label="島民名字" autocomplete="off"></div></div></div>`).join('')}
@@ -2448,6 +3084,12 @@ function settingsSheet() {
     $('#set-roof', sh).addEventListener('click', e => {
       const b = e.target.closest('[data-roof]'); if (!b) return;
       roof = b.dataset.roof; $$('#set-roof .swatch', sh).forEach(x => x.classList.toggle('on', x === b));
+    });
+    $('#set-i3', sh).addEventListener('click', e => {
+      const b = e.target.closest('[data-i3]'); if (!b) return;
+      try { localStorage.setItem(I3_KEY, b.dataset.i3); } catch (err) {}
+      $$('#set-i3 button', sh).forEach(x => x.classList.toggle('on', x === b));
+      render();
     });
     $('#set-fs', sh).addEventListener('click', e => {
       const b = e.target.closest('[data-fs]'); if (!b) return;
@@ -2482,17 +3124,17 @@ function settingsSheet() {
 }
 
 /* ───────── global events ───────── */
+function tapIsland(k, tapEl) {   // tapEl only needs getBoundingClientRect (the 3D island passes where the thing sits on screen)
+  if (k === 'cash') return cashSheet();
+  if (k === 'credit') return creditSheet();
+  if (k.startsWith('acc:')) return accountSheet(k.slice(4));
+  if (k.startsWith('goal:')) return goalSheet(k.slice(5));
+  return islandTap(k, tapEl);
+}
 document.addEventListener('click', e => {
   const tapEl = e.target.closest('[data-tap]');
   const el = e.target.closest('[data-action]');
-  if (tapEl && !el) {
-    const k = tapEl.dataset.tap;
-    if (k === 'cash') return cashSheet();
-    if (k === 'credit') return creditSheet();
-    if (k.startsWith('acc:')) return accountSheet(k.slice(4));
-    if (k.startsWith('goal:')) return goalSheet(k.slice(5));
-    return islandTap(k, tapEl);
-  }
+  if (tapEl && !el) return tapIsland(tapEl.dataset.tap, tapEl);
   if (!el) return;
   const parts = el.dataset.action.split(':'), a = parts[0], arg = parts.slice(1).join(':');
   if (a === 'tab') { ui.tab = arg; render(); window.scrollTo({ top:0 }); }
