@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Bf19hk2jlVYdScbvzEBvC3UzZk6vXREk8HtGSm4yciQ=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-jJgMGPaz2rM36es/9xc1hPVGPhxFwE0uSEOHB0MSpkQ=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -518,8 +518,17 @@ const TYPES = {
 };
 const INV_KIND = { stock:'股票・加密貨幣（風車）', fund:'ETF・基金・債券（燈塔）', policy:'保單・儲蓄險（燈塔）' };
 const MARKETS = { '':'手動輸入', tw:'台股・ETF', us:'美股', crypto:'加密貨幣' };   // where an investment's price comes from
-const CASH_KINDS = { save:'台幣活存', digital:'數位帳戶', fixed:'台幣定存', usd:'外幣活存', usdFixed:'外幣定存' };   // a cash account's kind; the 外幣 ones hold US dollars
+const CASH_KINDS = { save:'台幣活存', digital:'數位帳戶', fixed:'台幣定存', broker:'證券活存', usd:'外幣活存', usdFixed:'外幣定存' };   // a cash account's kind; the 外幣 ones hold US dollars
 const usdKind = k => k === 'usd' || k === 'usdFixed';
+// a bank from what people call it, in the names the rate boards use (more specific names first)
+const BANKS = [['Richart', '台新Richart'], ['中信', '中國信託'], ['中國信託', '中國信託'], ['國泰', '國泰世華'], ['玉山', '玉山銀行'], ['台新', '台新銀行'], ['永豐', '永豐銀行'], ['DAWHO', '永豐銀行'],
+  ['富邦', '富邦銀行'], ['兆豐', '兆豐銀行'], ['第一', '第一銀行'], ['一銀', '第一銀行'], ['華南', '華南銀行'], ['彰銀', '彰化銀行'], ['彰化', '彰化銀行'], ['合庫', '合作金庫'], ['合作金庫', '合作金庫'],
+  ['土銀', '土地銀行'], ['土地銀行', '土地銀行'], ['台銀', '臺灣銀行'], ['臺銀', '臺灣銀行'], ['台灣銀行', '臺灣銀行'], ['臺灣銀行', '臺灣銀行'], ['郵局', '郵局'], ['中華郵政', '郵局'], ['星展', '星展銀行'],
+  ['渣打', '渣打銀行'], ['匯豐', '匯豐銀行'], ['滙豐', '匯豐銀行'], ['元大', '元大銀行'], ['凱基', '凱基銀行'], ['新光', '新光銀行'], ['上海商銀', '上海商銀'], ['遠東', '遠東商銀'], ['聯邦', '聯邦銀行'],
+  ['王道', '王道銀行'], ['LINE Bank', 'LINE Bank'], ['LINE銀行', 'LINE Bank'], ['樂天', '樂天銀行'], ['將來', '將來銀行'], ['臺灣企銀', '臺灣企銀'], ['台灣企銀', '臺灣企銀'], ['台企', '臺灣企銀'],
+  ['安泰', '安泰銀行'], ['高雄銀行', '高雄銀行'], ['台中銀', '台中銀行'], ['京城', '京城銀行'], ['陽信', '陽信銀行'], ['板信', '板信銀行'], ['華泰', '華泰銀行'], ['三信', '三信商銀'], ['瑞興', '瑞興銀行'], ['盤谷', '盤谷銀行']];
+const guessBank = s => (BANKS.find(([k]) => String(s || '').includes(k)) || [])[1] || '';
+const bankOf = a => guessBank(a.bank) || String(a.bank || '').trim() || guessBank(a.name);
 const GOAL_COLORS = ['#E1604F','#3F97D6','#E0A030','#8E5A8B','#16905E'];
 
 const ICONS = {
@@ -610,7 +619,7 @@ function templateState(T = TEMPLATE) {
 }
 const emptyState = () => ({ v:2, source:'', settings:{ name:'我的財富島', budget:30000, fullWater:360000 }, accounts:[], goals:[], txs:[] });
 const SAFE_ID = /^[\w:-]{1,64}$/, SAFE_COLOR = /^#[0-9a-f]{6}$/i, SAFE_DATE = /^(\d{4}-\d{2}-\d{2})?$/;
-const NUM_KEYS = ['value', 'cost', 'amount', 'target', 'saved', 'ts', 'n', 'budget', 'fullWater', 'shares', 'price', 'priceTime', 'quotedAt', 'prev', 'fx', 'realized', 'usd', 'rate'];
+const NUM_KEYS = ['value', 'cost', 'amount', 'target', 'saved', 'ts', 'n', 'budget', 'fullWater', 'shares', 'price', 'priceTime', 'quotedAt', 'prev', 'fx', 'realized', 'usd', 'rate', 'fxSell'];
 function cleanState(s) {   // a backup file may come from anyone: ids, colours, dates, numbers and enums must look like what the app writes
   const bad = what => { throw new Error(`備份檔的「${what}」格式不正確，已停止還原`); };
   const list = (v, what) => v == null ? [] : Array.isArray(v) ? v : bad(what);
@@ -1967,7 +1976,7 @@ const QUOTE_TTL = 15 * 60e3;
 const autoInv = () => S.accounts.filter(a => a.type === 'invest' && a.market && a.symbol);
 const quoteKey = a => `${a.market}:${a.symbol}`;
 async function fetchQuotes(keys, usd = false) {   // our own /api/quote (functions/api/quote.js); only ticker symbols leave the phone
-  const r = await fetch('api/quote?q=' + encodeURIComponent(keys.join(',')) + (usd ? '&fx=USD' : ''), { credentials:'same-origin', cache:'no-store' });
+  const r = await fetch('api/quote?q=' + encodeURIComponent(keys.join(',')) + (usd ? '&fx=USD&banks=1' : ''), { credentials:'same-origin', cache:'no-store' });
   if (!r.ok) throw new Error('報價服務暫時無法使用');
   const j = await r.json(); if (!j || !j.quotes) throw new Error('報價服務回應不正確');
   return j;
@@ -1977,6 +1986,15 @@ async function usdRate(date) {   // TWD per US dollar at the close of a past buy
   try { const r = await fetch('api/quote?' + p, { credentials:'same-origin', cache:'no-store' }), j = r.ok ? await r.json() : null;
     const v = past ? j?.fxOn?.USD : j?.fx?.USD; if (v > 0) return v; } catch (e) {}
   return autoInv().find(a => a.currency === 'USD' && a.fx > 0)?.fx || null;   // offline: the last rate we saw
+}
+function bankRate(a, res) {   // a US dollar account's rates at its own bank, or the market rate when the bank posts none we can read
+  const b = res.bankFx?.[bankOf(a)], m = res.fx?.USD;
+  return b ? { fx:b.buy, fxSell:b.sell, fxSrc:bankOf(a) } : m > 0 ? { fx:m, fxSell:m, fxSrc:'' } : null;
+}
+async function cashRate(a) {   // the same, fetched now for one account being saved
+  try { const r = await fetch('api/quote?fx=USD&banks=1', { credentials:'same-origin', cache:'no-store' }); if (r.ok) { const v = bankRate(a, await r.json()); if (v) return v; } } catch (e) {}
+  const last = byType('cash').find(x => x.cur === 'USD' && x.fx > 0);   // offline: the last rate we saw
+  return last ? { fx:last.fx, fxSell:last.fxSell || last.fx, fxSrc:last.fxSrc || '' } : null;
 }
 const usdLot = (usd, rate) => usd > 0 && rate > 0 ? { amount:Math.round(usd * rate), usd, rate:+rate.toFixed(4) } : null;   // a US buy is typed in dollars and kept in TWD
 const usdText = n => 'US$' + n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
@@ -2032,8 +2050,8 @@ async function refreshQuotes(force = false, loud = force) {   // on launch, on r
   try {
     const res = await fetchQuotes([...new Set(list.map(quoteKey))], usdCash.length > 0), hl = [];
     list.forEach(a => { const q = res.quotes[quoteKey(a)]; if (q && setQuote(a, q, res.fx)) hl.push('acc:' + a.id); });
-    usdCash.forEach(a => { const r = res.fx.USD; if (!(r > 0)) return; const v = Math.round((a.usd || 0) * r);
-      Object.assign(a, { fx:r, quotedAt:Date.now() }); if (v !== a.value) { a.value = v; if (!hl.includes('cash')) hl.push('cash'); } });
+    usdCash.forEach(a => { const r = bankRate(a, res); if (!r) return; const v = Math.round((a.usd || 0) * r.fx);
+      Object.assign(a, r, { quotedAt:Date.now() }); if (v !== a.value) { a.value = v; if (!hl.includes('cash')) hl.push('cash'); } });
     const miss = [...new Set(list.filter(a => !res.quotes[quoteKey(a)]).map(a => a.symbol))];
     commit(hl);
     if (loud) toast(miss.length ? `${list.length - miss.length} 檔已更新，${miss.join('、')} 抓不到報價` : '市值已更新', `${list.length ? list.length + ' 檔 · ' : ''}${hhmm(Date.now())}`);
@@ -2516,7 +2534,7 @@ function viewReports() {
 /* ───────── assets & dreams ───────── */
 function accRow(a) {
   let sub = '', right = money(a.value), under = '', color = '';
-  if (a.type === 'cash') { const t = totals(); sub = CASH_KINDS[a.cashKind] || `佔蓄水池 ${pct(t.cash ? a.value / t.cash : 0)}`; }
+  if (a.type === 'cash') { const t = totals(), bank = bankOf(a); sub = [bank, CASH_KINDS[a.cashKind]].filter(Boolean).join(' · ') || `佔蓄水池 ${pct(t.cash ? a.value / t.cash : 0)}`; }
   if (a.type === 'credit') { sub = a.value < 0 ? '未繳金額，算在負債' : a.value > 0 ? '溢繳（可抵下期）' : '已繳清'; color = a.value < 0 ? 'var(--debt)' : ''; }
   let badge = '', sub2 = a.cur === 'USD' ? usdText(a.usd || 0) : '';
   if (a.type === 'invest' && a.market) {
@@ -2534,11 +2552,31 @@ function accRow(a) {
   return `<button class="row" data-action="acc:${a.id}">${typeTile(a.type)}<span class="main"><span class="t">${esc(a.name)}${badge}</span><span class="s">${sub}</span>${sub2 ? `<span class="s">${sub2}</span>` : ''}</span>
     <span class="amt"><span class="num" style="${color ? 'color:' + color : ''}">${right}</span>${under}</span></button>`;
 }
-function cashGroups(list) {   // 台幣資產 and 美金資產, each with its total
-  return [['台幣資產', list.filter(a => a.cur !== 'USD')], ['美金資產', list.filter(a => a.cur === 'USD')]].map(([label, as], i) => { if (!as.length) return '';
-    const sum = as.reduce((s, a) => s + a.value, 0), usd = as.reduce((s, a) => s + (a.usd || 0), 0);
-    return `<div class="mkt-h"><span class="l"><span>${label}<small>${as.length} 個帳戶</small></span></span><span class="r"><span class="num">${money(sum)}</span>${i ? `<span class="u">${usdText(usd)}</span>` : ''}</span></div>
-      <div class="list">${as.map(accRow).join('')}</div>`; }).join('');
+const cashCur = a => a.cur === 'USD' ? 'USD' : 'TWD';
+const sameBank = (cur, bank) => byType('cash').filter(a => cashCur(a) === cur && bankOf(a) === bank);
+function bankRow(cur, bank, as) {   // two or more accounts at one bank in one currency: one row, tap for the accounts
+  const sum = as.reduce((s, a) => s + a.value, 0), usd = as.reduce((s, a) => s + (a.usd || 0), 0);
+  const kinds = [...new Set(as.map(a => CASH_KINDS[a.cashKind]).filter(Boolean))].join('・');
+  return `<button class="row" data-action="bank:${cur}:${encodeURIComponent(bank)}">${typeTile('cash')}<span class="main"><span class="t">${esc(bank)}<span class="badge">${as.length} 個帳戶</span></span>
+    <span class="s">${kinds || '現金與銀行'}</span>${cur === 'USD' ? `<span class="s">${usdText(usd)}</span>` : ''}</span><span class="amt"><span class="num">${money(sum)}</span></span></button>`;
+}
+function cashGroups(list) {   // 台幣資產 and 美金資產, each with its total; accounts at the same bank fold into one row
+  return [['台幣資產', 'TWD'], ['美金資產', 'USD']].map(([label, cur]) => { const as = list.filter(a => cashCur(a) === cur); if (!as.length) return '';
+    const sum = as.reduce((s, a) => s + a.value, 0), usd = as.reduce((s, a) => s + (a.usd || 0), 0), done = new Set();
+    const rows = as.map(a => { const bank = bankOf(a); if (!bank) return accRow(a); if (done.has(bank)) return '';
+      const same = as.filter(x => bankOf(x) === bank); done.add(bank); return same.length > 1 ? bankRow(cur, bank, same) : accRow(a); }).join('');
+    return `<div class="mkt-h"><span class="l"><span>${label}<small>${as.length} 個帳戶</small></span></span><span class="r"><span class="num">${money(sum)}</span>${cur === 'USD' ? `<span class="u">${usdText(usd)}</span>` : ''}</span></div>
+      <div class="list">${rows}</div>`; }).join('');
+}
+function bankSheet(cur, bank) {   // one bank's accounts in one currency
+  const as = sameBank(cur, bank); if (!as.length) return closeSheet();
+  const sum = as.reduce((s, a) => s + a.value, 0), usd = as.reduce((s, a) => s + (a.usd || 0), 0), r = as.find(a => a.fx);
+  openSheet(`${head(esc(bank) + (cur === 'USD' ? ' 美金' : ' 台幣'))}
+    <div class="detail-hero">${typeTile('cash', 46)}<span class="num">${money(sum)}</span><span class="muted" style="font-size:calc(13px*var(--fs))">${cur === 'USD' ? `${usdText(usd)} · 匯率 ${r?.fx}（${r?.fxSrc ? r.fxSrc + '即期買入' : '市場匯率'}）· ` : ''}${as.length} 個帳戶</span></div>
+    <div class="list">${as.map(accRow).join('')}</div>
+    <button class="btn block" id="bk-add">＋ 在${esc(bank)}新增帳戶</button>`, sh => {
+    $('#bk-add', sh).addEventListener('click', () => addSheet('cash', { bank, cashKind:cur === 'USD' ? 'usd' : 'save' }));
+  });
 }
 function marketGroups(list) {   // investments split by market, each with its own holdings total: 台股, 美股, crypto, then the hand-valued ones
   const label = { tw:'台股・ETF', us:'美股', crypto:'加密貨幣', '':'保單・基金・其他' };
@@ -2793,8 +2831,8 @@ function saveRecord(f, sh, old) {
       tx.shares = n; }
   }
   if (f.noStat && f.kind !== 'transfer') tx.noStat = true;
-  const usdAcc = [tx.from, tx.to].map(acc).find(a => a?.cur === 'USD');   // the rate this record moves dollars at; an edit keeps the one it had
-  if (usdAcc) tx.rate = old?.rate && [old.from, old.to].includes(usdAcc.id) ? old.rate : usdAcc.fx;
+  const usdAcc = [tx.from, tx.to].map(acc).find(a => a?.cur === 'USD');   // the rate this record moves dollars at (the bank sells the dollars that come in); an edit keeps the one it had
+  if (usdAcc) tx.rate = old?.rate && [old.from, old.to].includes(usdAcc.id) ? old.rate : tx.to === usdAcc.id ? usdAcc.fxSell || usdAcc.fx : usdAcc.fx;
   const w0 = waterLevel(totals().cash);
   if (old) applyTx(old, -1);
   const b = tx.kind === 'transfer' ? acc(tx.to) : null;
@@ -2973,7 +3011,7 @@ function saySummary(f, basis) {
 
 /* add asset / debt */
 function addSheet(type = 'cash', pre = {}) {
-  const f = Object.assign({ type, name:'', value:'', cost:'', kind:'stock', market:'', symbol:'', shares:'', date:today(), withLoan:false, loanName:'', loanValue:'', propertyId:'', cashKind:'save', usd:'' }, pre);
+  const f = Object.assign({ type, name:'', value:'', cost:'', kind:'stock', market:'', symbol:'', shares:'', date:today(), withLoan:false, loanName:'', loanValue:'', propertyId:'', cashKind:'save', usd:'', bank:'' }, pre);
   openSheet(`${head('新增資產或負債')}
     <div class="type-grid">${Object.entries(TYPES).map(([k, t]) => `<button type="button" class="type-btn" style="--c:${t.c}" data-type="${k}">${typeTile(k, 34)}<span><b>${t.label}</b><small>島上的${t.island}</small></span></button>`).join('')}</div>
     <div id="add-body" style="display:flex;flex-direction:column;gap:12px"></div>
@@ -2994,12 +3032,14 @@ function addSheet(type = 'cash', pre = {}) {
 }
 const mField = (name, label, val, ph, hint = '', signed = false) => `<div class="field"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" data-money="${signed ? 'signed' : ''}" inputmode="${signed ? 'text' : 'numeric'}" placeholder="${ph}" value="${esc(val)}" autocomplete="off">${hint ? `<span class="hint">${hint}</span>` : ''}</div>`;
 const tField = (name, label, val, ph) => `<div class="field"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" placeholder="${ph}" value="${esc(val)}" maxlength="24" autocomplete="off"></div>`;
+const bankField = val => `<div class="field"><label for="f-bank">銀行</label><input id="f-bank" name="bank" list="bank-list" placeholder="例：玉山銀行、中國信託" value="${esc(val)}" maxlength="24" autocomplete="off">
+  <datalist id="bank-list">${[...new Set(BANKS.map(b => b[1]))].map(b => `<option value="${b}">`).join('')}</datalist><span class="hint">同一家銀行、同幣別的帳戶會合併成一列；外幣帳戶用這家銀行的牌告匯率換算</span></div>`;
 const cashFields = (f, editing) => `<div class="fgroup"><div class="flabel">帳戶種類</div><div class="chips">${Object.entries(CASH_KINDS).map(([k, l]) =>
     `<button type="button" class="chip-btn ${f.cashKind === k ? 'on' : ''}" data-set="cashKind:${k}">${l}</button>`).join('')}</div></div>
   ${usdKind(f.cashKind) ? `<div class="field"><label for="f-usd">目前餘額（美元${editing ? '，直接校正' : ''}）</label><input id="f-usd" name="usd" inputmode="decimal" placeholder="例：5000" value="${esc(f.usd)}" autocomplete="off"><span class="hint">依即時匯率換算成台幣，一起算進蓄水池；記帳金額照樣填台幣，會用當時匯率換成美元</span></div>`
     : editing ? mField('value', '目前餘額（直接校正）', f.value, '0', '平常記帳會自動扣款，只有對帳不符時才需要改這裡', true) : mField('value', '目前餘額', f.value, '0', '所有現金與銀行帳戶合起來就是島上蓄水池的水量')}`;
 function addBody(f) {
-  if (f.type === 'cash') return tField('name', '帳戶名稱', f.name, '例：中信銀行、現金、LinePay Money') + `<div id="cash-fields" style="display:flex;flex-direction:column;gap:12px">${cashFields(f, false)}</div>`;
+  if (f.type === 'cash') return tField('name', '帳戶名稱', f.name, '例：中信銀行、現金、LinePay Money') + bankField(f.bank) + `<div id="cash-fields" style="display:flex;flex-direction:column;gap:12px">${cashFields(f, false)}</div>`;
   if (f.type === 'credit') return tField('name', '信用卡名稱', f.name, '例：玉山信用卡') + mField('value', '目前未繳金額', f.value, '0', '刷卡會增加未繳金額，用「轉帳・還款」繳卡費就會減少');
   if (f.type === 'invest') return tField('name', '投資名稱', f.name, f.market ? '可留空，會用股票名稱' : '例：台積電、0050、儲蓄險') + investFields(f, false) +
     `<p class="note">市值越高，建物越高；股票賺錢時風車轉得快，虧損時轉得慢、葉片變灰。</p>`;
@@ -3021,11 +3061,11 @@ async function saveAsset(f, sh, btn) {
     window.scrollTo({ top:0, behavior:'smooth' }); return;
   }
   if (!name) return showErr(sh, '請輸入名稱');
-  const usd = f.type === 'cash' && usdKind(f.cashKind) ? parseFloat(f.usd) || 0 : null, rate = usd == null ? 0 : await usdRate('');
+  const usd = f.type === 'cash' && usdKind(f.cashKind) ? parseFloat(f.usd) || 0 : null, rate = usd == null ? null : await cashRate({ bank:f.bank, name });
   if (usd != null && !rate) return showErr(sh, '需要連上網路，才能把美元餘額換算成台幣');
   if (f.type === 'loan' && f.propertyId && loanOf(acc(f.propertyId))) return showErr(sh, '這個房產已經有連動房貸');
-  const a = { id:uid(), type:f.type, name, value:f.type === 'credit' ? -Math.abs(value) : usd != null ? Math.round(usd * rate) : value };
-  if (f.type === 'cash') { a.cashKind = f.cashKind; if (usd != null) Object.assign(a, { cur:'USD', usd, fx:rate, quotedAt:Date.now() }); }
+  const a = { id:uid(), type:f.type, name, value:f.type === 'credit' ? -Math.abs(value) : usd != null ? Math.round(usd * rate.fx) : value };
+  if (f.type === 'cash') { a.cashKind = f.cashKind; if (f.bank.trim()) a.bank = f.bank.trim(); if (usd != null) Object.assign(a, { cur:'USD', usd }, rate, { quotedAt:Date.now() }); }
   if (f.type === 'invest') { a.kind = f.kind; a.cost = parseInt(f.cost, 10) || value; }
   if (f.type === 'loan' && f.propertyId) a.propertyId = f.propertyId;
   S.accounts.push(a);
@@ -3046,12 +3086,12 @@ function accountSheet(id) {
   const a = acc(id); if (!a) return;
   if (a.type === 'invest' && a.market) return holdingSheet(id);
   const f = { name:a.name, value:String(a.type === 'credit' ? -a.value : a.value), cost:String(a.cost || ''), kind:a.kind || 'stock', propertyId:a.propertyId || '',
-    market:'', symbol:'', shares:'', date:today(), cashKind:a.cashKind || '', usd:a.cur === 'USD' ? String(+(a.usd || 0).toFixed(2)) : '' };
+    market:'', symbol:'', shares:'', date:today(), cashKind:a.cashKind || '', usd:a.cur === 'USD' ? String(+(a.usd || 0).toFixed(2)) : '', bank:a.type === 'cash' ? a.bank || bankOf(a) : '' };
   const loan = a.type === 'property' ? loanOf(a) : null;
   const related = S.txs.filter(t => t.from === id || t.to === id).sort(sortTx).slice(0, 6);
   const props = byType('property');
   let fields = tField('name', '名稱', f.name, '');
-  if (a.type === 'cash') fields += `<div id="cash-fields" style="display:flex;flex-direction:column;gap:12px">${cashFields(f, true)}</div>`;
+  if (a.type === 'cash') fields += bankField(f.bank) + `<div id="cash-fields" style="display:flex;flex-direction:column;gap:12px">${cashFields(f, true)}</div>`;
   if (a.type === 'credit') fields += mField('value', '目前未繳金額（直接校正）', f.value, '0', '負數代表溢繳', true);
   if (a.type === 'invest') fields += `<div id="inv-fields" style="display:flex;flex-direction:column;gap:12px">${investFields(f, true)}</div>`;
   if (a.type === 'property') fields += mField('value', '房屋價值', f.value, '0') + (loan ? `<p class="note">連動房貸「${esc(loan.name)}」剩 ${money(loan.value)}，地基厚度是貸款成數 ${pct(loan.value / a.value)}。</p>` : `<button class="btn small" type="button" data-sub="add-loan">＋ 新增連動房貸</button>`);
@@ -3059,7 +3099,7 @@ function accountSheet(id) {
     `<div class="field"><label for="f-prop">連動房產</label>${selectBox('f-prop', [['', '不連動（海邊的灰色岩石）'], ...props.map(p => [p.id, p.name])], f.propertyId, 'name="propertyId"')}</div>`;
   const shown = a.type === 'credit' ? -a.value : a.value;
   openSheet(`${head(TYPES[a.type].label)}
-    <div class="detail-hero">${typeTile(a.type, 46)}<span class="num" style="${a.type === 'loan' || (a.type === 'credit' && a.value < 0) ? 'color:var(--debt)' : ''}">${a.type === 'credit' ? (a.value < 0 ? '未繳 ' : '溢繳 ') + money(Math.abs(a.value)) : (a.type === 'loan' ? '−' : '') + money(shown)}</span><span class="muted" style="font-size:calc(13px*var(--fs))">${a.cur === 'USD' ? `${usdText(a.usd || 0)} · 匯率 ${a.fx} · ` : ''}島上的${TYPES[a.type].island}</span></div>
+    <div class="detail-hero">${typeTile(a.type, 46)}<span class="num" style="${a.type === 'loan' || (a.type === 'credit' && a.value < 0) ? 'color:var(--debt)' : ''}">${a.type === 'credit' ? (a.value < 0 ? '未繳 ' : '溢繳 ') + money(Math.abs(a.value)) : (a.type === 'loan' ? '−' : '') + money(shown)}</span><span class="muted" style="font-size:calc(13px*var(--fs))">${a.cur === 'USD' ? `${usdText(a.usd || 0)} · 匯率 ${a.fx}（${a.fxSrc ? a.fxSrc + '即期買入' : '市場匯率'}）<br>` : ''}島上的${TYPES[a.type].island}</span></div>
     <div style="display:flex;flex-direction:column;gap:12px">${fields}</div>
     <p class="err" hidden></p>
     <div class="btn-row"><button class="btn danger" id="acc-del">刪除</button><button class="btn primary" id="acc-save">儲存</button></div>
@@ -3079,12 +3119,13 @@ function accountSheet(id) {
       if (a.type === 'invest' && f.market && !auto) return;
       const v = parseInt(f.value, 10) || 0, toUsd = a.type === 'cash' && usdKind(f.cashKind);
       if (toUsd && f.usd === '') return showErr(sh, '請輸入美元餘額');
-      const rate = toUsd ? a.fx || await usdRate('') : 0;
+      const bankMoved = a.type === 'cash' && f.bank.trim() !== String(a.bank || bankOf(a));
+      const rate = !toUsd ? null : a.cur === 'USD' && a.fx && !bankMoved ? { fx:a.fx, fxSell:a.fxSell || a.fx, fxSrc:a.fxSrc || '' } : await cashRate({ bank:f.bank, name:f.name });
       if (toUsd && !rate) return showErr(sh, '需要連上網路，才能把美元餘額換算成台幣');
       a.name = f.name.trim(); if (!auto) a.value = a.type === 'credit' ? -v : v;
-      if (a.type === 'cash') { if (f.cashKind) a.cashKind = f.cashKind;
-        if (toUsd) { const usd = parseFloat(f.usd) || 0; Object.assign(a, { cur:'USD', usd, fx:rate, value:Math.round(usd * rate) }); a.quotedAt ||= Date.now(); }
-        else ['cur', 'usd', 'fx', 'quotedAt'].forEach(k => delete a[k]); }
+      if (a.type === 'cash') { if (f.cashKind) a.cashKind = f.cashKind; if (f.bank.trim()) a.bank = f.bank.trim(); else delete a.bank;
+        if (toUsd) { const usd = parseFloat(f.usd) || 0; Object.assign(a, { cur:'USD', usd }, rate, { value:Math.round(usd * rate.fx) }); a.quotedAt ||= Date.now(); }
+        else ['cur', 'usd', 'fx', 'fxSell', 'fxSrc', 'quotedAt'].forEach(k => delete a[k]); }
       if (a.type === 'invest') { const us = auto && f.market === 'us' ? usdLot(parseFloat(f.usd), auto.rate) : null;
         a.cost = us ? us.amount : parseInt(f.cost, 10) || 0; a.kind = f.kind;
         if (auto) {   // now priced: what was typed becomes its first purchase
@@ -3289,6 +3330,7 @@ document.addEventListener('click', e => {
   else if (a === 'record-on') recordSheet({ date:arg });
   else if (a === 'add') addSheet(arg || 'cash');
   else if (a === 'acc') accountSheet(arg);
+  else if (a === 'bank') { const [cur, bank] = arg.split(':'); bankSheet(cur, decodeURIComponent(bank)); }
   else if (a === 'goal') goalSheet(arg);
   else if (a === 'new-goal') goalSheet(null);
   else if (a === 'deposit') recordSheet({ kind:'transfer', dest:'goal:' + arg });

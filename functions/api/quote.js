@@ -1,5 +1,6 @@
 // Latest prices for investments: GET /api/quote?q=tw:2330,us:AAPL,crypto:BTC
 // Exchange rates too: &fx=USD adds today's rate, &on=2026-03-05 also the rate at that day's close (a US buy typed in dollars).
+// &banks=1 adds each Taiwan bank's posted USD spot rates (buy = what the bank pays for a dollar, sell = what it charges).
 // Runs behind the password gate (functions/_middleware.js). Only ticker symbols reach this function;
 // how many shares someone holds stays on their phone.
 const UA = 'Mozilla/5.0';   // Yahoo answers 429 to full browser user agents from servers
@@ -40,6 +41,30 @@ async function fxRate(c) {   // TWD per one unit of c
   const j = await getJSON(`https://open.er-api.com/v6/latest/${c}`);
   return j?.rates?.TWD > 0 ? j.rates.TWD : null;
 }
+async function getText(url) {
+  const r = await fetch(url, { headers: { 'User-Agent': UA }, cf: { cacheTtl: 300 } });
+  return r.ok ? r.text() : '';
+}
+async function bankRates(market) {   // Bank of Taiwan's own CSV, the other banks from findrate.tw's table of bank boards
+  const out = {}, num = s => parseFloat(String(s).replace(/<[^>]+>/g, '').trim());
+  try {
+    const html = await getText('https://www.findrate.tw/USD/');
+    for (const [, row] of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)) {
+      const td = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(m => m[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim());
+      if (td.length < 6) continue;
+      const buy = num(td[3]), sell = num(td[4]);
+      if (buy > 0 && sell >= buy) out[td[0]] = { buy, sell, time: td[5] };
+    }
+  } catch (e) {}
+  try {
+    const c = (await getText('https://rate.bot.com.tw/xrt/flcsv/0/day')).split('\n').find(l => l.startsWith('USD,'))?.split(',') || [];
+    const buy = num(c[3]), sell = num(c[13]);   // 本行買入 即期, 本行賣出 即期
+    if (buy > 0 && sell >= buy) out['臺灣銀行'] = { buy, sell, time: 'BOT' };
+  } catch (e) {}
+  // a board that is far from the market is a stale copy: leave it out, the app then uses the market rate
+  if (market > 0) for (const k of Object.keys(out)) if (Math.abs(out[k].buy / market - 1) > .015) delete out[k];
+  return out;
+}
 async function fxAt(c, date) {   // TWD per unit of c at the close of the last trading day on or before date
   const end = Math.floor(Date.parse(date + 'T23:59:59Z') / 1000);
   const path = `/v8/finance/chart/${c}TWD=X?period1=${end - 10 * 86400}&period2=${end}&interval=1d`;
@@ -68,8 +93,9 @@ export async function onRequestGet({ request }) {
   await Promise.all([...new Set([...Object.values(quotes).map(q => q.currency), ...want])].filter(c => c !== 'TWD' && /^[A-Z]{3}$/.test(c)).map(async c => {
     try { const r = await fxRate(c); if (r) fx[c] = r; } catch (e) {}
   }));
+  const bankFx = params.get('banks') ? await bankRates(fx.USD || (await fxRate('USD').catch(() => 0))) : undefined;
   const fxOn = {};   // the same currencies at the close of a past day
   if (/^\d{4}-\d{2}-\d{2}$/.test(on)) await Promise.all(want.map(async c => { try { const r = await fxAt(c, on); if (r) fxOn[c] = r; } catch (e) {} }));
-  return new Response(JSON.stringify({ quotes, fx, fxOn, missing: ok.filter(k => !quotes[k]), at: Date.now() }), {
+  return new Response(JSON.stringify({ quotes, fx, fxOn, bankFx, missing: ok.filter(k => !quotes[k]), at: Date.now() }), {
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, max-age=60' } });
 }
