@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gTAHBthjZkzGFQQ+YcnQooOioOlHuP/ewi8EUXDCBVM=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Bf19hk2jlVYdScbvzEBvC3UzZk6vXREk8HtGSm4yciQ=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -518,6 +518,8 @@ const TYPES = {
 };
 const INV_KIND = { stock:'股票・加密貨幣（風車）', fund:'ETF・基金・債券（燈塔）', policy:'保單・儲蓄險（燈塔）' };
 const MARKETS = { '':'手動輸入', tw:'台股・ETF', us:'美股', crypto:'加密貨幣' };   // where an investment's price comes from
+const CASH_KINDS = { save:'台幣活存', digital:'數位帳戶', fixed:'台幣定存', usd:'外幣活存', usdFixed:'外幣定存' };   // a cash account's kind; the 外幣 ones hold US dollars
+const usdKind = k => k === 'usd' || k === 'usdFixed';
 const GOAL_COLORS = ['#E1604F','#3F97D6','#E0A030','#8E5A8B','#16905E'];
 
 const ICONS = {
@@ -634,7 +636,7 @@ function cleanState(s) {   // a backup file may come from anyone: ids, colours, 
     ? s.settings.folk.map(p => ({ kind:CRITTERS[p?.kind] ? p.kind : 'cat', name:String(p?.name || '').slice(0, 8) })) : null;
   return { v:2, source:String(s.source || '').slice(0, 120), importedAt:rec({ date:s.importedAt || '' }, '匯入日期', {}, false).date,
     settings:Object.assign(emptyState().settings, set, folk ? { folk } : {}),
-    accounts:list(s.accounts, '帳戶').map(a => Object.assign(rec(a, '帳戶', { type:Object.keys(TYPES), market:Object.keys(MARKETS) }),
+    accounts:list(s.accounts, '帳戶').map(a => Object.assign(rec(a, '帳戶', { type:Object.keys(TYPES), market:Object.keys(MARKETS), cashKind:Object.keys(CASH_KINDS), cur:['USD'] }),
       Array.isArray(a.trades) ? { trades:a.trades.map(t => rec(t, '買進明細', { side:['buy', 'sell'] })) } : {})),
     goals:list(s.goals, '夢想').map(g => rec(g, '夢想')),
     txs:list(s.txs, '紀錄').map(t => rec(t, '紀錄', { kind:['expense', 'income', 'transfer'] })),
@@ -709,20 +711,22 @@ function monthStats(ym = thisYm()) {
 const waterLevel = cash => cash / Math.max(1, S.settings.fullWater);
 
 /* apply (sign=1) or reverse (sign=-1) a transaction's effect on balances */
+const bump = (a, amt, t) => { if (a.cur !== 'USD') { a.value += amt; return; }   // records are in TWD; a US dollar account takes them in dollars at the record's rate
+  const rate = t.rate || a.fx || 1; a.usd = +((a.usd || 0) + amt / rate).toFixed(4); a.value = Math.round(a.usd * (a.fx || rate)); };
 function applyTx(t, sign = 1) {
   const amt = t.amount * sign;
-  if (t.kind === 'expense') { const a = acc(t.from); if (a) a.value -= amt; }
-  else if (t.kind === 'income') { const a = acc(t.to); if (a) a.value += amt; }
+  if (t.kind === 'expense') { const a = acc(t.from); if (a) bump(a, -amt, t); }
+  else if (t.kind === 'income') { const a = acc(t.to); if (a) bump(a, amt, t); }
   else if (t.kind === 'transfer') {
     const a = acc(t.from);
     if (a && a.market && t.shares) tradeTx(a, t, 'sell', sign);
-    else if (a) { a.value -= amt; if (a.type === 'invest') a.cost = Math.max(0, (a.cost || 0) - amt); }
+    else if (a) { bump(a, -amt, t); if (a.type === 'invest') a.cost = Math.max(0, (a.cost || 0) - amt); }
     if (String(t.to).startsWith('goal:')) { const g = goal(t.to.slice(5)); if (g) g.saved += amt; }
     else { const b = acc(t.to); if (b) {
       if (b.type === 'loan') b.value -= amt;
       else if (b.type === 'invest' && b.market && t.shares) tradeTx(b, t, 'buy', sign);
       else if (b.type === 'invest') { b.value += amt; b.cost = (b.cost || 0) + amt; }
-      else b.value += amt; } }
+      else bump(b, amt, t); } }
   }
 }
 function transferKind(to) {
@@ -1962,8 +1966,8 @@ function makeIsland3D(T) {
 const QUOTE_TTL = 15 * 60e3;
 const autoInv = () => S.accounts.filter(a => a.type === 'invest' && a.market && a.symbol);
 const quoteKey = a => `${a.market}:${a.symbol}`;
-async function fetchQuotes(keys) {   // our own /api/quote (functions/api/quote.js); only ticker symbols leave the phone
-  const r = await fetch('api/quote?q=' + encodeURIComponent(keys.join(',')), { credentials:'same-origin', cache:'no-store' });
+async function fetchQuotes(keys, usd = false) {   // our own /api/quote (functions/api/quote.js); only ticker symbols leave the phone
+  const r = await fetch('api/quote?q=' + encodeURIComponent(keys.join(',')) + (usd ? '&fx=USD' : ''), { credentials:'same-origin', cache:'no-store' });
   if (!r.ok) throw new Error('報價服務暫時無法使用');
   const j = await r.json(); if (!j || !j.quotes) throw new Error('報價服務回應不正確');
   return j;
@@ -2022,15 +2026,17 @@ const dayChange = (a, short) => { if (!a.prev || !a.price) return ''; const d = 
   return `<span class="${upDown(d)}">${d > 0 ? '▲' : d < 0 ? '▼' : ''}${short ? pct : `${priceNum(Math.abs(d))} (${pct})`}</span>`; };
 let quoting = false;
 async function refreshQuotes(force = false, loud = force) {   // on launch, on return to the app (every 15 min at most), and the 更新市值 button
-  const list = autoInv(); if (!list.length || quoting) return;
-  if (!force && Date.now() - Math.min(...list.map(a => a.quotedAt || 0)) < QUOTE_TTL) return;
+  const list = autoInv(), usdCash = byType('cash').filter(a => a.cur === 'USD'); if (!(list.length + usdCash.length) || quoting) return;
+  if (!force && Date.now() - Math.min(...[...list, ...usdCash].map(a => a.quotedAt || 0)) < QUOTE_TTL) return;
   quoting = true;
   try {
-    const res = await fetchQuotes([...new Set(list.map(quoteKey))]), hl = [];
+    const res = await fetchQuotes([...new Set(list.map(quoteKey))], usdCash.length > 0), hl = [];
     list.forEach(a => { const q = res.quotes[quoteKey(a)]; if (q && setQuote(a, q, res.fx)) hl.push('acc:' + a.id); });
+    usdCash.forEach(a => { const r = res.fx.USD; if (!(r > 0)) return; const v = Math.round((a.usd || 0) * r);
+      Object.assign(a, { fx:r, quotedAt:Date.now() }); if (v !== a.value) { a.value = v; if (!hl.includes('cash')) hl.push('cash'); } });
     const miss = [...new Set(list.filter(a => !res.quotes[quoteKey(a)]).map(a => a.symbol))];
     commit(hl);
-    if (loud) toast(miss.length ? `${list.length - miss.length} 檔已更新，${miss.join('、')} 抓不到報價` : '市值已更新', `${list.length} 檔 · ${hhmm(Date.now())}`);
+    if (loud) toast(miss.length ? `${list.length - miss.length} 檔已更新，${miss.join('、')} 抓不到報價` : '市值已更新', `${list.length ? list.length + ' 檔 · ' : ''}${hhmm(Date.now())}`);
   } catch (e) { if (loud) toast('無法更新市值', navigator.onLine === false ? '目前沒有網路，先沿用上次的市值' : e.message); }
   finally { quoting = false; }
 }
@@ -2510,9 +2516,9 @@ function viewReports() {
 /* ───────── assets & dreams ───────── */
 function accRow(a) {
   let sub = '', right = money(a.value), under = '', color = '';
-  if (a.type === 'cash') { const t = totals(); sub = `佔蓄水池 ${pct(t.cash ? a.value / t.cash : 0)}`; }
+  if (a.type === 'cash') { const t = totals(); sub = CASH_KINDS[a.cashKind] || `佔蓄水池 ${pct(t.cash ? a.value / t.cash : 0)}`; }
   if (a.type === 'credit') { sub = a.value < 0 ? '未繳金額，算在負債' : a.value > 0 ? '溢繳（可抵下期）' : '已繳清'; color = a.value < 0 ? 'var(--debt)' : ''; }
-  let badge = '', sub2 = '';
+  let badge = '', sub2 = a.cur === 'USD' ? usdText(a.usd || 0) : '';
   if (a.type === 'invest' && a.market) {
     const n = holding(a).open.length;
     if (n > 1) badge = `<span class="badge">${n} 筆</span>`;
@@ -2527,6 +2533,12 @@ function accRow(a) {
   if (a.type === 'loan') { const p = acc(a.propertyId); sub = p ? `壓在「${esc(p.name)}」底下的地基` : '海邊的灰色岩石'; right = '−' + money(a.value); color = 'var(--debt)'; }
   return `<button class="row" data-action="acc:${a.id}">${typeTile(a.type)}<span class="main"><span class="t">${esc(a.name)}${badge}</span><span class="s">${sub}</span>${sub2 ? `<span class="s">${sub2}</span>` : ''}</span>
     <span class="amt"><span class="num" style="${color ? 'color:' + color : ''}">${right}</span>${under}</span></button>`;
+}
+function cashGroups(list) {   // 台幣資產 and 美金資產, each with its total
+  return [['台幣資產', list.filter(a => a.cur !== 'USD')], ['美金資產', list.filter(a => a.cur === 'USD')]].map(([label, as], i) => { if (!as.length) return '';
+    const sum = as.reduce((s, a) => s + a.value, 0), usd = as.reduce((s, a) => s + (a.usd || 0), 0);
+    return `<div class="mkt-h"><span class="l"><span>${label}<small>${as.length} 個帳戶</small></span></span><span class="r"><span class="num">${money(sum)}</span>${i ? `<span class="u">${usdText(usd)}</span>` : ''}</span></div>
+      <div class="list">${as.map(accRow).join('')}</div>`; }).join('');
 }
 function marketGroups(list) {   // investments split by market, each with its own holdings total: 台股, 美股, crypto, then the hand-valued ones
   const label = { tw:'台股・ETF', us:'美股', crypto:'加密貨幣', '':'保單・基金・其他' };
@@ -2544,7 +2556,7 @@ function viewAssets() {
   const segs = [['現金', t.cash, 'var(--sky)'], ['投資', t.invest, 'var(--emerald)'], ['房產', t.prop, 'var(--wood)'], ['夢想基金', t.goal, 'var(--coral)']];
   const group = type => { const list = byType(type); const sum = list.reduce((s, a) => s + a.value, 0);
     return `<div><div class="group-h"><h3>${TYPES[type].label}<small>島上的${TYPES[type].island}</small></h3><span class="num">${(type === 'loan' && sum) || sum < 0 ? '−' : ''}${money(Math.abs(sum)).replace('−', '')}</span></div>
-    ${type === 'invest' && list.some(a => a.market) ? marketGroups(list) : `<div class="list">${list.length ? list.map(accRow).join('') : `<button class="row" data-action="add:${type}" style="justify-content:center;color:var(--ink-3);font-size:calc(13.5px*var(--fs))">＋ 新增${TYPES[type].label}</button>`}</div>`}
+    ${type === 'invest' && list.some(a => a.market) ? marketGroups(list) : type === 'cash' && list.some(a => a.cashKind) ? cashGroups(list) : `<div class="list">${list.length ? list.map(accRow).join('') : `<button class="row" data-action="add:${type}" style="justify-content:center;color:var(--ink-3);font-size:calc(13.5px*var(--fs))">＋ 新增${TYPES[type].label}</button>`}</div>`}
     ${type === 'invest' && autoInv().length ? (() => { const hs = autoInv(), cost = hs.reduce((s, a) => s + a.cost, 0), pl = hs.reduce((s, a) => s + a.value, 0) - cost, at = Math.max(...hs.map(a => a.quotedAt || 0));
       return `<div class="quote-bar"><span>股票・加密貨幣預估損益 <b>${plText(pl, cost)}</b><br>${at ? `股價 ${hhmm(at)} 更新，會自動更新` : '還沒取得股價'}</span><button class="mini-btn" data-action="quotes">更新市值</button></div>`; })() : ''}</div>`; };
   return seg + `
@@ -2634,7 +2646,7 @@ function toast(main, sub = '') {
 }
 
 /* new / edit record — every field is a menu, like the template's 屬性・類型・項目・From・To columns */
-const accOpt = a => [a.id, `${a.name}（${a.type === 'credit' ? (a.value < 0 ? '未繳 ' + money(-a.value) : '信用卡') : money(a.value)}）`];
+const accOpt = a => [a.id, `${a.name}（${a.type === 'credit' ? (a.value < 0 ? '未繳 ' + money(-a.value) : '信用卡') : a.cur === 'USD' ? `${usdText(a.usd || 0)}，金額填台幣` : money(a.value)}）`];
 function recordSheet(pre = {}, editId = null) {
   const old = editId ? S.txs.find(t => t.id === editId) : null;
   const pays = payAccounts();
@@ -2781,6 +2793,8 @@ function saveRecord(f, sh, old) {
       tx.shares = n; }
   }
   if (f.noStat && f.kind !== 'transfer') tx.noStat = true;
+  const usdAcc = [tx.from, tx.to].map(acc).find(a => a?.cur === 'USD');   // the rate this record moves dollars at; an edit keeps the one it had
+  if (usdAcc) tx.rate = old?.rate && [old.from, old.to].includes(usdAcc.id) ? old.rate : usdAcc.fx;
   const w0 = waterLevel(totals().cash);
   if (old) applyTx(old, -1);
   const b = tx.kind === 'transfer' ? acc(tx.to) : null;
@@ -2959,7 +2973,7 @@ function saySummary(f, basis) {
 
 /* add asset / debt */
 function addSheet(type = 'cash', pre = {}) {
-  const f = Object.assign({ type, name:'', value:'', cost:'', kind:'stock', market:'', symbol:'', shares:'', date:today(), withLoan:false, loanName:'', loanValue:'', propertyId:'' }, pre);
+  const f = Object.assign({ type, name:'', value:'', cost:'', kind:'stock', market:'', symbol:'', shares:'', date:today(), withLoan:false, loanName:'', loanValue:'', propertyId:'', cashKind:'save', usd:'' }, pre);
   openSheet(`${head('新增資產或負債')}
     <div class="type-grid">${Object.entries(TYPES).map(([k, t]) => `<button type="button" class="type-btn" style="--c:${t.c}" data-type="${k}">${typeTile(k, 34)}<span><b>${t.label}</b><small>島上的${t.island}</small></span></button>`).join('')}</div>
     <div id="add-body" style="display:flex;flex-direction:column;gap:12px"></div>
@@ -2980,8 +2994,12 @@ function addSheet(type = 'cash', pre = {}) {
 }
 const mField = (name, label, val, ph, hint = '', signed = false) => `<div class="field"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" data-money="${signed ? 'signed' : ''}" inputmode="${signed ? 'text' : 'numeric'}" placeholder="${ph}" value="${esc(val)}" autocomplete="off">${hint ? `<span class="hint">${hint}</span>` : ''}</div>`;
 const tField = (name, label, val, ph) => `<div class="field"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" placeholder="${ph}" value="${esc(val)}" maxlength="24" autocomplete="off"></div>`;
+const cashFields = (f, editing) => `<div class="fgroup"><div class="flabel">帳戶種類</div><div class="chips">${Object.entries(CASH_KINDS).map(([k, l]) =>
+    `<button type="button" class="chip-btn ${f.cashKind === k ? 'on' : ''}" data-set="cashKind:${k}">${l}</button>`).join('')}</div></div>
+  ${usdKind(f.cashKind) ? `<div class="field"><label for="f-usd">目前餘額（美元${editing ? '，直接校正' : ''}）</label><input id="f-usd" name="usd" inputmode="decimal" placeholder="例：5000" value="${esc(f.usd)}" autocomplete="off"><span class="hint">依即時匯率換算成台幣，一起算進蓄水池；記帳金額照樣填台幣，會用當時匯率換成美元</span></div>`
+    : editing ? mField('value', '目前餘額（直接校正）', f.value, '0', '平常記帳會自動扣款，只有對帳不符時才需要改這裡', true) : mField('value', '目前餘額', f.value, '0', '所有現金與銀行帳戶合起來就是島上蓄水池的水量')}`;
 function addBody(f) {
-  if (f.type === 'cash') return tField('name', '帳戶名稱', f.name, '例：中信銀行、現金、LinePay Money') + mField('value', '目前餘額', f.value, '0', '所有現金與銀行帳戶合起來就是島上蓄水池的水量');
+  if (f.type === 'cash') return tField('name', '帳戶名稱', f.name, '例：中信銀行、現金、LinePay Money') + `<div id="cash-fields" style="display:flex;flex-direction:column;gap:12px">${cashFields(f, false)}</div>`;
   if (f.type === 'credit') return tField('name', '信用卡名稱', f.name, '例：玉山信用卡') + mField('value', '目前未繳金額', f.value, '0', '刷卡會增加未繳金額，用「轉帳・還款」繳卡費就會減少');
   if (f.type === 'invest') return tField('name', '投資名稱', f.name, f.market ? '可留空，會用股票名稱' : '例：台積電、0050、儲蓄險') + investFields(f, false) +
     `<p class="note">市值越高，建物越高；股票賺錢時風車轉得快，虧損時轉得慢、葉片變灰。</p>`;
@@ -3003,9 +3021,11 @@ async function saveAsset(f, sh, btn) {
     window.scrollTo({ top:0, behavior:'smooth' }); return;
   }
   if (!name) return showErr(sh, '請輸入名稱');
-  if ((f.type === 'property' || f.type === 'loan') && value <= 0) return showErr(sh, '請輸入金額');
+  const usd = f.type === 'cash' && usdKind(f.cashKind) ? parseFloat(f.usd) || 0 : null, rate = usd == null ? 0 : await usdRate('');
+  if (usd != null && !rate) return showErr(sh, '需要連上網路，才能把美元餘額換算成台幣');
   if (f.type === 'loan' && f.propertyId && loanOf(acc(f.propertyId))) return showErr(sh, '這個房產已經有連動房貸');
-  const a = { id:uid(), type:f.type, name, value:f.type === 'credit' ? -Math.abs(value) : value };
+  const a = { id:uid(), type:f.type, name, value:f.type === 'credit' ? -Math.abs(value) : usd != null ? Math.round(usd * rate) : value };
+  if (f.type === 'cash') { a.cashKind = f.cashKind; if (usd != null) Object.assign(a, { cur:'USD', usd, fx:rate, quotedAt:Date.now() }); }
   if (f.type === 'invest') { a.kind = f.kind; a.cost = parseInt(f.cost, 10) || value; }
   if (f.type === 'loan' && f.propertyId) a.propertyId = f.propertyId;
   S.accounts.push(a);
@@ -3016,7 +3036,7 @@ async function saveAsset(f, sh, btn) {
     if (lv > 0) { S.accounts.push({ id:uid(), type:'loan', name:f.loanName.trim() || name + '房貸', value:lv, propertyId:a.id }); sub = `小屋底下壓著 ${wan(lv)} 的灰色地基`; }
   }
   if (f.type === 'loan') { const p = acc(f.propertyId); if (p) hl.push('acc:' + p.id); sub = p ? `壓在「${p.name}」底下的地基` : '海邊的灰色岩石'; }
-  if (f.type === 'cash') sub = `蓄水池水位 ${pct(waterLevel(totals().cash))}`;
+  if (f.type === 'cash') sub = (usd != null ? `${usdText(usd)} ≈ ${money(a.value)} · ` : '') + `蓄水池水位 ${pct(waterLevel(totals().cash))}`;
   closeSheet(); ui.tab = 'home'; commit(hl); toast(msg, sub);
   window.scrollTo({ top:0, behavior:'smooth' });
 }
@@ -3026,12 +3046,12 @@ function accountSheet(id) {
   const a = acc(id); if (!a) return;
   if (a.type === 'invest' && a.market) return holdingSheet(id);
   const f = { name:a.name, value:String(a.type === 'credit' ? -a.value : a.value), cost:String(a.cost || ''), kind:a.kind || 'stock', propertyId:a.propertyId || '',
-    market:'', symbol:'', shares:'', date:today() };
+    market:'', symbol:'', shares:'', date:today(), cashKind:a.cashKind || '', usd:a.cur === 'USD' ? String(+(a.usd || 0).toFixed(2)) : '' };
   const loan = a.type === 'property' ? loanOf(a) : null;
   const related = S.txs.filter(t => t.from === id || t.to === id).sort(sortTx).slice(0, 6);
   const props = byType('property');
   let fields = tField('name', '名稱', f.name, '');
-  if (a.type === 'cash') fields += mField('value', '目前餘額（直接校正）', f.value, '0', '平常記帳會自動扣款，只有對帳不符時才需要改這裡', true);
+  if (a.type === 'cash') fields += `<div id="cash-fields" style="display:flex;flex-direction:column;gap:12px">${cashFields(f, true)}</div>`;
   if (a.type === 'credit') fields += mField('value', '目前未繳金額（直接校正）', f.value, '0', '負數代表溢繳', true);
   if (a.type === 'invest') fields += `<div id="inv-fields" style="display:flex;flex-direction:column;gap:12px">${investFields(f, true)}</div>`;
   if (a.type === 'property') fields += mField('value', '房屋價值', f.value, '0') + (loan ? `<p class="note">連動房貸「${esc(loan.name)}」剩 ${money(loan.value)}，地基厚度是貸款成數 ${pct(loan.value / a.value)}。</p>` : `<button class="btn small" type="button" data-sub="add-loan">＋ 新增連動房貸</button>`);
@@ -3039,7 +3059,7 @@ function accountSheet(id) {
     `<div class="field"><label for="f-prop">連動房產</label>${selectBox('f-prop', [['', '不連動（海邊的灰色岩石）'], ...props.map(p => [p.id, p.name])], f.propertyId, 'name="propertyId"')}</div>`;
   const shown = a.type === 'credit' ? -a.value : a.value;
   openSheet(`${head(TYPES[a.type].label)}
-    <div class="detail-hero">${typeTile(a.type, 46)}<span class="num" style="${a.type === 'loan' || (a.type === 'credit' && a.value < 0) ? 'color:var(--debt)' : ''}">${a.type === 'credit' ? (a.value < 0 ? '未繳 ' : '溢繳 ') + money(Math.abs(a.value)) : (a.type === 'loan' ? '−' : '') + money(shown)}</span><span class="muted" style="font-size:calc(13px*var(--fs))">島上的${TYPES[a.type].island}</span></div>
+    <div class="detail-hero">${typeTile(a.type, 46)}<span class="num" style="${a.type === 'loan' || (a.type === 'credit' && a.value < 0) ? 'color:var(--debt)' : ''}">${a.type === 'credit' ? (a.value < 0 ? '未繳 ' : '溢繳 ') + money(Math.abs(a.value)) : (a.type === 'loan' ? '−' : '') + money(shown)}</span><span class="muted" style="font-size:calc(13px*var(--fs))">${a.cur === 'USD' ? `${usdText(a.usd || 0)} · 匯率 ${a.fx} · ` : ''}島上的${TYPES[a.type].island}</span></div>
     <div style="display:flex;flex-direction:column;gap:12px">${fields}</div>
     <p class="err" hidden></p>
     <div class="btn-row"><button class="btn danger" id="acc-del">刪除</button><button class="btn primary" id="acc-save">儲存</button></div>
@@ -3049,15 +3069,22 @@ function accountSheet(id) {
       if (n === 'shares' || n === 'usd') e.target.value = e.target.value.replace(/[^\d.]/g, '');
       f[n] = e.target.value; });
     sh.addEventListener('click', e => {
-      const k = e.target.closest('[data-set]'); if (k) { const [key, val] = k.dataset.set.split(':'); f[key] = val; $('#inv-fields', sh).innerHTML = investFields(f, true); }
+      const k = e.target.closest('[data-set]'); if (k) { const [key, val] = k.dataset.set.split(':'); f[key] = val;
+        if (a.type === 'cash') $('#cash-fields', sh).innerHTML = cashFields(f, true); else $('#inv-fields', sh).innerHTML = investFields(f, true); }
       if (e.target.closest('[data-sub="add-loan"]')) addSheet('loan', { propertyId:a.id, name:a.name + '房貸' });
     });
     $('#acc-save', sh).addEventListener('click', async e => {
       if (!f.name.trim()) return showErr(sh, '請輸入名稱');
       const auto = a.type === 'invest' && f.market ? await checkQuote(f, sh, e.currentTarget) : null;
       if (a.type === 'invest' && f.market && !auto) return;
-      const v = parseInt(f.value, 10) || 0;
+      const v = parseInt(f.value, 10) || 0, toUsd = a.type === 'cash' && usdKind(f.cashKind);
+      if (toUsd && f.usd === '') return showErr(sh, '請輸入美元餘額');
+      const rate = toUsd ? a.fx || await usdRate('') : 0;
+      if (toUsd && !rate) return showErr(sh, '需要連上網路，才能把美元餘額換算成台幣');
       a.name = f.name.trim(); if (!auto) a.value = a.type === 'credit' ? -v : v;
+      if (a.type === 'cash') { if (f.cashKind) a.cashKind = f.cashKind;
+        if (toUsd) { const usd = parseFloat(f.usd) || 0; Object.assign(a, { cur:'USD', usd, fx:rate, value:Math.round(usd * rate) }); a.quotedAt ||= Date.now(); }
+        else ['cur', 'usd', 'fx', 'quotedAt'].forEach(k => delete a[k]); }
       if (a.type === 'invest') { const us = auto && f.market === 'us' ? usdLot(parseFloat(f.usd), auto.rate) : null;
         a.cost = us ? us.amount : parseInt(f.cost, 10) || 0; a.kind = f.kind;
         if (auto) {   // now priced: what was typed becomes its first purchase
