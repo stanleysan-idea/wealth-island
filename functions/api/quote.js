@@ -1,4 +1,5 @@
 // Latest prices for investments: GET /api/quote?q=tw:2330,us:AAPL,crypto:BTC
+// Exchange rates too: &fx=USD adds today's rate, &on=2026-03-05 also the rate at that day's close (a US buy typed in dollars).
 // Runs behind the password gate (functions/_middleware.js). Only ticker symbols reach this function;
 // how many shares someone holds stays on their phone.
 const UA = 'Mozilla/5.0';   // Yahoo answers 429 to full browser user agents from servers
@@ -39,6 +40,14 @@ async function fxRate(c) {   // TWD per one unit of c
   const j = await getJSON(`https://open.er-api.com/v6/latest/${c}`);
   return j?.rates?.TWD > 0 ? j.rates.TWD : null;
 }
+async function fxAt(c, date) {   // TWD per unit of c at the close of the last trading day on or before date
+  const end = Math.floor(Date.parse(date + 'T23:59:59Z') / 1000);
+  const path = `/v8/finance/chart/${c}TWD=X?period1=${end - 10 * 86400}&period2=${end}&interval=1d`;
+  const r = ((await getJSON('https://query1.finance.yahoo.com' + path)) || (await getJSON('https://query2.finance.yahoo.com' + path)))?.chart?.result?.[0];
+  const ts = r?.timestamp || [], close = r?.indicators?.quote?.[0]?.close || [];
+  for (let i = ts.length - 1; i >= 0; i--) if (ts[i] <= end && close[i] > 0) return close[i];
+  return null;
+}
 async function quote(market, sym) {
   if (market === 'tw') return (await twse(sym)) || (await yahoo(sym + '.TW')) || (await yahoo(sym + '.TWO'));
   if (market === 'us') return yahoo(sym.replace(/\./g, '-'));   // Yahoo writes class shares as BRK-B
@@ -46,7 +55,9 @@ async function quote(market, sym) {
 }
 
 export async function onRequestGet({ request }) {
-  const items = [...new Set(String(new URL(request.url).searchParams.get('q') || '').toUpperCase().split(',').map(s => s.trim()).filter(Boolean))];
+  const params = new URL(request.url).searchParams, on = String(params.get('on') || '');
+  const want = String(params.get('fx') || '').toUpperCase().split(',').filter(c => /^[A-Z]{3}$/.test(c) && c !== 'TWD').slice(0, 5);
+  const items = [...new Set(String(params.get('q') || '').toUpperCase().split(',').map(s => s.trim()).filter(Boolean))];
   const ok = items.map(s => s.replace(/^(TW|US|CRYPTO):/, p => p.toLowerCase())).filter(s => ITEM.test(s)).slice(0, MAX_ITEMS);
   const quotes = {};
   await Promise.all(ok.map(async key => {
@@ -54,9 +65,11 @@ export async function onRequestGet({ request }) {
     try { const q = await quote(market, sym); if (q) quotes[key] = q; } catch (e) { /* leave it out: the app keeps the last value */ }
   }));
   const fx = { TWD: 1 };   // every other currency the quotes came in, as TWD per unit
-  await Promise.all([...new Set(Object.values(quotes).map(q => q.currency))].filter(c => c !== 'TWD' && /^[A-Z]{3}$/.test(c)).map(async c => {
+  await Promise.all([...new Set([...Object.values(quotes).map(q => q.currency), ...want])].filter(c => c !== 'TWD' && /^[A-Z]{3}$/.test(c)).map(async c => {
     try { const r = await fxRate(c); if (r) fx[c] = r; } catch (e) {}
   }));
-  return new Response(JSON.stringify({ quotes, fx, missing: ok.filter(k => !quotes[k]), at: Date.now() }), {
+  const fxOn = {};   // the same currencies at the close of a past day
+  if (/^\d{4}-\d{2}-\d{2}$/.test(on)) await Promise.all(want.map(async c => { try { const r = await fxAt(c, on); if (r) fxOn[c] = r; } catch (e) {} }));
+  return new Response(JSON.stringify({ quotes, fx, fxOn, missing: ok.filter(k => !quotes[k]), at: Date.now() }), {
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, max-age=60' } });
 }

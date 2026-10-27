@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-F1alUrK5oCLoOot7TSLlZH6DJkUtTU81QotZdt4v2B4=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-CiBTEehsWE0hL9daPZBHbouCAMVtRdigH4YNOIceTWk=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -601,7 +601,7 @@ function templateState(T = TEMPLATE) {
 }
 const emptyState = () => ({ v:2, source:'', settings:{ name:'我的財富島', budget:30000, fullWater:360000 }, accounts:[], goals:[], txs:[] });
 const SAFE_ID = /^[\w:-]{1,64}$/, SAFE_COLOR = /^#[0-9a-f]{6}$/i, SAFE_DATE = /^(\d{4}-\d{2}-\d{2})?$/;
-const NUM_KEYS = ['value', 'cost', 'amount', 'target', 'saved', 'ts', 'n', 'budget', 'fullWater', 'shares', 'price', 'priceTime', 'quotedAt', 'prev', 'fx', 'realized'];
+const NUM_KEYS = ['value', 'cost', 'amount', 'target', 'saved', 'ts', 'n', 'budget', 'fullWater', 'shares', 'price', 'priceTime', 'quotedAt', 'prev', 'fx', 'realized', 'usd', 'rate'];
 function cleanState(s) {   // a backup file may come from anyone: ids, colours, dates, numbers and enums must look like what the app writes
   const bad = what => { throw new Error(`備份檔的「${what}」格式不正確，已停止還原`); };
   const list = (v, what) => v == null ? [] : Array.isArray(v) ? v : bad(what);
@@ -1961,6 +1961,14 @@ async function fetchQuotes(keys) {   // our own /api/quote (functions/api/quote.
   const j = await r.json(); if (!j || !j.quotes) throw new Error('報價服務回應不正確');
   return j;
 }
+async function usdRate(date) {   // TWD per US dollar at the close of a past buy date, or the live rate for today
+  const past = date && date < today(), p = new URLSearchParams({ fx:'USD' }); if (past) p.set('on', date);
+  try { const r = await fetch('api/quote?' + p, { credentials:'same-origin', cache:'no-store' }), j = r.ok ? await r.json() : null;
+    const v = past ? j?.fxOn?.USD : j?.fx?.USD; if (v > 0) return v; } catch (e) {}
+  return autoInv().find(a => a.currency === 'USD' && a.fx > 0)?.fx || null;   // offline: the last rate we saw
+}
+const usdLot = (usd, rate) => usd > 0 && rate > 0 ? { amount:Math.round(usd * rate), usd, rate:+rate.toFixed(4) } : null;   // a US buy is typed in dollars and kept in TWD
+const usdText = n => 'US$' + n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
 function holding(a) {   // buy lots, first in first out: what is still held from each buy, and what each sell realised
   const trades = [...(a.trades || [])].sort((x, y) => x.date.localeCompare(y.date) || (x.side === y.side ? 0 : x.side === 'buy' ? -1 : 1));
   const lots = [], sells = [];
@@ -2028,29 +2036,37 @@ async function checkQuote(f, sh, btn) {   // before saving a priced investment: 
   btn.disabled = true; btn.textContent = '查詢報價中…';
   try { const res = await fetchQuotes([key]), q = res.quotes[key];
     if (!q) { showErr(sh, `找不到「${symbol}」的${MARKETS[f.market]}報價，請確認代號和市場`); return null; }
-    return { symbol, shares, q, fx:res.fx };
-  } catch (e) { return { symbol, shares, q:null }; }   // offline: save now, price it on the next refresh
+    const rate = f.market !== 'us' ? 0 : f.date && f.date < today() ? await usdRate(f.date) : res.fx.USD;
+    if (f.market === 'us' && !(rate > 0)) { showErr(sh, '查不到買進日的美元匯率，請稍後再試'); return null; }
+    return { symbol, shares, q, fx:res.fx, rate };
+  } catch (e) {   // offline: save now, price it on the next refresh
+    const rate = f.market === 'us' ? await usdRate('') : 0;
+    if (f.market === 'us' && !rate) { showErr(sh, '需要連上網路，才能把美元成本換算成台幣'); return null; }
+    return { symbol, shares, q:null, rate };
+  }
   finally { btn.disabled = false; btn.textContent = label; }
 }
 function addLot(f, r, into) {   // a new purchase: into an existing holding of the same ticker, or a new holding
   const a = into || { id:uid(), type:'invest', name:f.name.trim() || (r.q ? r.q.name.replace(/ USD$/, '') : r.symbol), kind:f.kind, market:f.market, symbol:r.symbol, value:0, cost:0, trades:[] };
   if (r.q) setQuote(a, r.q, r.fx);
+  const us = f.market === 'us' && usdLot(parseFloat(f.usd) || (a.price ? +(a.price * r.shares).toFixed(2) : 0), r.rate);
   const amount = parseInt(f.cost, 10) || (a.price ? marketValue(a, r.shares) : 0) || 0;
-  a.trades.push({ id:uid(), date:f.date || today(), side:'buy', shares:r.shares, amount });
+  a.trades.push({ id:uid(), date:f.date || today(), side:'buy', shares:r.shares, amount, ...us });
   syncHolding(a);
   if (!into) S.accounts.push(a);
   return a;
 }
 const dropAuto = a => ['market', 'symbol', 'shares', 'price', 'prev', 'currency', 'fx', 'priceTime', 'quotedAt', 'trades', 'realized'].forEach(k => delete a[k]);
+const usdField = (name, val) => `<div class="field"><label for="f-${name}">付出成本（美元，含手續費）</label><input id="f-${name}" name="${name}" inputmode="decimal" placeholder="例：1735.50" value="${esc(val)}" autocomplete="off"></div>`;
 function investFields(f, editing) {
   const chips = (key, map) => Object.entries(map).map(([k, l]) => `<button type="button" class="chip-btn ${f[key] === k ? 'on' : ''}" data-set="${key}:${k}">${l}</button>`).join('');
   const ph = { tw:'例：2330、0050', us:'例：AAPL、VOO', crypto:'例：BTC、ETH' }[f.market];
   return `<div class="fgroup"><div class="flabel">市值怎麼算</div><div class="chips">${chips('market', MARKETS)}</div></div>
     ${f.market ? `<div class="two"><div class="field"><label for="f-symbol">代號</label><input id="f-symbol" name="symbol" placeholder="${ph}" value="${esc(f.symbol)}" maxlength="12" autocapitalize="characters" autocomplete="off" spellcheck="false"></div>
       <div class="field"><label for="f-shares">買進數量${f.market === 'crypto' ? '' : '（股）'}</label><input id="f-shares" name="shares" inputmode="decimal" placeholder="${f.market === 'tw' ? '例：1000' : f.market === 'us' ? '例：10' : '例：0.25'}" value="${esc(f.shares)}" autocomplete="off"></div>
-      ${mField('cost', '付出成本（含手續費）', f.cost, '0')}
+      ${f.market === 'us' ? usdField('usd', f.usd) : mField('cost', '付出成本（含手續費）', f.cost, '0')}
       <div class="field"><label for="f-date">買進日期</label><input type="date" id="f-date" name="date" value="${esc(f.date || today())}"></div></div>
-      <p class="note">市值 ＝ 最新價格 × 持有數量${f.market === 'tw' ? '，並扣掉賣出時的手續費和證交稅，跟券商 App 的「現值」算法一樣' : '，美元報價依即時匯率換成台幣'}。已經有同一檔時會合併成一檔，點進去可以看每次買進的明細。</p>`
+      <p class="note">市值 ＝ 最新價格 × 持有數量${f.market === 'tw' ? '，並扣掉賣出時的手續費和證交稅，跟券商 App 的「現值」算法一樣' : '，美元報價依即時匯率換成台幣；台幣成本用買進日的匯率自動換算'}。已經有同一檔時會合併成一檔，點進去可以看每次買進的明細。</p>`
     : `<div class="two">${mField('cost', '投入成本', f.cost, '0')}${mField('value', editing ? '更新目前市值' : '目前市值', f.value, '0')}</div>
       <p class="note">保單、儲蓄險和基金沒有公開的即時報價，市值請自己更新。</p>`}
     <div class="fgroup"><div class="flabel">島上的樣子</div><div class="chips">${chips('kind', INV_KIND)}</div></div>`;
@@ -2060,10 +2076,11 @@ function investFields(f, editing) {
 function holdingSheet(id) {
   const a = acc(id); if (!a) return;
   const h = holding(a), pl = a.value - a.cost, avg = h.shares ? a.cost / h.shares : 0, priced = !!a.price;
+  const avgUsd = a.market === 'us' && h.shares && h.open.every(l => l.usd) ? h.open.reduce((s, l) => s + l.usd * l.left / l.shares, 0) / h.shares : 0;
   const f = { name:a.name, kind:a.kind || 'stock' };
   const lotRow = l => { const c = l.amount * l.left / l.shares, v = priced ? marketValue(a, l.left) : null;
     return `<button class="row" data-lot="${l.id}"><span class="main"><span class="t">${l.date.replace(/-/g, '/')} 買進${l.tx ? '<span class="badge">轉帳</span>' : ''}</span>
-      <span class="s">${l.left < l.shares ? `剩 ${qtyText(a, l.left)}／` : ''}${qtyText(a, l.shares)} · 成本價 ${priceNum(l.amount / l.shares)}</span></span>
+      <span class="s">${l.left < l.shares ? `剩 ${qtyText(a, l.left)}／` : ''}${qtyText(a, l.shares)} · 成本價 ${l.usd ? `US$${priceNum(l.usd / l.shares)}` : priceNum(l.amount / l.shares)}</span></span>
       <span class="amt"><span class="num">${money(v ?? Math.round(c))}</span>${v == null ? '' : `<span class="s" style="font-weight:700">${plText(v - c, c)}</span>`}</span></button>`; };
   const sellRow = x => `<button class="row" data-lot="${x.id}"><span class="main"><span class="t">${x.date.replace(/-/g, '/')} 賣出${x.tx ? '<span class="badge">轉帳</span>' : ''}</span>
       <span class="s">${qtyText(a, x.shares)} · 實收 ${money(x.amount)}</span></span><span class="amt"><span class="s" style="font-weight:700">${plText(Math.round(x.gain), x.basis)}</span></span></button>`;
@@ -2071,7 +2088,7 @@ function holdingSheet(id) {
     <div class="detail-hero">${typeTile('invest', 46)}<span class="num">${money(a.value)}</span>
       <span style="font-weight:800;font-size:calc(15px*var(--fs))">${plText(pl, a.cost)}</span>
       <span class="muted" style="font-size:calc(12.5px*var(--fs))">${esc(a.symbol)} · ${priced ? `${priceText(a.price, a.currency)} ${dayChange(a)} · ${hhmm(a.priceTime)}` : '還沒取得報價'}</span></div>
-    <div class="hold-stats"><div><small>持有</small><b>${qtyText(a)}</b></div><div><small>平均成本</small><b>${priceNum(avg)}</b></div>
+    <div class="hold-stats"><div><small>持有</small><b>${qtyText(a)}</b></div><div><small>平均成本</small><b>${avgUsd ? 'US$' + priceNum(avgUsd) : priceNum(avg)}</b></div>
       <div><small>付出成本</small><b>${money(a.cost)}</b></div><div><small>已實現損益</small><b>${h.sells.length ? plText(h.realized) : '—'}</b></div></div>
     ${a.market === 'tw' ? '<p class="note">現值已扣掉賣出時的手續費 0.1425% 和證交稅（股票 0.3%、ETF 0.1%），跟券商 App 一樣；券商若有手續費折扣，數字會差幾元。</p>' : ''}
     <div class="flabel">買進明細（${h.open.length} 筆）</div>
@@ -2105,30 +2122,37 @@ function holdingSheet(id) {
 function lotSheet(id, lotId) {   // add or edit one purchase that isn't tied to a transfer
   const a = acc(id); if (!a) return;
   const lot = lotId ? a.trades.find(t => t.id === lotId) : null;
-  const f = { date:lot?.date || today(), shares:lot ? String(lot.shares) : '', amount:lot ? String(lot.amount) : '' };
+  const us = a.market === 'us', f = { date:lot?.date || today(), shares:lot ? String(lot.shares) : '', amount:lot ? String(lot.amount) : '',
+    usd:lot ? String(lot.usd || (a.fx ? +(lot.amount / a.fx).toFixed(2) : '')) : '' };
   openSheet(`${head(lot ? '編輯買進' : '新增買進')}
     <p class="note">${esc(a.name)}（${esc(a.symbol)}）${a.price ? ` · 現價 ${priceText(a.price, a.currency)}` : ''}</p>
     <div class="two"><div class="field"><label for="l-date">買進日期</label><input type="date" id="l-date" name="date" value="${esc(f.date)}"></div>
-      <div class="field"><label for="l-shares">買進數量</label><input id="l-shares" name="shares" inputmode="decimal" placeholder="例：1000" value="${esc(f.shares)}" autocomplete="off"></div></div>
-    ${mField('amount', '付出成本（含手續費）', f.amount, '例：106900')}
-    <p class="note">只記錄股數和成本，不會動到現金帳戶。</p>
+      <div class="field"><label for="l-shares">買進數量</label><input id="l-shares" name="shares" inputmode="decimal" placeholder="${us ? '例：10' : '例：1000'}" value="${esc(f.shares)}" autocomplete="off"></div></div>
+    ${us ? usdField('usd', f.usd) : mField('amount', '付出成本（含手續費）', f.amount, '例：106900')}
+    <p class="note">只記錄股數和成本，不會動到現金帳戶。${us ? (lot?.usd ? `這筆用匯率 ${lot.rate} 換算成 ${money(lot.amount)}；改金額或日期會重新換算。` : '台幣成本會用買進日的美元匯率自動換算。') : ''}</p>
     <p class="err" hidden></p>
     ${lot ? '<div class="btn-row"><button class="btn danger" id="l-del">刪除</button><button class="btn primary" id="l-save">儲存</button></div>' : '<button class="btn primary block" id="l-save">新增這筆買進</button>'}`, sh => {
     sh.addEventListener('input', e => { const n = e.target.name; if (!n) return;
-      if (n === 'shares') e.target.value = e.target.value.replace(/[^\d.]/g, '');
+      if (n === 'shares' || n === 'usd') e.target.value = e.target.value.replace(/[^\d.]/g, '');
       if (e.target.dataset.money !== undefined) e.target.value = digits(e.target.value);
       f[n] = e.target.value; });
     const done = msg => { syncHolding(a); commit(['acc:' + a.id]); holdingSheet(a.id); toast(msg, `持有 ${qtyText(a)} · 現值 ${money(a.value)}`); };
     const fits = () => { const hh = holding(a); return hh.sells.every(x => x.basis > 0 || x.amount === 0) && a.trades.filter(t => t.side === 'buy').reduce((s, t) => s + t.shares, 0) + 1e-9 >= a.trades.filter(t => t.side === 'sell').reduce((s, t) => s + t.shares, 0); };
-    $('#l-save', sh).addEventListener('click', () => {
-      const shares = parseFloat(f.shares), amount = parseInt(f.amount, 10) || 0;
+    $('#l-save', sh).addEventListener('click', async e => {
+      const shares = parseFloat(f.shares), usd = parseFloat(f.usd) || 0, btn = e.currentTarget;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(f.date)) return showErr(sh, '請選擇買進日期');
       if (!(shares > 0)) return showErr(sh, '請輸入買進數量');
-      if (!amount) return showErr(sh, '請輸入付出成本');
+      if (us ? !usd : !(parseInt(f.amount, 10) > 0)) return showErr(sh, us ? '請輸入付出成本（美元）' : '請輸入付出成本');
+      let cost = { amount:parseInt(f.amount, 10) || 0 };
+      if (us) {   // dollars at the buy date's rate; an unchanged date keeps the rate it had
+        let rate = lot?.rate && lot.date === f.date ? lot.rate : 0;
+        if (!rate) { const label = btn.textContent; btn.disabled = true; btn.textContent = '查詢匯率中…'; rate = await usdRate(f.date); btn.disabled = false; btn.textContent = label; }
+        cost = usdLot(usd, rate); if (!cost) return showErr(sh, '查不到買進日的美元匯率，請連上網路再試');
+      }
       const before = lot ? { ...lot } : null;
-      if (lot) Object.assign(lot, { date:f.date, shares, amount }); else a.trades.push({ id:uid(), date:f.date, side:'buy', shares, amount });
+      if (lot) Object.assign(lot, { date:f.date, shares }, cost); else a.trades.push({ id:uid(), date:f.date, side:'buy', shares, ...cost });
       if (!fits()) { if (lot) Object.assign(lot, before); else a.trades.pop(); return showErr(sh, '這樣賣出的數量會超過買進的數量'); }
-      done(lot ? '已更新這筆買進' : '已新增一筆買進');
+      done((lot ? '已更新這筆買進' : '已新增一筆買進') + (us ? ` · ${usdText(cost.usd)} ≈ ${money(cost.amount)}` : ''));
     });
     if (lot) armDelete($('#l-del', sh), '再按一次確認刪除', () => {
       const i = a.trades.indexOf(lot); a.trades.splice(i, 1);
@@ -2932,7 +2956,7 @@ function addSheet(type = 'cash', pre = {}) {
     sh.addEventListener('input', e => { const n = e.target.name; if (!n) return;
       if (e.target.type === 'checkbox') { f[n] = e.target.checked; draw(); return; }
       if (e.target.dataset.money !== undefined) e.target.value = (e.target.dataset.money === 'signed' && e.target.value.trim().startsWith('-') ? '-' : '') + digits(e.target.value);
-      if (n === 'shares') e.target.value = e.target.value.replace(/[^\d.]/g, '');
+      if (n === 'shares' || n === 'usd') e.target.value = e.target.value.replace(/[^\d.]/g, '');
       f[n] = e.target.value; });
     $('#add-save', sh).addEventListener('click', e => saveAsset(f, sh, e.currentTarget));
     draw();
@@ -2956,9 +2980,10 @@ async function saveAsset(f, sh, btn) {
   const name = f.name.trim(), value = parseInt(f.value, 10) || 0;
   if (f.type === 'invest' && f.market) {   // priced holdings: a purchase, merged into the same ticker if it's already on the island
     const r = await checkQuote(f, sh, btn); if (!r) return;
-    const same = autoInv().find(x => x.market === f.market && x.symbol === r.symbol), a = addLot(f, r, same);
+    const same = autoInv().find(x => x.market === f.market && x.symbol === r.symbol), a = addLot(f, r, same), lot = a.trades[a.trades.length - 1];
     closeSheet(); ui.tab = 'home'; commit(['acc:' + a.id]);
-    toast(same ? `已合併到「${a.name}」` : `島上多了「${a.name}」`, same ? `共 ${holding(a).open.length} 筆買進 · ${qtyText(a)}` : a.price ? `${qtyText(a)} · 現值 ${money(a.value)}` : '暫時抓不到報價，連上網路後會自動更新');
+    toast(same ? `已合併到「${a.name}」` : `島上多了「${a.name}」`, (lot.usd ? `成本 ${usdText(lot.usd)} ≈ ${money(lot.amount)} · ` : '') +
+      (same ? `共 ${holding(a).open.length} 筆買進 · ${qtyText(a)}` : a.price ? `${qtyText(a)} · 現值 ${money(a.value)}` : '暫時抓不到報價，連上網路後會自動更新'));
     window.scrollTo({ top:0, behavior:'smooth' }); return;
   }
   if (!name) return showErr(sh, '請輸入名稱');
@@ -3005,7 +3030,7 @@ function accountSheet(id) {
     ${related.length ? `<div class="flabel">最近相關紀錄</div><div class="list">${related.map(txRow).join('')}</div><button class="btn small" data-action="ledger-acc:${a.id}">在帳本看全部 →</button>` : ''}`, sh => {
     sh.addEventListener('input', e => { const n = e.target.name; if (!n) return;
       if (e.target.dataset.money !== undefined) e.target.value = (e.target.dataset.money === 'signed' && e.target.value.trim().startsWith('-') ? '-' : '') + digits(e.target.value);
-      if (n === 'shares') e.target.value = e.target.value.replace(/[^\d.]/g, '');
+      if (n === 'shares' || n === 'usd') e.target.value = e.target.value.replace(/[^\d.]/g, '');
       f[n] = e.target.value; });
     sh.addEventListener('click', e => {
       const k = e.target.closest('[data-set]'); if (k) { const [key, val] = k.dataset.set.split(':'); f[key] = val; $('#inv-fields', sh).innerHTML = investFields(f, true); }
@@ -3017,9 +3042,10 @@ function accountSheet(id) {
       if (a.type === 'invest' && f.market && !auto) return;
       const v = parseInt(f.value, 10) || 0;
       a.name = f.name.trim(); if (!auto) a.value = a.type === 'credit' ? -v : v;
-      if (a.type === 'invest') { a.cost = parseInt(f.cost, 10) || 0; a.kind = f.kind;
+      if (a.type === 'invest') { const us = auto && f.market === 'us' ? usdLot(parseFloat(f.usd), auto.rate) : null;
+        a.cost = us ? us.amount : parseInt(f.cost, 10) || 0; a.kind = f.kind;
         if (auto) {   // now priced: what was typed becomes its first purchase
-          Object.assign(a, { market:f.market, symbol:auto.symbol, trades:[{ id:uid(), date:f.date || today(), side:'buy', shares:auto.shares, amount:a.cost || a.value }] });
+          Object.assign(a, { market:f.market, symbol:auto.symbol, trades:[{ id:uid(), date:f.date || today(), side:'buy', shares:auto.shares, amount:a.cost || a.value, ...us }] });
           if (auto.q) setQuote(a, auto.q, auto.fx); else syncHolding(a);
           mergeHoldings(S);
         } }
