@@ -21,7 +21,9 @@ async function twse(code) {   // the Taiwan exchange's own quote, listed (tse) o
   const j = await getJSON(`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${code}.tw|otc_${code}.tw`);
   const m = (j?.msgArray || []).find(x => parseFloat(x.z) > 0 || parseFloat(x.y) > 0);
   if (!m) return null;
-  const price = parseFloat(m.z) > 0 ? parseFloat(m.z) : parseFloat(m.y);   // z = last trade, y = previous close (no trade yet today)
+  // z = last trade, but it reads "-" whenever the latest 5-second match had no trade, so fall back to the best bid/ask, then y = previous close
+  const best = k => parseFloat(String(m[k] || '').split('_')[0]), bid = best('b'), ask = best('a');
+  const price = parseFloat(m.z) > 0 ? parseFloat(m.z) : bid > 0 && ask > 0 ? +((bid + ask) / 2).toFixed(4) : bid > 0 ? bid : ask > 0 ? ask : parseFloat(m.y);
   const d = String(m.d || ''), t = String(m.t || '00:00:00');
   const time = d.length === 8 ? Date.parse(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}T${t}+08:00`) : 0;
   return { price, prev: parseFloat(m.y) || 0, currency: 'TWD', time: time || Date.now(), name: m.n || code };
@@ -39,7 +41,7 @@ async function fxRate(c) {   // TWD per one unit of c
 }
 async function quote(market, sym) {
   if (market === 'tw') return (await twse(sym)) || (await yahoo(sym + '.TW')) || (await yahoo(sym + '.TWO'));
-  if (market === 'us') return yahoo(sym);
+  if (market === 'us') return yahoo(sym.replace(/\./g, '-'));   // Yahoo writes class shares as BRK-B
   return (await yahoo(sym + '-USD')) || (await coingecko(sym));
 }
 
