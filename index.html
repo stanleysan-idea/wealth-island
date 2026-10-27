@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-CiBTEehsWE0hL9daPZBHbouCAMVtRdigH4YNOIceTWk=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-sgnZHzbzgf1XmU8BDHrJkYi0ZNN9m2RoF8fvI3arYbk=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -341,6 +341,11 @@ details.tview[open] summary{margin-bottom:8px}
 .group-h h3{font-size:calc(14px*var(--fs));font-weight:700;color:var(--ink-2)}
 .group-h .num{font-size:calc(14px*var(--fs));color:var(--ink-2)}
 .group-h small{font-size:calc(11.5px*var(--fs));color:var(--ink-3);font-weight:500;margin-left:6px}
+.mkt-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 8px 6px;font-size:calc(13px*var(--fs));font-weight:700;color:var(--ink-2)}
+.mkt-h:first-child{padding-top:2px}
+.mkt-h small{font-size:calc(11.5px*var(--fs));color:var(--ink-3);font-weight:500;margin-left:6px}
+.mkt-h .r{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.mkt-h .r .s{font-size:calc(11.5px*var(--fs));font-weight:700}
 .goal{display:flex;gap:12px;align-items:center}
 .goal svg{width:54px;height:72px;flex-shrink:0;overflow:visible}
 .goal .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
@@ -2521,6 +2526,14 @@ function accRow(a) {
   return `<button class="row" data-action="acc:${a.id}">${typeTile(a.type)}<span class="main"><span class="t">${esc(a.name)}${badge}</span><span class="s">${sub}</span>${sub2 ? `<span class="s">${sub2}</span>` : ''}</span>
     <span class="amt"><span class="num" style="${color ? 'color:' + color : ''}">${right}</span>${under}</span></button>`;
 }
+function marketGroups(list) {   // investments split by market, each with its own holdings total: 台股, 美股, crypto, then the hand-valued ones
+  const label = { tw:'台股・ETF', us:'美股', crypto:'加密貨幣', '':'保單・基金・其他' };
+  return ['tw', 'us', 'crypto', ''].map(m => { const hs = list.filter(a => (a.market || '') === m); if (!hs.length) return '';
+    const sum = hs.reduce((s, a) => s + a.value, 0), cost = hs.reduce((s, a) => s + (a.cost || 0), 0);
+    const usd = m === 'us' && hs.every(a => a.price && a.currency === 'USD') ? hs.reduce((s, a) => s + a.price * a.shares, 0) : 0;
+    return `<div class="mkt-h"><span>${label[m]}<small>${hs.length} 檔</small></span><span class="r"><span class="num">${money(sum)}${usd ? `<small>${usdText(usd)}</small>` : ''}</span>
+      ${cost ? `<span class="s">${plText(sum - cost, cost)}</span>` : ''}</span></div><div class="list">${hs.map(accRow).join('')}</div>`; }).join('');
+}
 function viewAssets() {
   const seg = `<div class="seg"><button data-action="aview:list" class="${ui.assetsView === 'list' ? 'on' : ''}">資產與負債</button><button data-action="aview:dreams" class="${ui.assetsView === 'dreams' ? 'on' : ''}">夢想目標</button></div>`;
   if (ui.assetsView === 'dreams') return seg + viewDreams();
@@ -2528,7 +2541,7 @@ function viewAssets() {
   const segs = [['現金', t.cash, 'var(--sky)'], ['投資', t.invest, 'var(--emerald)'], ['房產', t.prop, 'var(--wood)'], ['夢想基金', t.goal, 'var(--coral)']];
   const group = type => { const list = byType(type); const sum = list.reduce((s, a) => s + a.value, 0);
     return `<div><div class="group-h"><h3>${TYPES[type].label}<small>島上的${TYPES[type].island}</small></h3><span class="num">${(type === 'loan' && sum) || sum < 0 ? '−' : ''}${money(Math.abs(sum)).replace('−', '')}</span></div>
-    <div class="list">${list.length ? list.map(accRow).join('') : `<button class="row" data-action="add:${type}" style="justify-content:center;color:var(--ink-3);font-size:calc(13.5px*var(--fs))">＋ 新增${TYPES[type].label}</button>`}</div>
+    ${type === 'invest' && list.some(a => a.market) ? marketGroups(list) : `<div class="list">${list.length ? list.map(accRow).join('') : `<button class="row" data-action="add:${type}" style="justify-content:center;color:var(--ink-3);font-size:calc(13.5px*var(--fs))">＋ 新增${TYPES[type].label}</button>`}</div>`}
     ${type === 'invest' && autoInv().length ? (() => { const hs = autoInv(), cost = hs.reduce((s, a) => s + a.cost, 0), pl = hs.reduce((s, a) => s + a.value, 0) - cost, at = Math.max(...hs.map(a => a.quotedAt || 0));
       return `<div class="quote-bar"><span>股票・加密貨幣預估損益 <b>${plText(pl, cost)}</b><br>${at ? `股價 ${hhmm(at)} 更新，會自動更新` : '還沒取得股價'}</span><button class="mini-btn" data-action="quotes">更新市值</button></div>`; })() : ''}</div>`; };
   return seg + `
