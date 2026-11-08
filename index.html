@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-jJgMGPaz2rM36es/9xc1hPVGPhxFwE0uSEOHB0MSpkQ=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-PzoeyNczl7PxPSMIOHx2q3yUs30eYnM5vQqprye0BZo=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -227,6 +227,14 @@ main{max-width:520px;margin:0 auto;padding-block:6px calc(110px + env(safe-area-
 .list{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden}
 .row{display:flex;align-items:center;gap:12px;padding:12px 14px;width:100%;text-align:left}
 .row + .row{border-top:1px solid var(--line)}
+.swipe{position:relative;overflow:hidden}
+.swipe + .swipe{border-top:1px solid var(--line)}
+.swipe > .row{position:relative;z-index:1;background:var(--surface);touch-action:pan-y;transition:transform .22s ease}
+.swipe-acts{position:absolute;inset:0 0 0 auto;display:flex;width:148px}
+.swipe-acts button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;font-size:calc(13px*var(--fs));font-weight:700}
+.swipe-acts .cp{background:var(--sky)}
+.swipe-acts .del{background:var(--debt)}
+.swipe-acts .del.armed{background:var(--coral)}
 button.row:active{background:var(--surface-2)}
 .row .main{flex:1;min-width:0}
 .row .t{display:block;font-size:calc(15px*var(--fs));font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2266,6 +2274,7 @@ const txRow = t => { const i = txInfo(t);
   return `<button class="row" data-action="tx:${t.id}"><span class="tile" style="--c:${i.c}">${i.emo}</span>
     <span class="main"><span class="t">${esc(i.title)}${t.noStat ? '<span class="badge">不計收支</span>' : ''}</span><span class="s">${esc(i.sub)}</span></span>
     <span class="amt"><span class="num ${i.cls}" style="${i.cls === 'tra' ? 'color:var(--sky)' : ''}">${i.amt}</span><span class="s">${t.date.slice(5).replace('-', '/')}</span></span></button>`; };
+const ledgerRow = t => `<div class="swipe"><div class="swipe-acts"><button data-action="txcopy:${t.id}" class="cp" tabindex="-1">複製</button><button data-action="txdel:${t.id}" class="del" tabindex="-1">刪除</button></div>${txRow(t)}</div>`;
 const selectBox = (id, opts, val, attrs = '', cls = '') => `<div class="sel ${cls}"><select id="${id}" ${attrs}>${opts.map(o => Array.isArray(o)
   ? `<option value="${esc(o[0])}" ${String(o[0]) === String(val) ? 'selected' : ''}>${esc(o[1])}</option>`
   : `<optgroup label="${esc(o.group)}">${o.opts.map(p => `<option value="${esc(p[0])}" ${String(p[0]) === String(val) ? 'selected' : ''}>${esc(p[1])}</option>`).join('')}</optgroup>`).join('')}</select></div>`;
@@ -2362,7 +2371,7 @@ function dayGroups(list, limit) {
   for (const t of list) { if (shown >= limit) break; (groups[t.date] = groups[t.date] || []).push(t); shown++; }
   return Object.keys(groups).map(d => {
     const exp = groups[d].filter(statExp).reduce((s, t) => s + t.amount, 0);
-    return `<div><div class="day-h"><span>${dayLabel(d)}</span><span>${exp ? '支出 ' + money(exp) : ''}</span></div><div class="list">${groups[d].map(txRow).join('')}</div></div>`;
+    return `<div><div class="day-h"><span>${dayLabel(d)}</span><span>${exp ? '支出 ' + money(exp) : ''}</span></div><div class="list">${groups[d].map(ledgerRow).join('')}</div></div>`;
   }).join('');
 }
 function ledgerList() {
@@ -2397,7 +2406,7 @@ function ledgerCalendar() {
     <div class="foot"><span>本月支出 <b>${money(mExp)}</b></span><span>收入 <b>${money(mInc)}</b></span></div>
   </section>
   <div class="sec-title"><h2>${dayLabel(ui.day)}</h2><button class="link" data-action="record-on:${ui.day}">＋ 這天記一筆</button></div>
-  <div class="list">${dayList.length ? dayList.map(txRow).join('') : '<div class="empty-row">這天沒有紀錄</div>'}</div>`;
+  <div class="list">${dayList.length ? dayList.map(ledgerRow).join('') : '<div class="empty-row">這天沒有紀錄</div>'}</div>`;
 }
 function refreshLedger() { const r = $('#ledger-results'); if (r) r.innerHTML = ui.ledgerMode === 'cal' ? ledgerCalendar() : ledgerList(); }
 
@@ -2685,7 +2694,14 @@ function toast(main, sub = '') {
 
 /* new / edit record — every field is a menu, like the template's 屬性・類型・項目・From・To columns */
 const accOpt = a => [a.id, `${a.name}（${a.type === 'credit' ? (a.value < 0 ? '未繳 ' + money(-a.value) : '信用卡') : a.cur === 'USD' ? `${usdText(a.usd || 0)}，金額填台幣` : money(a.value)}）`];
-function recordSheet(pre = {}, editId = null) {
+const txForm = t => Object.assign({ kind:t.kind, amount:String(Math.abs(t.amount)), refund:t.kind === 'expense' && t.amount < 0, date:t.date, scope:t.scope || '個人', note:t.note || '', noStat:!!t.noStat },
+  t.kind === 'expense' ? { cat:t.cat, item:t.item, from:t.from || '', payer:t.payer || '' } : t.kind === 'income' ? { income:t.item, payer:t.payer || '', to:t.to } : { tfrom:t.from, dest:t.to, shares:t.shares ? String(t.shares) : '' });
+function deleteTx(t) {
+  applyTx(t, -1); S.txs = S.txs.filter(x => x.id !== t.id);
+  commit(['cash']); refreshLedger(); toast('已刪除紀錄', '金額已退回原帳戶，島嶼也跟著還原');
+}
+const copyTx = t => recordSheet({ ...txForm(t), date:today() }, null, true);   // a copy is a new record dated today; every field can still be changed before saving
+function recordSheet(pre = {}, editId = null, copy = false) {
   const old = editId ? S.txs.find(t => t.id === editId) : null;
   const pays = payAccounts();
   if (!pays.length) { toast('先新增一個現金帳戶', '記帳要從帳戶扣款或入帳'); addSheet('cash'); return; }
@@ -2693,18 +2709,18 @@ function recordSheet(pre = {}, editId = null) {
   const cashFirst = byType('cash')[0] || pays[0];
   const f = Object.assign({ kind:'expense', amount:'', date:today(), scope:lastExp?.scope || '個人', cat:'食', item:'外食', from:lastExp?.from || pays[0].id,
     income:'薪資', payer:'', to:cashFirst.id, tfrom:cashFirst.id, dest:'', shares:'', note:'', noStat:false, refund:false }, pre);
-  if (old) Object.assign(f, { kind:old.kind, amount:String(Math.abs(old.amount)), refund:old.kind === 'expense' && old.amount < 0, date:old.date, scope:old.scope || '個人', note:old.note || '', noStat:!!old.noStat },
-    old.kind === 'expense' ? { cat:old.cat, item:old.item, from:old.from || '', payer:old.payer || '' } : old.kind === 'income' ? { income:old.item, payer:old.payer || '', to:old.to } : { tfrom:old.from, dest:old.to, shares:old.shares ? String(old.shares) : '' });
+  if (old) Object.assign(f, txForm(old));
   const f0 = { ...f };
-  openSheet(`${head(old ? '編輯紀錄' : '新增紀錄')}
-    ${old ? '' : `<div class="say"><label class="say-box">${ic('mic', 20)}<input id="rec-say" placeholder="說或打一句話" autocomplete="off" enterkeyhint="done" aria-label="用一句話記帳"></label>
+  openSheet(`${head(old ? '編輯紀錄' : copy ? '複製紀錄' : '新增紀錄')}
+    ${copy ? '<p class="note">已複製原本的內容，日期改成今天，修改後按「記下這筆」另存成新的一筆。</p>' : ''}
+    ${old || copy ? '' : `<div class="say"><label class="say-box">${ic('mic', 20)}<input id="rec-say" placeholder="說或打一句話" autocomplete="off" enterkeyhint="done" aria-label="用一句話記帳"></label>
       <p class="say-hint" id="say-hint">點鍵盤上的 🎤 說一句話，例如「昨天中餐 220 富邦信用卡」，下面的欄位會自動填好</p></div>`}
     <div class="seg" role="tablist">${[['expense', '支出'], ['income', '收入'], ['transfer', '轉帳・還款']].map(([k, l]) => `<button type="button" data-kind="${k}">${l}</button>`).join('')}</div>
     <label class="amount" id="amt-box"><span>NT$</span><input id="rec-amt" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="金額" value="${esc(f.amount)}"></label>
     <div id="rec-body" class="two"></div>
     <div class="preview" id="rec-preview"></div>
     <p class="err" hidden></p>
-    ${old ? `<div class="btn-row"><button class="btn danger" id="rec-del">刪除</button><button class="btn primary" id="rec-save">儲存修改</button></div>` : '<button class="btn primary block" id="rec-save">記下這筆</button>'}`, sh => {
+    ${old ? `<div class="btn-row"><button class="btn danger" id="rec-del">刪除</button><button class="btn" id="rec-copy">複製</button><button class="btn primary" id="rec-save">儲存修改</button></div>` : '<button class="btn primary block" id="rec-save">記下這筆</button>'}`, sh => {
     const body = $('#rec-body', sh), amt = $('#rec-amt', sh);
     const draw = () => {
       $$('[data-kind]', sh).forEach(b => b.classList.toggle('on', b.dataset.kind === f.kind));
@@ -2736,10 +2752,8 @@ function recordSheet(pre = {}, editId = null) {
       say.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); say.blur(); } });
     }
     $('#rec-save', sh).addEventListener('click', () => saveRecord(f, sh, old));
-    if (old) armDelete($('#rec-del', sh), '再按一次確認刪除', () => {
-      applyTx(old, -1); S.txs = S.txs.filter(x => x.id !== old.id);
-      closeSheet(); commit(['cash']); refreshLedger(); toast('已刪除紀錄', '金額已退回原帳戶，島嶼也跟著還原');
-    });
+    if (old) armDelete($('#rec-del', sh), '再按一次確認', () => { closeSheet(); deleteTx(old); });
+    if (old) $('#rec-copy', sh).addEventListener('click', () => copyTx(old));
     draw();
     if (!f.amount) setTimeout(() => (say || amt).focus({ preventScroll:true }), 350);
   });
@@ -3317,6 +3331,33 @@ function tapIsland(k, tapEl) {   // tapEl only needs getBoundingClientRect (the 
   if (k.startsWith('goal:')) return goalSheet(k.slice(5));
   return islandTap(k, tapEl);
 }
+/* ledger rows: slide left to show 複製 and 刪除; a tap anywhere else slides them back */
+const SWIPE_W = 148;
+let swipe = null, swipedAt = 0;
+const slide = (box, open) => { box.classList.toggle('open', open); box.querySelector('.row').style.transform = open ? `translateX(-${SWIPE_W}px)` : ''; };
+const closeSwipes = keep => $$('.swipe.open').forEach(b => { if (b !== keep) slide(b, false); });
+document.addEventListener('pointerdown', e => {
+  const row = e.target.closest('.swipe > .row');
+  swipe = row ? { row, box:row.parentNode, x:e.clientX, y:e.clientY, base:row.parentNode.classList.contains('open') ? -SWIPE_W : 0, dx:0, on:false } : null;
+});
+document.addEventListener('pointermove', e => {
+  if (!swipe) return;
+  const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+  if (!swipe.on) {
+    if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { swipe = null; return; }   // scrolling the list
+    if (Math.abs(dx) < 10) return;
+    swipe.on = true; swipe.row.style.transition = 'none'; closeSwipes(swipe.box);
+  }
+  swipe.dx = dx; swipe.row.style.transform = `translateX(${clamp(swipe.base + dx, -SWIPE_W - 24, 0)}px)`;
+});
+const endSwipe = () => { const s = swipe; swipe = null; if (!s?.on) return;
+  s.row.style.transition = ''; swipedAt = Date.now(); slide(s.box, s.base + s.dx < -SWIPE_W / 2); };
+document.addEventListener('pointerup', endSwipe);
+document.addEventListener('pointercancel', endSwipe);
+document.addEventListener('click', e => {   // the click that ends a slide, or a tap while a row is open, only closes rows
+  if (Date.now() - swipedAt < 400) { e.stopPropagation(); e.preventDefault(); return; }
+  if ($('.swipe.open') && !e.target.closest('.swipe-acts')) { closeSwipes(); e.stopPropagation(); e.preventDefault(); }
+}, true);
 document.addEventListener('click', e => {
   const tapEl = e.target.closest('[data-tap]');
   const el = e.target.closest('[data-action]');
@@ -3337,6 +3378,11 @@ document.addEventListener('click', e => {
   else if (a === 'dreams') { ui.tab = 'assets'; ui.assetsView = 'dreams'; render(); window.scrollTo({ top:0 }); }
   else if (a === 'aview') { ui.assetsView = arg; render(); }
   else if (a === 'tx') recordSheet({}, arg);
+  else if (a === 'txcopy') { closeSwipes(); const t = S.txs.find(x => x.id === arg); if (t) copyTx(t); }
+  else if (a === 'txdel') { const t = S.txs.find(x => x.id === arg); if (!t) return;
+    if (el.dataset.armed) return deleteTx(t);   // a second tap deletes
+    el.dataset.armed = '1'; el.classList.add('armed'); el.textContent = '確認刪除';
+    setTimeout(() => { if (!el.isConnected) return; delete el.dataset.armed; el.classList.remove('armed'); el.textContent = '刪除'; }, 4000); }
   else if (a === 'lmode') { ui.ledgerMode = arg; if (arg === 'cal' && ui.f.month === 'all') ui.f.month = thisYm(); render(); }
   else if (a === 'day') { ui.day = arg; refreshLedger(); }
   else if (a === 'cal') { ui.f.month = shiftYm(ui.f.month === 'all' ? thisYm() : ui.f.month, Number(arg)); ui.day = null; refreshLedger(); }
