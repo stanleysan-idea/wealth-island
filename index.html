@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-PzoeyNczl7PxPSMIOHx2q3yUs30eYnM5vQqprye0BZo=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-+x9Thz/i6lMGze7cyYnJmt5pcx/9oYNLzJZKTQGc7Z8=' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -3244,19 +3244,198 @@ function replaceWithTemplate(T) {   // keep what the template doesn't know: prop
   return built;
 }
 
-/* backup: on iPhone the share sheet can save it to 檔案 / iCloud 雲碟 or send it via LINE / mail */
-async function exportBackup() {
-  const name = `財富島備份-${today()}.json`;
-  const blob = new Blob([JSON.stringify(S)], { type:'application/json' });
+/* backup and Excel files: on iPhone the share sheet can save them to 檔案 / iCloud 雲碟 or send them via LINE / mail */
+async function saveFile(name, blob) {
   const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;   // inside the claude.ai viewer, plain downloads are blocked
-  if (dl) { try { await dl.save({ filename:name, data:blob }); toast('備份已匯出', name); }
+  if (dl) { try { await dl.save({ filename:name, data:blob }); toast('已匯出', name); }
     catch (err) { if (err.code !== 'declined') throw new Error(err.message || err.code); } return; }
-  const file =typeof File === 'function' ? new File([blob], name, { type:'application/json' }) : null;
+  const file = typeof File === 'function' ? new File([blob], name, { type:blob.type }) : null;
   if (file && navigator.canShare && navigator.canShare({ files:[file] })) { await navigator.share({ files:[file], title:name }); return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
+const exportBackup = () => saveFile(`財富島備份-${today()}.json`, new Blob([JSON.stringify(S)], { type:'application/json' }));
+/* Excel export: vendor/ledger-template.xlsx is the 記帳模板 workbook with nothing personal in it (make_xlsx_template.py);
+   the export fills its 流水帳 and 金流 with this phone's records, so sheets, formulas, styles and the chart stay the template's own. */
+/* xlsx:begin — no app state below, so tests can run this part on its own */
+const XL_MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+const pipeBytes = async (bytes, stream) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer());
+async function unzip(buf) {   // name → bytes, read through the zip's central directory
+  const b = new Uint8Array(buf), dv = new DataView(b.buffer, b.byteOffset, b.byteLength), out = {}, dec = new TextDecoder();
+  let e = b.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('Excel 範本檔損壞');
+  for (let i = 0, n = dv.getUint16(e + 10, true), p = dv.getUint32(e + 16, true); i < n; i++) {
+    const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true), off = dv.getUint32(p + 42, true), nl = dv.getUint16(p + 28, true);
+    const name = dec.decode(b.subarray(p + 46, p + 46 + nl)); p += 46 + nl + dv.getUint16(p + 30, true) + dv.getUint16(p + 32, true);
+    const at = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), data = b.subarray(at, at + size);
+    out[name] = method === 8 ? await pipeBytes(data, new DecompressionStream('deflate-raw')) : data.slice();
+  }
+  return out;
+}
+const CRC_T = Array.from({ length:256 }, (_, n) => { for (let k = 0; k < 8; k++) n = n & 1 ? 0xEDB88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; });
+const crc32 = b => { let c = -1; for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 255] ^ (c >>> 8); return ~c >>> 0; };
+async function zip(files) {   // [[name, bytes]] → one .xlsx (deflated where the browser can, stored otherwise)
+  const enc = new TextEncoder(), parts = [], dir = []; let off = 0;
+  for (const [name, raw] of files) {
+    const nm = enc.encode(name), deflate = typeof CompressionStream === 'function', data = deflate ? await pipeBytes(raw, new CompressionStream('deflate-raw')) : raw;
+    const head = (sig, size) => { const h = new DataView(new ArrayBuffer(size)); h.setUint32(0, sig, true); return h; };
+    const fill = (h, o) => { h.setUint16(o, 20, true); h.setUint16(o + 2, 0x800, true); h.setUint16(o + 4, deflate ? 8 : 0, true); h.setUint16(o + 6, 0, true); h.setUint16(o + 8, 33, true);
+      h.setUint32(o + 10, crc32(raw), true); h.setUint32(o + 14, data.length, true); h.setUint32(o + 18, raw.length, true); h.setUint16(o + 22, nm.length, true); };
+    const lh = head(0x04034b50, 30); fill(lh, 4);
+    const ch = head(0x02014b50, 46); ch.setUint16(4, 20, true); fill(ch, 6); ch.setUint32(42, off, true);
+    parts.push(new Uint8Array(lh.buffer), nm, data); dir.push(new Uint8Array(ch.buffer), nm); off += 30 + nm.length + data.length;
+  }
+  const size = dir.reduce((s, x) => s + x.length, 0), end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, size, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...dir, new Uint8Array(end.buffer)]);
+}
+const xmlEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const xmlText = s => s.replace(/&(lt|gt|quot|apos|amp|#x[0-9a-f]+|#\d+);/gi, (m, e) => ({ lt:'<', gt:'>', quot:'"', apos:"'", amp:'&' }[e.toLowerCase()] ??
+  String.fromCodePoint(e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : +e.slice(1))));
+const colNum = c => [...c].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
+const colName = n => { let s = ''; for (; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; };
+const xlAttr = (a, k, v) => a.replace(new RegExp(`\\s${k}="[^"]*"`, 'g'), '') + (v == null ? '' : ` ${k}="${v}"`);
+function xlSheet(xml) {   // the sheetData as rows → cells; everything around it is kept as text
+  const a = xml.indexOf('<sheetData'), open = xml.indexOf('>', a) + 1, b = xml.indexOf('</sheetData>'), rows = new Map();
+  for (const [, ra, rb] of xml.slice(open, b).matchAll(/<row\b([^>]*?)(?:\/>|>(.*?)<\/row>)/gs)) {
+    const cells = new Map();
+    for (const [, col, , ca, inner] of (rb || '').matchAll(/<c r="([A-Z]+)(\d+)"([^>]*?)(?:\/>|>(.*?)<\/c>)/gs)) cells.set(col, { a:ca, x:inner || '' });
+    rows.set(+ra.match(/\br="(\d+)"/)[1], { a:ra, cells });
+  }
+  return { head:xml.slice(0, open), tail:xml.slice(b), rows };
+}
+const xlXml = sh => sh.head + [...sh.rows].sort((x, y) => x[0] - y[0]).map(([r, row]) => `<row${row.a}>` +
+  [...row.cells].sort((x, y) => colNum(x[0]) - colNum(y[0])).map(([c, cell]) => `<c r="${c}${r}"${cell.a}${cell.x ? `>${cell.x}</c>` : '/>'}`).join('') + '</row>').join('') + sh.tail;
+function xlPut(sh, col, r, { v, f, style }) {   // a number, text or formula; the cell keeps its own style unless one is given
+  let row = sh.rows.get(r); if (!row) sh.rows.set(r, row = { a:` r="${r}"`, cells:new Map() });
+  const s = style ?? row.cells.get(col)?.a.match(/\ss="(\d+)"/)?.[1];
+  let a = s == null ? '' : ` s="${s}"`, x = '';
+  if (f != null) x = `<f>${xmlEsc(f)}</f>`;
+  else if (typeof v === 'number') x = `<v>${v}</v>`;
+  else if (v != null && v !== '') { a += ' t="inlineStr"'; x = `<is><t xml:space="preserve">${xmlEsc(v)}</t></is>`; }
+  row.cells.set(col, { a, x });
+}
+const cellF = cell => { const m = cell.x.match(/<f>([^<]*)<\/f>/); return m ? xmlText(m[1]) : null; };
+function cellLit(cell, sst) {
+  const t = cell.a.match(/\st="([^"]+)"/)?.[1], v = cell.x.match(/<v>([^<]*)<\/v>/)?.[1];
+  if (t === 's') return sst[+v] ?? '';
+  if (t === 'inlineStr') return xmlText(cell.x.match(/<t[^>]*>([^<]*)<\/t>/)?.[1] ?? '');
+  if (t === 'str' || t === 'e') return xmlText(v ?? '');
+  return v == null || v === '' ? null : +v;
+}
+function xlCalc(book, sst) {   // works out every formula and stores the result in the file, as Excel would: previews and re-imports read these
+  const memo = new Map(), byCol = new Map(), ERR = err => ({ err }), isErr = v => v !== null && typeof v === 'object' && 'err' in v;
+  const rowsIn = (sh, col) => { const k = sh + '|' + col;
+    if (!byCol.has(k)) byCol.set(k, [...(book[sh]?.rows || [])].filter(([, row]) => row.cells.has(col)).map(([r]) => r).sort((x, y) => x - y)); return byCol.get(k); };
+  const get = (sh, col, r) => { const k = `${sh}!${col}${r}`; if (memo.has(k)) return memo.get(k);
+    const cell = book[sh]?.rows.get(r)?.cells.get(col); if (!cell) return null;
+    const f = cellF(cell); if (f == null) { const v = cellLit(cell, sst); memo.set(k, v); return v; }
+    memo.set(k, ERR('#REF!')); const v = run(f, sh); memo.set(k, v); return v; };
+  const ref = (sheet, s, sh) => { const [p, q = p] = s.replace(/\$/g, '').split(':'), A = p.match(/([A-Z]+)(\d*)/), B = q.match(/([A-Z]+)(\d*)/);
+    return { sheet:sheet ? sheet.slice(0, -1).replace(/^'|'$/g, '') : sh, c1:colNum(A[1]), r1:+A[2] || 1, c2:colNum(B[1]), r2:+B[2] || 1e7, one:p === q && !!A[2] }; };
+  const val = x => x && x.sheet ? (x.one ? get(x.sheet, colName(x.c1), x.r1) : ERR('#VALUE!')) : x;
+  const num = x => { x = val(x); return isErr(x) ? x : x == null || x === '' ? 0 : typeof x === 'number' ? x : typeof x === 'boolean' ? +x : isNaN(+x) ? ERR('#VALUE!') : +x; };
+  const str = x => { x = val(x); return isErr(x) ? x : x == null ? '' : typeof x === 'boolean' ? String(x).toUpperCase() : String(x); };
+  const each = (g, fn) => { for (let c = g.c1; c <= g.c2; c++) for (const r of rowsIn(g.sheet, colName(c))) if (r >= g.r1 && r <= g.r2) fn(c, r, get(g.sheet, colName(c), r)); };
+  const at = (g, from, c, r) => get(g.sheet, colName(g.c1 + c - from.c1), g.r1 + r - from.r1);
+  const same = (v, k) => v != null && v !== '' && !isErr(v) && (typeof k === 'number' ? +v === k : String(v).toLowerCase() === String(k ?? '').toLowerCase());
+  const day = (x, part) => { const n = num(x); return isErr(n) ? n : n < 1 ? (part === 'y' ? 1900 : 1) :
+    (d => part === 'y' ? d.getUTCFullYear() : d.getUTCMonth() + 1)(new Date(Date.UTC(1899, 11, 30) + Math.floor(n) * 864e5)); };
+  const FN = {
+    SUM: args => { let t = 0; for (const a of args) { if (a && a.sheet && !a.one) { let bad = null; each(a, (c, r, v) => { if (isErr(v)) bad = bad || v; else if (typeof v === 'number') t += v; }); if (bad) return bad; }
+      else { const n = num(a); if (isErr(n)) return n; t += n; } } return t; },
+    SUMIF: ([g, k, sum = g]) => { k = val(k); if (isErr(k)) return k; let t = 0; each(g, (c, r, v) => { if (same(v, k)) { const s = num(at(sum, g, c, r)); if (!isErr(s)) t += s; } }); return t; },
+    SUMIFS: ([sum, ...cr]) => { const ks = []; for (let i = 0; i < cr.length; i += 2) ks.push([cr[i], val(cr[i + 1])]);
+      let t = 0; each(sum, (c, r, v) => { if (typeof v === 'number' && ks.every(([g, k]) => same(at(g, sum, c, r), k))) t += v; }); return t; },
+    YEAR: ([x]) => day(x, 'y'), MONTH: ([x]) => day(x, 'm'),
+    IF: ([c, a, b = false]) => { c = val(c); return isErr(c) ? c : (typeof c === 'string' ? c !== '' : !!c) ? val(a) : val(b); },
+    ISERROR: ([x]) => isErr(val(x)),
+  };
+  const TOK = /\s*(?:"((?:[^"]|"")*)"|((?:'[^']+'|[^\s()+\-*\/&,:!"'<>=]+)!)?(\$?[A-Z]{1,3}\$?\d*(?::\$?[A-Z]{1,3}\$?\d*)?)(?![A-Za-z(\d])|(\d+(?:\.\d+)?)|([A-Z][A-Z0-9.]*)\(|([-+*\/&(),]))/y;
+  function run(src, sh) {   // + - * / & ( ) , numbers, "text", A1 / A1:B9 / D:D / 一月!$K2 and the functions above
+    const toks = []; let pos = 0;
+    while (pos < src.length) { TOK.lastIndex = pos; const m = TOK.exec(src); if (!m) { if (src.slice(pos).trim()) return ERR('#NAME?'); break; } pos = TOK.lastIndex; toks.push(m); }
+    let i = 0; const is = o => toks[i]?.[6] === o, eat = o => is(o) && ++i;
+    const bin = (a, b, f) => { a = num(a); b = num(b); return isErr(a) ? a : isErr(b) ? b : f(a, b); };
+    const prim = () => { const m = toks[i++]; if (!m) return ERR('#VALUE!');
+      if (m[1] != null) return m[1].replace(/""/g, '"');
+      if (m[3]) return ref(m[2], m[3], sh);
+      if (m[4]) return +m[4];
+      if (m[5]) { const args = []; if (!eat(')')) { do args.push(cat()); while (eat(',')); eat(')'); } const fn = FN[m[5].toUpperCase()]; return fn ? fn(args) : ERR('#NAME?'); }
+      if (m[6] === '(') { const v = cat(); eat(')'); return v; }
+      if (m[6] === '-') { const n = num(prim()); return isErr(n) ? n : -n; }
+      if (m[6] === '+') return num(prim());
+      return ERR('#VALUE!'); };
+    const mul = () => { let a = prim(); while (is('*') || is('/')) { const o = toks[i++][6]; a = bin(a, prim(), (x, y) => o === '*' ? x * y : y === 0 ? ERR('#DIV/0!') : x / y); } return a; };
+    const add = () => { let a = mul(); while (is('+') || is('-')) { const o = toks[i++][6]; a = bin(a, mul(), (x, y) => o === '+' ? x + y : x - y); } return a; };
+    const cat = () => { let a = add(); while (eat('&')) { const x = str(a), y = str(add()); a = isErr(x) ? x : isErr(y) ? y : x + y; } return a; };
+    return val(cat());
+  }
+  for (const [name, sh] of Object.entries(book)) for (const [r, row] of sh.rows) for (const [col, cell] of row.cells) {
+    const f = cellF(cell); if (f == null) continue;
+    const v = get(name, col, r); let a = xlAttr(cell.a, 't', null), x = `<f>${xmlEsc(f)}</f>`;
+    if (isErr(v)) { a += ' t="e"'; x += `<v>${v.err}</v>`; }
+    else if (typeof v === 'string') { a += ' t="str"'; x += `<v>${xmlEsc(v)}</v>`; }
+    else if (typeof v === 'boolean') { a += ' t="b"'; x += `<v>${+v}</v>`; }
+    else if (typeof v === 'number' && isFinite(v)) x += `<v>${+v.toPrecision(15)}</v>`;
+    Object.assign(cell, { a, x });
+  }
+  return get;
+}
+const fillChart = (xml, get) => xml.replace(/(<c:numRef><c:f>([^<]+)<\/c:f><c:numCache>.*?<c:ptCount val="\d+"\/>)(.*?<\/c:numCache>)/gs, (m, head, f, tail) => {
+  const [sheet, g] = xmlText(f).split('!'), [p, q = p] = g.replace(/\$/g, '').split(':'), A = p.match(/([A-Z]+)(\d+)/), B = q.match(/([A-Z]+)(\d+)/);
+  let pts = ''; for (let r = +A[2], i = 0; r <= +B[2]; r++, i++) { const v = get(sheet.replace(/^'|'$/g, ''), A[1], r); if (typeof v === 'number') pts += `<c:pt idx="${i}"><c:v>${v}</c:v></c:pt>`; }
+  return head + pts + tail.replace(/^.*?(?=<\/c:numCache>)/s, '');
+});
+async function buildWorkbook(tpl, data) {   // data: { months:[12 lists of [日期序號, 屬性, 類型, 項目, 備註, 金額, From, To]], accounts:[{ name, open, credit }] }
+  const files = await unzip(tpl), dec = new TextDecoder(), enc = new TextEncoder(), txt = n => dec.decode(files[n]);
+  const sst = [...txt('xl/sharedStrings.xml').matchAll(/<si>(.*?)<\/si>/gs)].map(([, si]) => [...si.replace(/<rPh\b.*?<\/rPh>/gs, '').matchAll(/<t\b[^>]*>([^<]*)<\/t>/g)].map(t => xmlText(t[1])).join(''));
+  let wb = txt('xl/workbook.xml'); const rels = txt('xl/_rels/workbook.xml.rels'), book = {}, path = {};
+  for (const [tag] of wb.matchAll(/<sheet\b[^>]*>/g)) {
+    const name = xmlText(tag.match(/\bname="([^"]*)"/)[1]), rel = rels.match(new RegExp(`<Relationship\\b[^>]*\\bId="${tag.match(/\br:id="([^"]*)"/)[1]}"[^>]*>`))[0];
+    const target = rel.match(/\bTarget="([^"]*)"/)[1]; path[name] = target.startsWith('/') ? target.slice(1) : 'xl/' + target; book[name] = xlSheet(txt(path[name]));
+  }
+  const sOf = (sh, col, r) => sh.rows.get(r)?.cells.get(col)?.a.match(/\ss="(\d+)"/)?.[1], TOP = 65;   // 金流 accounts start on row 65, as in the template
+  XL_MONTHS.forEach((name, m) => { const sh = book[name]; if (!sh) return;
+    const dataS = [...'ABCDEFGH'].map(c => sOf(sh, c, 2)), flowS = [...'JKLMN'].map(c => sOf(sh, c, TOP)), plainS = [...'JKLMN'].map(c => sOf(sh, c, 80)), totS = ['L', 'M'].map(c => sOf(sh, c, 79));
+    const rows = data.months[m] || [], last = rows.length + 1, n = data.accounts.length;
+    rows.forEach((v, i) => [...'ABCDEFGH'].forEach((c, k) => xlPut(sh, c, i + 2, { v:v[k], style:dataS[k] })));
+    sh.tail = sh.tail.replace(/<autoFilter ref="[^"]*"/, `<autoFilter ref="A1:H${last}"`);
+    wb = wb.replace(new RegExp(`(<definedName name="_xlnm\\._FilterDatabase"[^>]*>'?${name}'?!\\$A\\$1:\\$H\\$)\\d+`), `$1${last}`);
+    for (let r = TOP; r <= Math.max(79, TOP + n); r++) [...'JKLMN'].forEach((c, k) => xlPut(sh, c, r, { style:plainS[k] }));   // clear the template's 14 account rows
+    data.accounts.forEach((a, i) => { const r = TOP + i;
+      xlPut(sh, 'J', r, { v:a.name, style:flowS[0] });
+      xlPut(sh, 'K', r, m ? { f:`${XL_MONTHS[m - 1]}!M${r}`, style:flowS[1] } : { v:a.open, style:flowS[1] });   // 上月餘額: last month's 本月餘額
+      xlPut(sh, 'L', r, { f:`SUMIF(H:H, J${r}, F:F) - SUMIF(G:G, J${r}, F:F)`, style:flowS[2] });
+      xlPut(sh, 'M', r, { f:`K${r}+L${r}`, style:flowS[3] });
+      xlPut(sh, 'N', r, { style:flowS[4] }); });
+    const own = data.accounts.map((a, i) => a.credit ? '' : `M${TOP + i}`).filter(Boolean);   // 總金額 leaves out credit cards, like the template
+    xlPut(sh, 'L', TOP + n, { v:'總金額💰', style:totS[0] }); xlPut(sh, 'M', TOP + n, { f:own.join('+') || '0', style:totS[1] });
+  });
+  const get = xlCalc(book, sst), sheetAt = Object.fromEntries(Object.entries(path).map(([k, v]) => [v, k]));
+  return zip(Object.keys(files).map(n => { const x = sheetAt[n] ? xlXml(book[sheetAt[n]]) : n === 'xl/workbook.xml' ? wb : /^xl\/charts\/[^/]+\.xml$/.test(n) ? fillChart(txt(n), get) : null;
+    return [n, x == null ? files[n] : enc.encode(x)]; }));
+}
+/* xlsx:end */
+function excelData(year) {   // records from 1/1 of that year, as template rows; each account's 1/1 balance is worked back from today's
+  const list = S.txs.filter(t => t.date >= `${year}-01-01`).sort((a, b) => a.date.localeCompare(b.date) || (a.ts || 0) - (b.ts || 0));
+  const name = id => acc(id)?.name || '', serial = d => (Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) - Date.UTC(1899, 11, 30)) / 864e5;
+  const rows = list.map(t => [t.date, ...(t.kind === 'expense' ? [t.scope || '', t.noStat ? '' : t.cat || '', t.noStat ? '' : t.item || '', t.note || '', t.amount, t.from ? name(t.from) : t.payer || '', '花費']   // 不計收支 = no 類型, as the template marks it
+    : t.kind === 'income' ? [t.scope || '', t.noStat ? '' : '收入', t.noStat ? '' : t.item || '', t.note || '', t.amount, t.payer || '', name(t.to)]
+    : ['', '', '', t.note || '', t.amount, name(t.from), destName(t.to)])]);
+  const accounts = S.accounts.filter(a => isFlow(a) || (a.type === 'invest' && a.src === 'template')).map(a => ({ name:a.name, credit:a.type === 'credit',
+    open:Math.round(a.value - rows.reduce((s, r) => s + (r[7] === a.name ? r[5] : 0) - (r[6] === a.name ? r[5] : 0), 0)) }));
+  const months = Array.from({ length:12 }, (_, m) => rows.filter(r => r[0].startsWith(`${year}-${String(m + 1).padStart(2, '0')}-`)).map(r => [serial(r[0]), ...r.slice(1)]));
+  return { months, accounts };
+}
+async function exportExcel(year) {
+  if (typeof DecompressionStream !== 'function') throw new Error('這個瀏覽器無法產生 Excel，請把 iOS 更新到 16.4 以上');
+  const r = await fetch('vendor/ledger-template.xlsx', { credentials:'same-origin' });
+  if (!r.ok) throw new Error('無法載入 Excel 範本，請確認網路連線');
+  return new Blob([await buildWorkbook(await r.arrayBuffer(), excelData(year))], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
 function settingsSheet() {
+  const years = [...new Set([thisYm().slice(0, 4), ...S.txs.map(t => t.date.slice(0, 4))])].sort().reverse();
   const f = { name:S.settings.name, budget:String(S.settings.budget), fullWater:String(S.settings.fullWater) };
   openSheet(`${head('設定')}
     <div class="flabel">字體大小</div>
@@ -3276,6 +3455,8 @@ function settingsSheet() {
     <p class="note">${S.source ? `目前資料來自「${esc(S.source)}」，${S.txs.length.toLocaleString()} 筆紀錄。` : '目前沒有匯入的資料。'}匯入 Excel 會用檔案裡的流水帳與最新月份的「金流」餘額取代現有帳戶和紀錄，你另外新增的房產、貸款、投資和夢想會保留。</p>
     <label class="btn block file-btn" id="imp-label">匯入 Excel（.xlsx）<input type="file" id="imp-file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
     ${TEMPLATE ? '<button class="btn block" id="set-tpl">重新載入 2026_記帳模板.xlsx 的資料</button>' : ''}
+    <div class="btn-row"><button class="btn" id="xl-export">匯出 Excel（.xlsx）</button>${years.length > 1 ? selectBox('xl-year', years.map(y => [y, y + ' 年']), years[0], 'aria-label="匯出年份"') : ''}</div>
+    <p class="note">匯出的檔案和記帳模板同樣格式：年度總表、1～12 月的流水帳與金流，公式和圖表都在，也可以再匯入。</p>
     <div class="flabel" style="margin-top:6px">備份</div>
     <p class="note">所有資料只存在這台裝置的瀏覽器（localStorage），重新整理不會遺失；但刪除主畫面 App、清除 Safari 資料或換手機就會不見。建議定期匯出備份，存到「檔案」或 iCloud 雲碟。</p>
     <div class="btn-row"><button class="btn" id="bk-export">匯出備份</button><label class="btn file-btn" id="bk-label">還原備份<input type="file" id="bk-file" accept=".json,application/json"></label></div>
@@ -3310,6 +3491,17 @@ function settingsSheet() {
       try { const T = await parseWorkbook(file); const b = replaceWithTemplate(T);
         closeSheet(); ui.tab = 'home'; commit(['cash']); toast(`已匯入 ${file.name}`, `${b.txs.length} 筆紀錄、${b.accounts.length} 個帳戶`); }
       catch (err) { $('#imp-label', sh).firstChild.textContent = '匯入 Excel（.xlsx）'; showErr(sh, err.message); }
+    });
+    const xl = $('#xl-export', sh), xlLabel = xl.textContent;
+    $('#xl-year', sh)?.addEventListener('change', () => { delete xl.file; xl.textContent = xlLabel; });
+    xl.addEventListener('click', async () => {
+      if (xl.file) return saveFile(xl.file.name, xl.file.blob).catch(err => { if (err.name !== 'AbortError') showErr(sh, '匯出失敗：' + err.message); });
+      const y = $('#xl-year', sh)?.value || years[0], name = `財富島記帳-${y}.xlsx`;
+      xl.disabled = true; xl.textContent = '產生中…';
+      try { const blob = await exportExcel(y); xl.disabled = false; xl.textContent = xlLabel;
+        try { await saveFile(name, blob); }
+        catch (err) { if (err.name !== 'NotAllowedError') throw err; xl.file = { name, blob }; xl.textContent = '檔案好了，點這裡儲存'; } }   // the share sheet needs a fresh tap after a slow build
+      catch (err) { xl.disabled = false; xl.textContent = xlLabel; if (err.name !== 'AbortError') showErr(sh, '匯出失敗：' + err.message); }
     });
     $('#bk-export', sh).addEventListener('click', () => exportBackup().catch(err => { if (err.name !== 'AbortError') showErr(sh, '匯出失敗：' + err.message); }));
     $('#bk-file', sh).addEventListener('change', async e => {
